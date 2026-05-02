@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Logo from "./components/Logo";
 import TopNav from "./components/TopNav";
 import Hero from "./components/Hero";
+import Projects from "./components/Projects";
 import Footer from "./components/Footer";
 import Grain from "./components/Grain";
 import { attachScrollProgress } from "./lib/scrollProgress";
@@ -21,17 +22,28 @@ function App() {
 
   return (
     <>
-      <Logo />
-      <TopNav />
+      <header className="topbar">
+        <Logo />
+        <TopNav />
+      </header>
       <main className="page">
         <section className="page__section page__section--hero">
           <Hero dpr={dpr} />
+          <Grain />
         </section>
-        <section className="page__section page__section--footer">
+        <section
+          id="projects"
+          className="page__section page__section--projects"
+        >
+          <Projects />
+        </section>
+        <section
+          id="about"
+          className="page__section page__section--footer"
+        >
           <Footer />
         </section>
       </main>
-      <Grain />
     </>
   );
 }

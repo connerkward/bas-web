@@ -6,8 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preload the local subsetted IntraNet so it's in flight in parallel
+         with HTML parsing instead of waiting for CSS to be parsed. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500&display=swap"
+      rel="preload"
+      href="/fonts/IntraNet.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <!-- Single static 400-weight Source Code Pro. The hover "thicker" effect
+         is faked via text-shadow stamps so we don't actually need the
+         variable wght axis or a heavier weight. ~70% smaller than the
+         full-axis variable file. -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap"
       rel="stylesheet"
     />
     <title>BAS STUDIO</title>

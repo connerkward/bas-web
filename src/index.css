@@ -1,10 +1,9 @@
 @font-face {
   font-family: "IntraNet";
-  src: url("/fonts/IntraNet.woff2") format("woff2"),
-       url("/fonts/IntraNet.woff") format("woff"),
-       url("/fonts/IntraNet.otf") format("opentype"),
-       url("/fonts/IntraNet.ttf") format("truetype");
+  /* Subsetted to BASTUDIO + space, woff2-encoded — ~1KB total. */
+  src: url("/fonts/IntraNet.woff2") format("woff2");
   font-display: swap;
+  unicode-range: U+0020, U+0041-005A;
 }
 
 * {
@@ -17,21 +16,16 @@ html,
 body,
 #root {
   width: 100%;
-  background: #0a0a0a;
+  height: 100%;
+  /* Document itself doesn't scroll — `.page` does (see App.css). Locking
+     the document scroll prevents iOS Safari from auto-collapsing the
+     address bar mid-scroll, which was making mandatory snap jump. With
+     no document scroll, the viewport size never changes during scroll
+     and snap math stays stable across hero/projects/footer. */
+  overflow: hidden;
+  background: var(--footer-bg, #0a0a0a);
   color: #e8e8e8;
   font-family: "Source Code Pro", ui-monospace, monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-html {
-  overflow-x: hidden;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
-}
-
-body,
-#root {
-  min-height: 100%;
 }

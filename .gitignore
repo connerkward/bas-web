@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local audit/automation artifacts
+.audit-tmp/
+.playwright-mcp/

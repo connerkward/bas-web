@@ -5,28 +5,240 @@
   /* Warm cream (matches stone × light × ACES peak). Available for any spot
      where a single warm tone reads better than monochrome. */
   --warm-cream: #d4ad6f;
+
+  /* Footer palette — defaults are the dark scheme. Light scheme overrides
+     below via prefers-color-scheme. Only the footer reads these; the hero
+     stays dark either way (the canvas + grain are tuned for black bg). */
+  --footer-bg: #0a0a0a;
+  --footer-text: #ededed;
+  --footer-text-2: #d6d6d6;
+  --footer-text-3: #cfcfcf;
+  --footer-label: #6a6a6a;
+  --footer-display: #f4f4f4;
+  --footer-hover: #ffffff;
+  --footer-rule: #2a2a2a;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --footer-bg: #f1ece2;
+    --footer-text: #1c1c1c;
+    --footer-text-2: #2a2a2a;
+    --footer-text-3: #383838;
+    --footer-label: #8a8478;
+    --footer-display: #0d0d0d;
+    --footer-hover: #000000;
+    --footer-rule: #d4cfc2;
+  }
+}
+
+/* Debug menu can force a scheme via data-scheme on <html>, overriding the
+   media query. data-scheme="dark" restores the dark palette even on a
+   light-mode OS; data-scheme="light" applies the light palette regardless. */
+:root[data-scheme="dark"] {
+  --footer-bg: #0a0a0a;
+  --footer-text: #ededed;
+  --footer-text-2: #d6d6d6;
+  --footer-text-3: #cfcfcf;
+  --footer-label: #6a6a6a;
+  --footer-display: #f4f4f4;
+  --footer-hover: #ffffff;
+  --footer-rule: #2a2a2a;
+}
+
+:root[data-scheme="light"] {
+  --footer-bg: #f1ece2;
+  --footer-text: #1c1c1c;
+  --footer-text-2: #2a2a2a;
+  --footer-text-3: #383838;
+  --footer-label: #8a8478;
+  --footer-display: #0d0d0d;
+  --footer-hover: #000000;
+  --footer-rule: #d4cfc2;
+}
+
+/* Thin sharp white cross cursor, scoped to the 3D hero canvas only — DOM
+   chrome (logo, nav, debug, footer) keeps the system pointer. Hotspot is
+   the center (12,12). Toggled via the debug menu. */
+body.crosshair-cursor .hero {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='25' height='25' viewBox='0 0 25 25'><line x1='12.5' y1='0' x2='12.5' y2='25' stroke='black' stroke-opacity='0.55' stroke-width='3'/><line x1='0' y1='12.5' x2='25' y2='12.5' stroke='black' stroke-opacity='0.55' stroke-width='3'/><line x1='12.5' y1='0' x2='12.5' y2='25' stroke='white' stroke-width='1'/><line x1='0' y1='12.5' x2='25' y2='12.5' stroke='white' stroke-width='1'/></svg>") 12 12, crosshair;
 }
 
 /* ----- Page / scroll-snap ---------------------------------------------- */
 
+/* `.page` is the actual scroll container, not the document. By scrolling
+   inside a fixed inner element, iOS Safari doesn't auto-collapse its
+   address bar — viewport stays constant for the session, so mandatory
+   scroll-snap doesn't fight the chrome. Sections size at 100% of `.page`
+   which equals the live visible viewport. */
 .page {
+  position: fixed;
+  inset: 0;
   width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .page__section {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   scroll-snap-align: start;
   scroll-snap-stop: always;
   position: relative;
+  /* Skip layout/paint for sections that aren't in the viewport. With
+     `contain-intrinsic-size` the browser keeps a placeholder box of the
+     section's known size so scroll-snap targets remain correct. Big
+     scroll-fps win — only the visible section ever renders. */
+  content-visibility: auto;
+  contain-intrinsic-size: 100% 100%;
 }
 
 .page__section--hero {
   background: #0a0a0a;
+  /* Grain layer is `position: absolute; inset: -10%` and would otherwise
+     bleed into the footer below, painting its overlay-blended shimmer over
+     the footer top edge. Clip it to the hero. */
+  overflow: hidden;
+}
+
+.page__section--projects {
+  background: var(--footer-bg);
 }
 
 .page__section--footer {
-  background: #0a0a0a;
+  background: var(--footer-bg);
+}
+
+/* ----- Projects -------------------------------------------------------- */
+
+.projects {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 96px 32px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  color: var(--footer-text);
+}
+
+.projects__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--footer-label);
+  border-bottom: 1px solid var(--footer-rule);
+  padding-bottom: 12px;
+}
+
+.projects__count {
+  font-variant-numeric: tabular-nums;
+}
+
+.projects__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.projects__row {
+  border-bottom: 1px solid var(--footer-rule);
+  /* Stagger entrance — index.tsx applies transitionDelay per row. */
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.projects--in .projects__row {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.projects__link {
+  display: grid;
+  grid-template-columns: 56px 1fr 1.4fr 80px;
+  align-items: baseline;
+  gap: 16px;
+  padding: 18px 0;
+  text-decoration: none;
+  color: inherit;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: color 200ms ease, padding 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.projects__link:hover {
+  color: var(--footer-hover);
+  /* Subtle slide-right on hover; reads as "this row is targetable." */
+  padding-left: 6px;
+}
+
+.projects__no {
+  color: var(--footer-label);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+}
+
+.projects__title {
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+.projects__type {
+  color: var(--footer-text-3);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+}
+
+.projects__year {
+  color: var(--footer-text-3);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+  .projects {
+    padding: 80px 22px 40px;
+    gap: 24px;
+  }
+  .projects__link {
+    grid-template-columns: 36px 1fr 64px;
+    gap: 12px;
+    padding: 14px 0;
+    font-size: 12px;
+  }
+  /* Hide the type column on narrow screens to keep title legible. */
+  .projects__type {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projects__row {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 /* ----- Hero canvas wrapper --------------------------------------------- */
@@ -38,92 +250,147 @@
   height: 100%;
 }
 
-/* ----- Logo (top-left, persistent) ------------------------------------- */
+/* ----- Top bar (logo + nav share a centerline) ------------------------- */
+
+/* Single fixed flex strip that owns both Logo and TopNav. align-items:center
+   guarantees the two sides share an exact vertical centerline regardless of
+   their differing content heights. pointer-events disabled on the strip
+   itself; re-enabled on the children so clicks fall through the empty
+   middle into the canvas / scroll. */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 28px;
+  pointer-events: none;
+}
+
+.topbar > * {
+  pointer-events: auto;
+}
+
+/* ----- Logo (left side of topbar) -------------------------------------- */
 
 .logo {
-  position: fixed;
-  top: 26px;
-  left: 28px;
-  z-index: 20;
   display: flex;
   align-items: center;
   gap: 10px;
   user-select: none;
-  pointer-events: none;
-  /* Color is driven by useTopBarColor (rAF) — fades white → black based on
-     cursor proximity × current light visibility. No blend modes / no
-     backdrop-filter, so no rectangular artifacts and uniform per-channel
-     transition. */
+  /* Button reset */
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
   color: var(--topbar-color, #ffffff);
+  mix-blend-mode: difference;
+  isolation: isolate;
 }
 
+/* Gradual weight via 4-stamped text-shadow whose color alpha animates from
+   transparent → currentColor over 2s. Alpha interpolation is perfectly
+   smooth on every browser/font (no font-weight discreteness, no stroke
+   pixel-snapping). The shadow offsets are fixed; only the color transitions. */
 .logo__bas {
   font-family: "IntraNet", "Source Code Pro", ui-monospace, monospace;
   font-size: 28px;
   letter-spacing: 0.02em;
   color: inherit;
   line-height: 1;
-  -webkit-text-stroke: var(--topbar-stroke, 0px) currentColor;
+  text-shadow:
+    0.7px 0 0 transparent,
+    -0.7px 0 0 transparent,
+    0 0.7px 0 transparent,
+    0 -0.7px 0 transparent;
+  transition: text-shadow 2000ms cubic-bezier(0.4, 0, 0.6, 1);
 }
 
 .logo__studio {
   font-family: "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.18em;
   color: inherit;
   text-transform: uppercase;
   line-height: 1;
   transform: translateY(-1px);
-  -webkit-text-stroke: var(--topbar-stroke, 0px) currentColor;
+  text-shadow:
+    0.4px 0 0 transparent,
+    -0.4px 0 0 transparent,
+    0 0.4px 0 transparent,
+    0 -0.4px 0 transparent;
+  transition: text-shadow 2000ms cubic-bezier(0.4, 0, 0.6, 1);
 }
 
-/* ----- Top nav (top-right, persistent) --------------------------------- */
+.logo:hover .logo__bas {
+  text-shadow:
+    0.5px 0 0 currentColor,
+    -0.5px 0 0 currentColor,
+    0 0.5px 0 currentColor,
+    0 -0.5px 0 currentColor;
+}
+
+.logo:hover .logo__studio {
+  text-shadow:
+    0.32px 0 0 currentColor,
+    -0.32px 0 0 currentColor,
+    0 0.32px 0 currentColor,
+    0 -0.32px 0 currentColor;
+}
+
+
+.logo:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* ----- Top nav (right side of topbar) ---------------------------------- */
 
 .topnav {
-  position: fixed;
-  top: 30px;
-  right: 32px;
-  z-index: 20;
   display: flex;
   align-items: center;
   gap: 28px;
   color: var(--topbar-color, #ffffff);
+  mix-blend-mode: difference;
+  isolation: isolate;
 }
 
 .topnav__link {
   font-family: "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.18em;
   color: inherit;
   text-transform: uppercase;
   text-decoration: none;
   line-height: 1;
   position: relative;
-  padding-bottom: 3px;
-  -webkit-text-stroke: var(--topbar-stroke, 0px) currentColor;
+  padding: 6px 10px;
+  text-shadow:
+    0.4px 0 0 transparent,
+    -0.4px 0 0 transparent,
+    0 0.4px 0 transparent,
+    0 -0.4px 0 transparent;
+  /* Nav weight transition is much shorter than the logo's so hover feedback
+     feels responsive (links should react ~as fast as a normal hover). */
+  transition: text-shadow 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-.topnav__link::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: currentColor;
-  opacity: 0;
-  transform: scaleX(0.3);
-  transform-origin: left center;
-  transition: opacity 200ms ease, transform 200ms ease;
+.topnav__link:hover,
+.topnav__link[aria-current="page"] {
+  text-shadow:
+    0.32px 0 0 currentColor,
+    -0.32px 0 0 currentColor,
+    0 0.32px 0 currentColor,
+    0 -0.32px 0 currentColor;
 }
 
-.topnav__link:hover::after {
-  opacity: 1;
-  transform: scaleX(1);
-  background: var(--accent);
-}
 
 /* ----- Footer ----------------------------------------------------------- */
 
@@ -134,8 +401,8 @@
   padding: 80px 32px 28px;
   display: flex;
   flex-direction: column;
-  color: #ededed;
-  background: #0a0a0a;
+  color: var(--footer-text);
+  background: var(--footer-bg);
 }
 
 .footer__top {
@@ -164,7 +431,7 @@
   font-weight: 500;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #6a6a6a;
+  color: var(--footer-label);
   margin-bottom: 6px;
 }
 
@@ -172,7 +439,7 @@
   font-family: "Source Code Pro", ui-monospace, monospace;
   font-size: 12px;
   letter-spacing: 0.06em;
-  color: #d6d6d6;
+  color: var(--footer-text-2);
   text-decoration: none;
   text-transform: uppercase;
 }
@@ -182,34 +449,36 @@ a.footer__line {
 }
 
 a.footer__line:hover {
-  color: #ffffff;
+  color: var(--footer-hover);
 }
 
-.footer__rule {
-  height: 1px;
-  width: 100%;
-  background: #2a2a2a;
-}
 
 .footer__brand {
+  /* Mobile/narrow base: stacked. The wide-screen override below puts meta
+     inline to the right of BAS (BAS shrinks to make room). */
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 32px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
   padding-top: 16px;
+  min-width: 0;
 }
 
 .footer__bas {
   font-family: "IntraNet", "Source Code Pro", ui-monospace, monospace;
-  font-size: clamp(8rem, 28vw, 26rem);
+  /* Maximize the wordmark to fill the available content width. Empirical:
+     measured on real renders, three IntraNet letters + 0.04em of gaps
+     occupy ~2.83em total width. Dividing by 2.85 leaves a hairline of
+     slack and lets BAS reach essentially edge to edge. */
+  font-size: calc((100vw - 64px) / 2.85);
   line-height: 0.82;
   letter-spacing: -0.01em;
-  color: #f4f4f4;
+  color: var(--footer-display);
   user-select: none;
-  /* Pull the visual block tight to the baseline */
   margin-bottom: -0.06em;
   display: flex;
   gap: 0.02em;
+  min-width: 0;
 }
 
 .footer__bas-letter {
@@ -242,13 +511,19 @@ a.footer__line:hover {
   }
 }
 
+/* Below BAS (column brand layout, < 1100px): two rows, items flow into a
+   2-col auto-sized grid. Col 1 is the wider of items 1 & 3, col 2 starts
+   at col1-width + gap. Every row uses the same column rhythm so items
+   align cleanly: row1col1 with row2col1, row1col2 with row2col2. */
 .footer__meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  padding-bottom: 18px;
-  min-width: 200px;
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: start;
+  align-items: baseline;
+  gap: 6px 28px;
+  width: 100%;
+  padding-bottom: 0;
+  min-width: 0;
 }
 
 .footer__meta-row {
@@ -257,8 +532,8 @@ a.footer__line:hover {
   font-weight: 500;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #cfcfcf;
-  text-align: right;
+  color: var(--footer-text-3);
+  text-align: left;
 }
 
 .footer__meta-row--icons {
@@ -266,29 +541,147 @@ a.footer__line:hover {
   gap: 10px;
   font-size: 12px;
   letter-spacing: 0.05em;
-  color: #ededed;
+  color: var(--footer-text);
   margin: 4px 0 6px;
 }
 
+/* Side-by-side. BAS fills all available horizontal space until the meta
+   column; meta is vertically centered to BAS's text centerline. */
+@media (min-width: 1100px) {
+  .footer__brand {
+    flex-direction: row;
+    align-items: center; /* meta vertically centered on BAS centerline */
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .footer__bas {
+    /* Maximize: 3.15 divisor (matches narrow rule, accounts for IntraNet's
+       letterform overshoot) and a tight 240px reservation (64 padding +
+       16 gap + 160 meta). meta uses min-content so it stays as narrow
+       as its longest row needs. */
+    font-size: calc((100vw - 240px) / 3.15);
+  }
+  .footer__meta {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: flex-end;
+    text-align: right;
+    gap: 4px;
+    width: auto;
+    padding-bottom: 0;
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+  .footer__meta-row {
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+/* ----- Mobile: phone / small tablet (<= 720px) ----------------------- */
 @media (max-width: 720px) {
+  /* Topbar — keep logo + nav at sizes that respect mobile tap-target
+     guidance (44–48px hit area). Padding on the interactive elements is
+     bumped explicitly so buttons remain easy to tap. */
+  .topbar {
+    padding: 14px 18px;
+  }
+  .logo {
+    gap: 9px;
+    padding: 8px 10px;
+    margin: -8px -10px;
+  }
+  .logo__bas {
+    font-size: 26px;
+  }
+  .logo__studio {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+  }
+  .topnav {
+    gap: 6px;
+  }
+  .topnav__link {
+    font-size: 12px;
+    /* ~44px tap target (12px font + 12px top + 12px bottom + line-height). */
+    padding: 12px 14px;
+    letter-spacing: 0.16em;
+  }
+
+  /* Footer — drop padding and switch column grid to 2-up. */
+  .footer {
+    padding: 56px 20px 22px;
+  }
   .footer__top {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
+    gap: 22px;
+    padding-bottom: 28px;
   }
   .footer__col--right {
     align-items: flex-start;
     text-align: left;
   }
+  .footer__line {
+    font-size: 11px;
+  }
   .footer__brand {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
+  }
+  .footer__bas {
+    /* Slightly looser line-height when stacked vertically so the descender
+       below the wordmark doesn't kiss the meta block. */
+    line-height: 0.85;
   }
   .footer__meta {
     align-items: flex-start;
     text-align: left;
+    min-width: 0;
+    padding-bottom: 0;
   }
   .footer__meta-row {
     text-align: left;
+  }
+  /* Icons collapse from 1×N row → 2-column grid in narrow stacked mode.
+     Five total marks, so they stack as 2 + 2 + 1. */
+  .footer__meta-row--icons {
+    display: grid;
+    grid-template-columns: repeat(2, max-content);
+    gap: 6px 14px;
+  }
+}
+
+/* ----- Mobile: tight portrait phones (<= 420px) ---------------------- */
+@media (max-width: 420px) {
+  /* Single-column footer info — at narrow widths the 2-col grid wraps
+     awkwardly with long values like the time ticker / coordinates. */
+  .footer__top {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .footer {
+    padding: 48px 16px 18px;
+  }
+  /* Footer padding shrinks to 16px each side here; recompute BAS so it
+     fills the new content width without clipping. */
+  .footer__bas {
+    font-size: calc((100vw - 32px) / 2.85);
+  }
+  .topbar {
+    padding: 12px;
+  }
+  .topnav {
+    gap: 4px;
+  }
+  /* Keep tap targets full-size even on tight portrait — letter-spacing
+     reduces so PROJECTS + ABOUT both fit, but font / padding stay tap-friendly. */
+  .topnav__link {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    padding: 11px 10px;
   }
 }
 
@@ -299,17 +692,68 @@ a.footer__line:hover {
   letter-spacing: 0.06em;
 }
 
+/* ----- Gyro prompt (touch only) --------------------------------------- */
+
+/* Floating CTA inside the hero. Tappable, mostly transparent, with a small
+   pulsing dot to draw attention without shouting. Hides itself in JS once
+   the user enables the gyro. Sits above the canvas but below logo+topnav. */
+.gyro-prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: #f3e2b8;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 240ms ease, transform 240ms ease;
+}
+
+.gyro-prompt:active {
+  transform: translateX(-50%) scale(0.97);
+}
+
+.gyro-prompt__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warm-cream);
+  box-shadow: 0 0 8px var(--warm-cream);
+  animation: gyro-pulse 1800ms ease-in-out infinite;
+}
+
+@keyframes gyro-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.78); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gyro-prompt__dot { animation: none; }
+}
+
 /* ----- Film grain ------------------------------------------------------ */
 
+/* Scoped inside .page__section--hero — grain only paints over the canvas,
+   not the footer or any other future section. */
 .grain {
-  position: fixed;
+  position: absolute;
   inset: -10%;
   width: 120%;
   height: 120%;
   pointer-events: none;
-  /* Sit beneath the fixed top-bar UI so grain doesn't paint directly over the
-     logo/nav (the difference-blend on those is sensitive to per-frame
-     backdrop noise). */
   z-index: 5;
   opacity: 0.7;
   mix-blend-mode: overlay;
@@ -338,6 +782,14 @@ a.footer__line:hover {
   .grain { animation: none; }
 }
 
+/* Pause the stepped grain transform during active scroll. The grain itself
+   uses mix-blend-mode: overlay, which forces a full-page composite per
+   animation tick; pausing it frees the compositor for the scroll motion.
+   Hero.tsx toggles body[data-scrolling] from a debounced scroll listener. */
+body[data-scrolling] .grain {
+  animation-play-state: paused;
+}
+
 /* ----- Cinematic intro fade-in ----------------------------------------- */
 
 @keyframes intro-fade-up {
@@ -353,15 +805,15 @@ a.footer__line:hover {
 
 .logo,
 .topnav {
-  animation: intro-fade-up 900ms cubic-bezier(0.2, 0.7, 0.2, 1) 1100ms both;
+  animation: intro-fade-up 450ms cubic-bezier(0.2, 0.7, 0.2, 1) 150ms both;
 }
 
 .topnav__link {
-  animation: intro-fade-up 700ms cubic-bezier(0.2, 0.7, 0.2, 1) 1300ms both;
+  animation: intro-fade-up 380ms cubic-bezier(0.2, 0.7, 0.2, 1) 280ms both;
 }
 
 .topnav__link:nth-child(2) {
-  animation-delay: 1450ms;
+  animation-delay: 360ms;
 }
 
 @keyframes intro-curtain {

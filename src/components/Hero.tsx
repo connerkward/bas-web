@@ -18,11 +18,22 @@ RectAreaLightUniformsLib.init();
 import { lightProbe } from "../lib/lightProbe";
 import { scrollProgress } from "../lib/scrollProgress";
 
-// True while the OS pointer is over the document. Flips on document
-// mouseleave/mouseenter (cursor crossing the viewport edge) and on
-// blur/focus (alt-tab away).
+// True while a pointer is engaged with the page:
+//   - Mouse: cursor inside the document and the window has focus.
+//   - Touch: a finger is currently pressing the screen.
+// Flips false when the cursor leaves, the window loses focus, or all touches
+// end. Touch end → torch fades out (matches the "cursor leaves" feel on
+// desktop), so the relief settles into the dark when the user lifts off.
+// Touch devices have no hover — the torch should stay dark until the user
+// actually presses. Mouse devices start lit so desktop renders the scene
+// immediately. Used as the seed for both `present` (boolean) and `presence`
+// (lerp target ref) so the very first frame matches steady-state.
+const INITIAL_PRESENT =
+  typeof window === "undefined" ||
+  !window.matchMedia("(pointer: coarse)").matches;
+
 function useMousePresence() {
-  const present = useRef(true);
+  const present = useRef(INITIAL_PRESENT);
   useEffect(() => {
     const leave = () => {
       present.current = false;
@@ -34,11 +45,24 @@ function useMousePresence() {
     document.addEventListener("mouseenter", enter);
     window.addEventListener("blur", leave);
     window.addEventListener("focus", enter);
+    // Touch presence: any active touch counts as "engaged."
+    const onTouchStart = () => {
+      present.current = true;
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) present.current = false;
+    };
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
     return () => {
       document.removeEventListener("mouseleave", leave);
       document.removeEventListener("mouseenter", enter);
       window.removeEventListener("blur", leave);
       window.removeEventListener("focus", enter);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
     };
   }, []);
   return present;
@@ -81,9 +105,9 @@ type LightShape = { c1x: number; c1y: number; c2x: number; c2y: number };
 
 const DEFAULT_LIGHT_SHAPE: LightShape = {
   c1x: 0.05,
-  c1y: 0.5,
+  c1y: 0.68,
   c2x: 0.4,
-  c2y: 0.05,
+  c2y: 0.08,
 };
 
 function sampleBezierLUT(shape: LightShape, n: number): Float32Array {
@@ -274,9 +298,12 @@ type StoneProps = {
 };
 
 const RELIEF_DRAFT_URL = "/meshes/relief-draft.glb";
+// drei's useGLTF accepts a `useDraco` argument: pass `true` to wire up its
+// built-in DRACOLoader (CDN-hosted decoder) so the Draco-compressed GLB
+// (position 12-bit / normal 8-bit quantization, ~25% smaller) decodes.
 
 function ReliefDraft({ color, roughness, lut }: StoneProps) {
-  const { scene } = useGLTF(RELIEF_DRAFT_URL);
+  const { scene } = useGLTF(RELIEF_DRAFT_URL, true);
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
   useFalloffPatch(matRef, lut);
 
@@ -314,7 +341,7 @@ function ReliefDraft({ color, roughness, lut }: StoneProps) {
   );
 }
 
-useGLTF.preload(RELIEF_DRAFT_URL);
+useGLTF.preload(RELIEF_DRAFT_URL, true);
 
 function HeroMesh({ color, roughness, lut }: StoneProps) {
   if (VARIANT === "relief-draft")
@@ -342,8 +369,8 @@ function Backdrop({ color, roughness, lut }: StoneProps) {
 // Two-octave smooth-noise flicker, range ~[-0.18, 0.18]. Slow base envelope
 // + faster micro-jitter, both C¹-smooth so the modulation is continuous.
 function flameFlicker(t: number) {
-  const slow = (smoothNoise(t * 1.9, 11.3) - 0.5) * 0.14;
-  const fast = (smoothNoise(t * 7.0, 41.7) - 0.5) * 0.05;
+  const slow = (smoothNoise(t * 1.9, 11.3) - 0.5) * 0.4;
+  const fast = (smoothNoise(t * 7.0, 41.7) - 0.5) * 0.18;
   return slow + fast;
 }
 
@@ -357,12 +384,17 @@ function flameOffset(t: number, seed: number) {
 // to the viewport diagonal at z=0. The actual distance attenuation comes
 // from the bezier LUT (see useFalloffPatch), so PointLight.decay no longer
 // matters — we leave it at 1.
-const DEFAULT_LIGHT_INTENSITY = 0.95;
-const DEFAULT_LIGHT_RADIUS_FRAC = 1.5;
+const DEFAULT_LIGHT_INTENSITY = 0.05;
+const DEFAULT_LIGHT_RADIUS_FRAC = 2.0;
 // Lock the torch to a lower band of the relief and let only horizontal cursor
 // motion move it. Y is in world units (visible vertical half-extent at z=0
 // is ~2.5 with CAMERA_Z=8, fov=35, so -1.5 sits about 60% down from center).
 const LIGHT_LOCK_Y = -1.5;
+// Torch height above the relief plane. Lower = more grazing = stronger
+// self-shadows on relief bumps via Lambert (N·L approaches 0 for normals
+// not facing the light). 0.7 was perpendicular and washed out detail; 0.25
+// puts the light just above the deepest peaks for raking light.
+const DEFAULT_LIGHT_HEIGHT = 0.25;
 
 const INTRO_DURATION = 1.8; // seconds
 
@@ -380,11 +412,20 @@ type LightControls = {
   intensity: number;
   radiusFrac: number;
   lockY: boolean;
+  height: number;
   // Subtle warm uplight from a thin bar along the bottom of the relief plane.
   // Grazing angle picks up surface bumps, adding contrast/shadow detail.
   bottomBar: boolean;
   bottomBarIntensity: number;
+  // Custom thin-cross mouse pointer (replaces the system cursor everywhere).
+  crosshair: boolean;
+  // null = follow the OS prefers-color-scheme setting; "light" / "dark" =
+  // override and force that palette regardless of OS.
+  forcedScheme: "light" | "dark" | null;
 };
+
+// Single warm color shared by every light in the scene (torch + uplight bar).
+const TORCH_COLOR = "#ffb072";
 
 // Footlight bar params. Width matches the relief width; height (depth) is
 // thin so it reads as a strip. Position sits just below the visible bottom
@@ -392,25 +433,50 @@ type LightControls = {
 const BOTTOM_BAR_WIDTH = 7;
 const BOTTOM_BAR_HEIGHT = 0.4;
 const BOTTOM_BAR_POS: [number, number, number] = [0, -2.4, 0.5];
-const BOTTOM_BAR_COLOR = "#ffb072";
 
 function BottomBarLight({ intensity }: { intensity: number }) {
+  const lightRef = useRef<THREE.RectAreaLight>(null);
+  const intro = useIntroProgress();
+  const present = useMousePresence();
+  const presence = useRef(INITIAL_PRESENT ? 1 : 0);
+
+  // Same intro / flicker envelope as the torch so both feel driven by the
+  // same fire. Unlike the torch, the bar keeps a low ember glow when the
+  // cursor leaves the window so the relief never goes fully black.
+  useFrame((state) => {
+    if (!lightRef.current) return;
+    const t = state.clock.elapsedTime;
+    const presenceTarget = present.current ? 1 : 0;
+    const presenceRate =
+      presenceTarget > presence.current ? 0.07 : 0.025;
+    presence.current +=
+      (presenceTarget - presence.current) * presenceRate;
+    const BAR_MIN_PRESENCE = 0.9;
+    const effectivePresence =
+      BAR_MIN_PRESENCE + (1 - BAR_MIN_PRESENCE) * presence.current;
+    const introT = intro(t);
+    const flicker = 1 + flameFlicker(t);
+    lightRef.current.intensity =
+      intensity * introT * flicker * effectivePresence;
+  });
+
   // Rotate +90° around X so the rect's emission axis (local -Z) points to
   // world +Y (upward), illuminating the relief above it.
   return (
     <rectAreaLight
+      ref={lightRef}
       position={BOTTOM_BAR_POS}
       rotation={[Math.PI / 2, 0, 0]}
       width={BOTTOM_BAR_WIDTH}
       height={BOTTOM_BAR_HEIGHT}
-      intensity={intensity}
-      color={BOTTOM_BAR_COLOR}
+      intensity={0}
+      color={TORCH_COLOR}
     />
   );
 }
 
 function MouseLight({ controls }: { controls: LightControls }) {
-  const { intensity, radiusFrac, lockY } = controls;
+  const { intensity, radiusFrac, lockY, height } = controls;
   const lightRef = useRef<THREE.PointLight>(null);
   const target = useRef(new THREE.Vector3(0, 0, 0.7));
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
@@ -421,29 +487,57 @@ function MouseLight({ controls }: { controls: LightControls }) {
   const hit = useMemo(() => new THREE.Vector3(), []);
   const intro = useIntroProgress();
   const present = useMousePresence();
-  const presence = useRef(1);
+  const presence = useRef(INITIAL_PRESENT ? 1 : 0);
 
   useFrame((state) => {
+    // r3f's state.pointer reflects mouse pointer events AND touch events
+    // (touch devices fire pointermove during finger drag), so the same
+    // NDC source feeds both desktop hover and mobile drag.
     raycaster.setFromCamera(state.pointer, state.camera);
     const t = state.clock.elapsedTime;
-    if (raycaster.ray.intersectPlane(plane, hit)) {
-      // Layer subtle XY/Z wander on top of the cursor-tracked target so the
-      // shadows on the relief shift like a candle, not a static spotlight.
-      const wx = flameOffset(t, 7.3) * 0.025;
-      const wy = flameOffset(t, 19.1) * 0.025;
-      const wz = flameOffset(t, 31.7) * 0.09;
-      const baseY = lockY ? LIGHT_LOCK_Y : hit.y;
-      target.current.set(hit.x + wx, baseY + wy, 0.7 + wz);
-      if (lightRef.current) {
-        // Constant smooth lerp — no snap on jump. Re-entering the window from
-        // a different edge looks like the light gliding to its new position.
-        lightRef.current.position.lerp(target.current, 0.18);
+    const wx = flameOffset(t, 7.3) * 0.025;
+    const wy = flameOffset(t, 19.1) * 0.025;
+    const wz = flameOffset(t, 31.7) * 0.09;
+
+    // Raycast against the actual scene mesh so the light hugs the relief
+    // surface — never sinks into bumps when `height` is small. Falls back
+    // to the z=0 plane if the cursor isn't over any mesh.
+    const intersects = raycaster.intersectObjects(
+      state.scene.children,
+      true,
+    );
+    let hx = 0;
+    let hy = 0;
+    let surfaceZ = 0;
+    let gotHit = false;
+    for (const inter of intersects) {
+      if ((inter.object as THREE.Mesh).isMesh) {
+        hx = inter.point.x;
+        hy = inter.point.y;
+        surfaceZ = inter.point.z;
+        gotHit = true;
+        break;
       }
+    }
+    if (!gotHit && raycaster.ray.intersectPlane(plane, hit)) {
+      hx = hit.x;
+      hy = hit.y;
+      surfaceZ = 0;
+    }
+
+    const baseY = lockY ? LIGHT_LOCK_Y : hy;
+    target.current.set(hx + wx, baseY + wy, surfaceZ + height + wz);
+    if (lightRef.current) {
+      // Constant smooth lerp — no snap on jump. Re-entering the window from
+      // a different edge looks like the light gliding to its new position.
+      lightRef.current.position.lerp(target.current, 0.18);
     }
     if (lightRef.current) {
       // Asymmetric presence lerp: comes up quickly when the cursor enters
       // the window, fades out slowly when it leaves so the room "settles
-      // into the dark" instead of blinking off.
+      // into the dark" instead of blinking off. On touch, present.current
+      // is true while a finger is down and false on lift, so the same lerp
+      // gives the torch a "lift to dim" behavior.
       const presenceTarget = present.current ? 1 : 0;
       const presenceRate =
         presenceTarget > presence.current ? 0.07 : 0.025;
@@ -475,7 +569,7 @@ function MouseLight({ controls }: { controls: LightControls }) {
   return (
     <pointLight
       ref={lightRef}
-      color="#fff1d4"
+      color={TORCH_COLOR}
       intensity={0}
       distance={5}
       decay={1}
@@ -492,7 +586,7 @@ function CameraRig() {
 
   useFrame((state) => {
     const { x, y } = state.pointer;
-    target.current.set(x * 0.18, y * 0.12, CAMERA_Z);
+    target.current.set(x * 0.1, y * 0.07, CAMERA_Z);
     camera.position.lerp(target.current, 0.06);
     camera.lookAt(0, 0, 0);
   });
@@ -500,12 +594,158 @@ function CameraRig() {
   return null;
 }
 
+// --- Dust motes ---------------------------------------------------------
+//
+// Lightweight Points system: ~250 particles drifting in a thin volume in
+// front of the relief, drawn as small additive-blended soft circles via a
+// runtime-generated radial-gradient texture. ~250 sprites @ 6 floats each is
+// ~6KB total, one draw call per frame.
+
+const DUST_COUNT = 250;
+const DUST_VOLUME = { x: 8, y: 5, zMin: 0.4, zMax: 2.6 };
+
+function makeDustTexture() {
+  const size = 32;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size / 2,
+  );
+  g.addColorStop(0, "rgba(255,255,255,1)");
+  g.addColorStop(0.4, "rgba(255,255,255,0.5)");
+  g.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// All particle motion runs in the vertex shader. Per-frame CPU cost is a
+// single uTime uniform write — the GPU does the per-particle drift, sway,
+// and volume-wrap math in parallel.
+const DUST_VERTEX = /* glsl */ `
+  attribute float aSeed;
+  uniform float uTime;
+  uniform float uSize;
+  uniform float uPxScale;
+  uniform vec3 uVolMin;
+  uniform vec3 uVolSize;
+  void main() {
+    // Cheap per-particle velocity derived from the seed — saves an attribute.
+    float vx = (fract(aSeed * 12.9898) - 0.5) * 0.0006;
+    float vy = (fract(aSeed * 78.2330) - 0.5) * 0.0003 + 0.0002;
+    float vz = (fract(aSeed * 39.3460) - 0.5) * 0.0002;
+    vec3 vel = vec3(vx, vy, vz);
+    // Slow sinusoidal sway around the drift path so motion looks organic.
+    vec3 sway = vec3(
+      sin(uTime * 0.4 + aSeed * 6.2832) * 0.05,
+      0.0,
+      cos(uTime * 0.3 + aSeed * 6.2832) * 0.05
+    );
+    vec3 pos = position + vel * uTime + sway;
+    // Wrap into the dust volume so density stays constant.
+    vec3 wrapped = mod(pos - uVolMin, uVolSize) + uVolMin;
+    vec4 mvPosition = modelViewMatrix * vec4(wrapped, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+    gl_PointSize = uSize * (uPxScale / -mvPosition.z);
+  }
+`;
+
+const DUST_FRAGMENT = /* glsl */ `
+  uniform sampler2D uMap;
+  uniform vec3 uColor;
+  uniform float uOpacity;
+  void main() {
+    vec4 tex = texture2D(uMap, gl_PointCoord);
+    if (tex.a < 0.01) discard;
+    gl_FragColor = vec4(uColor, tex.a * uOpacity);
+  }
+`;
+
+function DustMotes() {
+  const dustTex = useMemo(makeDustTexture, []);
+  const matRef = useRef<THREE.ShaderMaterial>(null);
+
+  const { positions, seeds } = useMemo(() => {
+    const p = new Float32Array(DUST_COUNT * 3);
+    const s = new Float32Array(DUST_COUNT);
+    for (let i = 0; i < DUST_COUNT; i++) {
+      p[i * 3] = (Math.random() - 0.5) * DUST_VOLUME.x;
+      p[i * 3 + 1] = (Math.random() - 0.5) * DUST_VOLUME.y;
+      p[i * 3 + 2] =
+        DUST_VOLUME.zMin +
+        Math.random() * (DUST_VOLUME.zMax - DUST_VOLUME.zMin);
+      s[i] = Math.random();
+    }
+    return { positions: p, seeds: s };
+  }, []);
+
+  const geom = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    g.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
+    return g;
+  }, [positions, seeds]);
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uMap: { value: dustTex },
+      uColor: { value: new THREE.Color("#888888") },
+      uOpacity: { value: 0.45 },
+      uSize: { value: 0.022 },
+      uPxScale: { value: 1.0 },
+      uVolMin: {
+        value: new THREE.Vector3(
+          -DUST_VOLUME.x / 2,
+          -DUST_VOLUME.y / 2,
+          DUST_VOLUME.zMin,
+        ),
+      },
+      uVolSize: {
+        value: new THREE.Vector3(
+          DUST_VOLUME.x,
+          DUST_VOLUME.y,
+          DUST_VOLUME.zMax - DUST_VOLUME.zMin,
+        ),
+      },
+    }),
+    [dustTex],
+  );
+
+  useFrame((state) => {
+    const m = matRef.current;
+    if (!m) return;
+    m.uniforms.uTime.value = state.clock.elapsedTime;
+    // Mirror the standard PointsMaterial sizeAttenuation factor so the
+    // visual size matches what we had before.
+    m.uniforms.uPxScale.value = state.size.height * 0.5;
+  });
+
+  return (
+    <points geometry={geom} renderOrder={1}>
+      <shaderMaterial
+        ref={matRef}
+        uniforms={uniforms}
+        vertexShader={DUST_VERTEX}
+        fragmentShader={DUST_FRAGMENT}
+        transparent
+        depthWrite={false}
+      />
+    </points>
+  );
+}
+
 interface HeroProps {
   dpr: number;
 }
-
-// Active preset from STONE_PRESETS. Change index to swap material.
-const ACTIVE_STONE = STONE_PRESETS[0];
 
 function Slider({
   label,
@@ -683,12 +923,16 @@ function DebugMenu({
   onControlsChange,
   shape,
   onShapeChange,
+  stone,
+  onStoneChange,
   onResetLight,
 }: {
   controls: LightControls;
   onControlsChange: (c: LightControls) => void;
   shape: LightShape;
   onShapeChange: (s: LightShape) => void;
+  stone: StonePreset;
+  onStoneChange: (s: StonePreset) => void;
   onResetLight: () => void;
 }) {
   return (
@@ -746,6 +990,14 @@ function DebugMenu({
         value={controls.radiusFrac}
         onChange={(v) => onControlsChange({ ...controls, radiusFrac: v })}
       />
+      <Slider
+        label="height (lower = grazing)"
+        min={0.05}
+        max={1.5}
+        step={0.01}
+        value={controls.height}
+        onChange={(v) => onControlsChange({ ...controls, height: v })}
+      />
       <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <input
           type="checkbox"
@@ -780,6 +1032,138 @@ function DebugMenu({
           }
         />
       )}
+      <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <input
+          type="checkbox"
+          checked={controls.crosshair}
+          onChange={(e) =>
+            onControlsChange({ ...controls, crosshair: e.target.checked })
+          }
+          style={{ accentColor: "#c9a36a" }}
+        />
+        thin-cross cursor
+      </label>
+
+      {/* Stone material — color picker, roughness slider, preset shortcuts. */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          paddingTop: 6,
+          borderTop: "1px solid rgba(255,255,255,0.08)",
+        }}
+      >
+        <span style={{ opacity: 0.5, letterSpacing: 0.18 }}>STONE</span>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+          }}
+        >
+          <span style={{ opacity: 0.7 }}>color</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span
+              style={{
+                fontVariantNumeric: "tabular-nums",
+                opacity: 0.6,
+                fontSize: 9,
+              }}
+            >
+              {stone.color.toUpperCase()}
+            </span>
+            <input
+              type="color"
+              value={stone.color}
+              onChange={(e) =>
+                onStoneChange({ ...stone, name: "Custom", color: e.target.value })
+              }
+              style={{
+                width: 28,
+                height: 18,
+                padding: 0,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "transparent",
+                cursor: "pointer",
+              }}
+            />
+          </span>
+        </label>
+        <Slider
+          label="roughness"
+          min={0}
+          max={1}
+          step={0.01}
+          value={stone.roughness}
+          onChange={(v) => onStoneChange({ ...stone, roughness: v })}
+        />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(6, 1fr)",
+            gap: 4,
+            marginTop: 2,
+          }}
+        >
+          {STONE_PRESETS.map((p) => (
+            <button
+              key={p.name}
+              type="button"
+              onClick={() => onStoneChange(p)}
+              title={`${p.name} · ${p.color}`}
+              aria-label={p.name}
+              style={{
+                height: 18,
+                background: p.color,
+                border:
+                  stone.color.toLowerCase() === p.color.toLowerCase()
+                    ? "1.5px solid #fff"
+                    : "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 2,
+                cursor: "pointer",
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <span style={{ opacity: 0.7 }}>footer scheme</span>
+        <div style={{ display: "flex", gap: 4 }}>
+          {(["auto", "light", "dark"] as const).map((opt) => {
+            const value = opt === "auto" ? null : opt;
+            const active = controls.forcedScheme === value;
+            return (
+              <button
+                key={opt}
+                onClick={() =>
+                  onControlsChange({ ...controls, forcedScheme: value })
+                }
+                style={{
+                  flex: 1,
+                  padding: "3px 6px",
+                  background: active
+                    ? "rgba(255,255,255,0.1)"
+                    : "transparent",
+                  border: active
+                    ? "1px solid rgba(255,255,255,0.3)"
+                    : "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 3,
+                  color: "inherit",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: "inherit",
+                  textTransform: "lowercase",
+                }}
+              >
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <button
         onClick={onResetLight}
         style={{
@@ -805,8 +1189,11 @@ const DEFAULT_LIGHT_CONTROLS: LightControls = {
   intensity: DEFAULT_LIGHT_INTENSITY,
   radiusFrac: DEFAULT_LIGHT_RADIUS_FRAC,
   lockY: false,
-  bottomBar: false,
-  bottomBarIntensity: 0.6,
+  height: DEFAULT_LIGHT_HEIGHT,
+  bottomBar: true,
+  bottomBarIntensity: 0.5,
+  crosshair: false,
+  forcedScheme: null,
 };
 
 export default function Hero({ dpr }: HeroProps) {
@@ -816,13 +1203,93 @@ export default function Hero({ dpr }: HeroProps) {
   const [lightControls, setLightControls] = useState<LightControls>(
     DEFAULT_LIGHT_CONTROLS,
   );
+  // Live mesh material — color + roughness tweakable from the debug menu.
+  const [stone, setStone] = useState<StonePreset>(STONE_PRESETS[0]);
   const lut = useFalloffLUT(lightShape);
+
+  // Pause the WebGL render loop when the hero is offscreen (footer snapped
+  // in, page hidden, etc). Saves the per-frame cost of the relief render +
+  // EffectComposer passes when the user can't see the canvas.
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(true);
+  // Pause render while the user is actively scrolling. Even though the
+  // hero stays visible during the snap transition, redrawing the WebGL
+  // scene + EffectComposer at 60fps competes with scroll for the main
+  // thread. Pausing both during scroll frees the compositor.
+  const [scrolling, setScrolling] = useState(false);
+  useEffect(() => {
+    const node = wrapperRef.current;
+    if (!node) return;
+    const root = document.querySelector(".page");
+    const io = new IntersectionObserver(
+      ([entry]) => setActive(entry.isIntersecting),
+      { threshold: 0.02, root },
+    );
+    io.observe(node);
+
+    const onVisibility = () => {
+      if (document.hidden) setActive(false);
+      else if (node.getBoundingClientRect().bottom > 0) setActive(true);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    // Scroll-pause: ref tracks the live state to avoid setState on every
+    // scroll event; we only re-render on the false→true and true→false
+    // transitions. Body data-attr lets CSS pause grain in parallel.
+    const isScrollingRef = { current: false };
+    let scrollTimer: ReturnType<typeof setTimeout> | undefined;
+    const onScroll = () => {
+      if (!isScrollingRef.current) {
+        isScrollingRef.current = true;
+        document.body.dataset.scrolling = "true";
+        setScrolling(true);
+      }
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        isScrollingRef.current = false;
+        delete document.body.dataset.scrolling;
+        setScrolling(false);
+      }, 180);
+    };
+    root?.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+      root?.removeEventListener("scroll", onScroll);
+      clearTimeout(scrollTimer);
+      delete document.body.dataset.scrolling;
+    };
+  }, []);
+
+  // Apply / remove the thin-cross cursor body class.
+  useEffect(() => {
+    const cls = "crosshair-cursor";
+    if (lightControls.crosshair) document.body.classList.add(cls);
+    else document.body.classList.remove(cls);
+    return () => document.body.classList.remove(cls);
+  }, [lightControls.crosshair]);
+
+  // Force a footer color scheme via data-scheme on <html>. CSS reads the
+  // attribute and overrides the prefers-color-scheme media query. null
+  // (auto) clears the attribute and lets the OS preference take over.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (lightControls.forcedScheme) {
+      root.setAttribute("data-scheme", lightControls.forcedScheme);
+    } else {
+      root.removeAttribute("data-scheme");
+    }
+    return () => root.removeAttribute("data-scheme");
+  }, [lightControls.forcedScheme]);
+
   return (
-    <div className="hero">
+    <div ref={wrapperRef} className="hero">
       <Canvas
         camera={{ position: [0, 0, CAMERA_Z], fov: 35 }}
         dpr={dpr}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
+        frameloop={active && !scrolling ? "always" : "never"}
       >
         <color attach="background" args={["#0a0a0a"]} />
         <ambientLight intensity={0} />
@@ -832,19 +1299,20 @@ export default function Hero({ dpr }: HeroProps) {
         )}
         <CameraRig />
         <Backdrop
-          color={ACTIVE_STONE.color}
-          roughness={ACTIVE_STONE.roughness}
+          color={stone.color}
+          roughness={stone.roughness}
           lut={lut}
         />
         <Suspense fallback={null}>
           <HeroMesh
-            color={ACTIVE_STONE.color}
-            roughness={ACTIVE_STONE.roughness}
+            color={stone.color}
+            roughness={stone.roughness}
             lut={lut}
           />
         </Suspense>
+        <DustMotes />
         <EffectComposer>
-          <Noise opacity={0.2} blendFunction={BlendFunction.OVERLAY} />
+          <Noise opacity={0.28} blendFunction={BlendFunction.OVERLAY} />
         </EffectComposer>
       </Canvas>
       {debugOpen && (
@@ -853,9 +1321,12 @@ export default function Hero({ dpr }: HeroProps) {
           onControlsChange={setLightControls}
           shape={lightShape}
           onShapeChange={setLightShape}
+          stone={stone}
+          onStoneChange={setStone}
           onResetLight={() => {
             setLightControls(DEFAULT_LIGHT_CONTROLS);
             setLightShape(DEFAULT_LIGHT_SHAPE);
+            setStone(STONE_PRESETS[0]);
           }}
         />
       )}

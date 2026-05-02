@@ -10,6 +10,8 @@ export default function Footer() {
   useEffect(() => {
     if (!ref.current) return;
     const node = ref.current;
+    // `.page` is the actual scroll container (see App.css).
+    const root = document.querySelector(".page");
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -17,14 +19,14 @@ export default function Footer() {
           observer.disconnect();
         }
       },
-      { threshold: 0.35 },
+      { threshold: 0.35, root },
     );
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
 
   return (
-    <footer ref={ref} className="footer" id="about">
+    <footer ref={ref} className="footer">
       <div className="footer__top">
         <div className="footer__col">
           <div className="footer__label">CONTACT</div>
@@ -65,8 +67,6 @@ export default function Footer() {
           <div className="footer__line">40.689°N, 74.044°W</div>
         </div>
       </div>
-
-      <div className="footer__rule" />
 
       <div className="footer__brand">
         <div
