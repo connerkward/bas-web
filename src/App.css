@@ -1,0 +1,383 @@
+/* ----- Tokens ----------------------------------------------------------- */
+
+:root {
+  --accent: #c9a36a;
+  /* Warm cream (matches stone × light × ACES peak). Available for any spot
+     where a single warm tone reads better than monochrome. */
+  --warm-cream: #d4ad6f;
+}
+
+/* ----- Page / scroll-snap ---------------------------------------------- */
+
+.page {
+  width: 100%;
+}
+
+.page__section {
+  width: 100%;
+  height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  position: relative;
+}
+
+.page__section--hero {
+  background: #0a0a0a;
+}
+
+.page__section--footer {
+  background: #0a0a0a;
+}
+
+/* ----- Hero canvas wrapper --------------------------------------------- */
+
+.hero {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ----- Logo (top-left, persistent) ------------------------------------- */
+
+.logo {
+  position: fixed;
+  top: 26px;
+  left: 28px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+  pointer-events: none;
+  /* Color is driven by useTopBarColor (rAF) — fades white → black based on
+     cursor proximity × current light visibility. No blend modes / no
+     backdrop-filter, so no rectangular artifacts and uniform per-channel
+     transition. */
+  color: var(--topbar-color, #ffffff);
+}
+
+.logo__bas {
+  font-family: "IntraNet", "Source Code Pro", ui-monospace, monospace;
+  font-size: 28px;
+  letter-spacing: 0.02em;
+  color: inherit;
+  line-height: 1;
+  -webkit-text-stroke: var(--topbar-stroke, 0px) currentColor;
+}
+
+.logo__studio {
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: inherit;
+  text-transform: uppercase;
+  line-height: 1;
+  transform: translateY(-1px);
+  -webkit-text-stroke: var(--topbar-stroke, 0px) currentColor;
+}
+
+/* ----- Top nav (top-right, persistent) --------------------------------- */
+
+.topnav {
+  position: fixed;
+  top: 30px;
+  right: 32px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  color: var(--topbar-color, #ffffff);
+}
+
+.topnav__link {
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: inherit;
+  text-transform: uppercase;
+  text-decoration: none;
+  line-height: 1;
+  position: relative;
+  padding-bottom: 3px;
+  -webkit-text-stroke: var(--topbar-stroke, 0px) currentColor;
+}
+
+.topnav__link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(0.3);
+  transform-origin: left center;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.topnav__link:hover::after {
+  opacity: 1;
+  transform: scaleX(1);
+  background: var(--accent);
+}
+
+/* ----- Footer ----------------------------------------------------------- */
+
+.footer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 80px 32px 28px;
+  display: flex;
+  flex-direction: column;
+  color: #ededed;
+  background: #0a0a0a;
+}
+
+.footer__top {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px;
+  align-items: start;
+  padding-bottom: 40px;
+}
+
+.footer__col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.footer__col--right {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.footer__label {
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #6a6a6a;
+  margin-bottom: 6px;
+}
+
+.footer__line {
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #d6d6d6;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+a.footer__line {
+  transition: color 150ms ease;
+}
+
+a.footer__line:hover {
+  color: #ffffff;
+}
+
+.footer__rule {
+  height: 1px;
+  width: 100%;
+  background: #2a2a2a;
+}
+
+.footer__brand {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding-top: 16px;
+}
+
+.footer__bas {
+  font-family: "IntraNet", "Source Code Pro", ui-monospace, monospace;
+  font-size: clamp(8rem, 28vw, 26rem);
+  line-height: 0.82;
+  letter-spacing: -0.01em;
+  color: #f4f4f4;
+  user-select: none;
+  /* Pull the visual block tight to the baseline */
+  margin-bottom: -0.06em;
+  display: flex;
+  gap: 0.02em;
+}
+
+.footer__bas-letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.35em);
+  will-change: transform, opacity;
+}
+
+.footer__bas--in .footer__bas-letter {
+  animation: bas-letter-rise 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes bas-letter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer__bas-letter {
+    opacity: 1;
+    transform: none;
+    animation: none !important;
+  }
+}
+
+.footer__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding-bottom: 18px;
+  min-width: 200px;
+}
+
+.footer__meta-row {
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #cfcfcf;
+  text-align: right;
+}
+
+.footer__meta-row--icons {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: #ededed;
+  margin: 4px 0 6px;
+}
+
+@media (max-width: 720px) {
+  .footer__top {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .footer__col--right {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .footer__brand {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .footer__meta {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .footer__meta-row {
+    text-align: left;
+  }
+}
+
+/* ----- Time ticker ----------------------------------------------------- */
+
+.time-ticker {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+/* ----- Film grain ------------------------------------------------------ */
+
+.grain {
+  position: fixed;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+  pointer-events: none;
+  /* Sit beneath the fixed top-bar UI so grain doesn't paint directly over the
+     logo/nav (the difference-blend on those is sensitive to per-frame
+     backdrop noise). */
+  z-index: 5;
+  opacity: 0.7;
+  mix-blend-mode: overlay;
+  background-repeat: repeat;
+  background-size: 160px 160px;
+  animation: grain-shimmer 0.42s steps(8) infinite;
+  will-change: transform;
+}
+
+/* Small-amplitude shimmer: the noise pattern stays visually anchored, only
+   jittering by a few percent per step. Reads as "this surface is grainy"
+   instead of "the noise is sliding." */
+@keyframes grain-shimmer {
+  0%   { transform: translate(0%, 0%); }
+  12%  { transform: translate(-1.5%, -1%); }
+  25%  { transform: translate(1%, -2%); }
+  37%  { transform: translate(-2%, 1.5%); }
+  50%  { transform: translate(2%, 1%); }
+  62%  { transform: translate(-1%, 2%); }
+  75%  { transform: translate(2%, -1%); }
+  87%  { transform: translate(-1.5%, 1%); }
+  100% { transform: translate(0%, 0%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain { animation: none; }
+}
+
+/* ----- Cinematic intro fade-in ----------------------------------------- */
+
+@keyframes intro-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.logo,
+.topnav {
+  animation: intro-fade-up 900ms cubic-bezier(0.2, 0.7, 0.2, 1) 1100ms both;
+}
+
+.topnav__link {
+  animation: intro-fade-up 700ms cubic-bezier(0.2, 0.7, 0.2, 1) 1300ms both;
+}
+
+.topnav__link:nth-child(2) {
+  animation-delay: 1450ms;
+}
+
+@keyframes intro-curtain {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo,
+  .topnav,
+  .topnav__link {
+    animation: none;
+  }
+}
+
