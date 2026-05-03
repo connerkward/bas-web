@@ -363,13 +363,11 @@ body.crosshair-cursor .hero {
     0 -0.32px 0 currentColor;
 }
 
-/* Classic header mode (debug toggle): drop mix-blend-mode so the hook's
-   grayscale modulation (white→black as torch approaches) shows through
-   directly, plus apply -webkit-text-stroke for the subtle weight gain. */
-body.topbar-classic .logo,
-body.topbar-classic .topnav {
-  mix-blend-mode: normal;
-}
+/* Classic header mode (debug toggle): the hook drives text grayscale
+   white→black as the torch approaches. mix-blend-mode: difference stays
+   active — at white, text reads as the inverse of the bg (cool/legible);
+   at black, difference is identity so text dissolves into the warm lit bg
+   directly. -webkit-text-stroke adds the subtle weight gain on approach. */
 body.topbar-classic .logo__bas,
 body.topbar-classic .logo__studio,
 body.topbar-classic .topnav__link {
