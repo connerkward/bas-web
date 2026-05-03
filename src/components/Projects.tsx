@@ -212,6 +212,9 @@ function StepLook() {
         date="2025–2026"
       />
       <div className="step__body">
+        <h3 className="step__display step__display--centered">
+          Grade for the dark.
+        </h3>
         <div className="step__pair">
           <figure className="step__pair-cell">
             <div className="step__portrait">
