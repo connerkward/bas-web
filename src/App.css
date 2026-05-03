@@ -39,7 +39,7 @@ body.crosshair-cursor .hero {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: y proximity;
   scroll-behavior: smooth;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
@@ -129,11 +129,12 @@ body.crosshair-cursor .hero {
 
 .prefinal__title {
   margin: 0;
-  /* Sized to match the runner's optical scale within the (now smaller)
-     video poster — two title lines stack to roughly the runner's torso-
-     to-head height, so neither side dominates. */
-  font-size: clamp(40px, 5.2vw, 76px);
-  line-height: 0.98;
+  /* Sized so "IN MOTION." fits on a single line in the 400px copy column.
+     At Mirano Extended Freebie italic + 1.05em bump, ~58px is the ceiling
+     where the line still fits; tighter clamp prevents it from outgrowing
+     the column on wide viewports and wrapping. */
+  font-size: clamp(34px, 4.2vw, 58px);
+  line-height: 1;
   letter-spacing: 0;
   color: var(--footer-text);
 }
@@ -141,6 +142,9 @@ body.crosshair-cursor .hero {
 .prefinal__title-line {
   display: block;
   text-transform: uppercase;
+  /* Belt + suspenders against a future breakpoint quirk: never break
+     "IN MOTION" / "STUDIES" mid-phrase. */
+  white-space: nowrap;
 }
 
 /* Line 1: "STUDIES" in IntraNet — same display face as the BAS wordmark in
@@ -255,13 +259,13 @@ body.crosshair-cursor .hero {
 
 /* ----- Projects (process narrative) ----------------------------------- */
 
-/* Full-width process narrative. Each .step is full-bleed; only the head
-   row and blurb get internal horizontal padding so text stays readable
-   while media goes edge-to-edge. */
+/* Five chronological steps. Each .step is min-100vh and snap-aligned so
+   the page reads as a sequence of designed slides. Layouts vary per
+   step (wide-image, right-media, diptych, left-media, finale) — the
+   common spine is the head row + body. */
 .projects {
   position: relative;
   width: 100%;
-  padding: 96px 0 64px;
   display: flex;
   flex-direction: column;
   color: var(--footer-text);
@@ -274,21 +278,29 @@ body.crosshair-cursor .hero {
 }
 
 .step {
+  position: relative;
+  min-height: 100vh;
+  border-top: 1px solid var(--footer-rule);
+  padding: 96px 64px 80px;
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--footer-rule);
+  gap: 56px;
+  box-sizing: border-box;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
 }
 
 .step:first-child {
   border-top: none;
 }
 
+/* --- Head row (small monospace meta band, present on every step) ---- */
+
 .step__head {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: baseline;
-  gap: 28px;
-  padding: 26px 32px 22px;
+  gap: 32px;
   font-family: "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.22em;
@@ -301,7 +313,7 @@ body.crosshair-cursor .hero {
   font-weight: 500;
 }
 
-.step__title {
+.step__head-title {
   color: var(--footer-text);
   font-weight: 500;
   letter-spacing: 0.18em;
@@ -319,52 +331,286 @@ body.crosshair-cursor .hero {
   color: var(--footer-rule);
 }
 
-.step__media {
-  width: 100%;
-  background: #050505;
+/* --- Body shell (per-step layout overrides this) -------------------- */
+
+.step__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 40px;
+}
+
+/* --- Display title + body copy (shared) ----------------------------- */
+
+.step__display {
+  margin: 0;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: clamp(28px, 3.4vw, 48px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--footer-text);
+  max-width: 22ch;
+}
+
+.step__blurb {
+  margin: 0;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  color: var(--footer-text-3);
+  max-width: 56ch;
+}
+
+.step__blurb--centered {
+  margin: 0 auto;
+  text-align: center;
+  max-width: 60ch;
+}
+
+/* --- Portrait media frame (true 9:16, centered, not stretched) ------ */
+
+.step__portrait {
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
 }
 
-/* Container is full-width × fixed height; the media inside is fit via
-   object-fit: contain so true source aspect is always preserved.
-   Portrait clips letterbox horizontally (black flanks); wide images
-   letterbox vertically. Nothing ever stretches. */
-.step__media video,
-.step__media img {
+.step__portrait video,
+.step__portrait img {
+  display: block;
+  height: 64vh;
+  max-height: 720px;
+  width: auto;
+  max-width: 100%;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+.step__portrait--finale video {
+  height: 70vh;
+  max-height: 800px;
+}
+
+/* --- 01: wide image, two-column copy beneath ------------------------ */
+
+.step--wide .step__body {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 56px;
+}
+
+.step__media-wide img {
   display: block;
   width: 100%;
-  height: 78vh;
-  max-height: 820px;
+  max-height: 56vh;
   object-fit: contain;
   -webkit-user-drag: none;
   user-select: none;
   pointer-events: none;
 }
 
-.step__blurb {
+.step__copy--two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 80px;
+  align-items: start;
+}
+
+/* --- 02: right-media (text left, portrait video right) -------------- */
+
+.step--right-media .step__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 80px;
+  align-items: center;
+}
+
+.step--right-media .step__copy,
+.step--left-media .step__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 540px;
+}
+
+/* --- 03: diptych (two portraits side-by-side, blurb beneath) -------- */
+
+.step--diptych .step__body {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  justify-content: center;
+}
+
+.step__diptych {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 32px;
+}
+
+.step__diptych-cell {
   margin: 0;
-  padding: 22px 32px 30px;
-  max-width: 72ch;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.step__diptych-cell .step__portrait video {
+  height: 56vh;
+  max-height: 600px;
+}
+
+.step__diptych-cell figcaption {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
   font-family: "Source Code Pro", ui-monospace, monospace;
-  font-size: 12px;
-  line-height: 1.7;
-  letter-spacing: 0.02em;
-  color: var(--footer-text-3);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.step__cap-label {
+  color: var(--footer-label);
+}
+
+.step__cap-value {
+  color: var(--footer-text);
+}
+
+/* --- 04: left-media (portrait video left, text right) --------------- */
+
+.step--left-media .step__body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 80px;
+  align-items: center;
+}
+
+/* --- 05: centered finale (title above, video center, caption below)  */
+
+.step--finale .step__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 36px;
+  justify-content: center;
+}
+
+.step__display--finale {
+  margin: 0 auto;
+  max-width: 28ch;
+}
+
+.step__caption {
+  margin: 0;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--footer-label);
+}
+
+/* --- Status callout (mold studies) ---------------------------------- */
+
+.step__status {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 24px;
+  row-gap: 6px;
+  padding-top: 18px;
+  border-top: 1px solid var(--footer-rule);
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.step__status dt {
+  color: var(--footer-label);
+}
+
+.step__status dd {
+  color: var(--footer-text);
+  margin: 0;
+}
+
+/* --- Spec table (controller museum-label) --------------------------- */
+
+.step__specs {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(80px, auto) 1fr;
+  column-gap: 32px;
+  row-gap: 8px;
+  padding-top: 18px;
+  border-top: 1px solid var(--footer-rule);
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.step__specs dt {
+  color: var(--footer-label);
+}
+
+.step__specs dd {
+  color: var(--footer-text);
+  margin: 0;
+}
+
+/* --- Responsive: collapse 2-cols, shrink portraits ------------------ */
+
+@media (max-width: 880px) {
+  .step {
+    padding: 80px 32px 64px;
+    gap: 40px;
+  }
+  .step--right-media .step__body,
+  .step--left-media .step__body {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  /* Always show text first when collapsed (visual order keeps copy
+     above its companion media). step--left-media wraps in source order
+     where media comes first, so flip with order. */
+  .step--left-media .step__portrait {
+    order: 2;
+  }
+  .step--right-media .step__copy,
+  .step--left-media .step__copy {
+    max-width: 720px;
+  }
+  .step__copy--two-col {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .step__portrait video,
+  .step__portrait img {
+    height: 56vh;
+  }
+  .step__diptych-cell .step__portrait video {
+    height: 50vh;
+  }
 }
 
 @media (max-width: 720px) {
-  .projects {
-    padding: 72px 0 48px;
+  .step {
+    padding: 72px 18px 56px;
+    gap: 32px;
   }
   .step__head {
     grid-template-columns: auto 1fr;
     grid-template-rows: auto auto;
     column-gap: 16px;
     row-gap: 6px;
-    padding: 22px 18px 16px;
     font-size: 10px;
     letter-spacing: 0.18em;
   }
@@ -372,13 +618,22 @@ body.crosshair-cursor .hero {
     grid-column: 1 / -1;
     gap: 8px;
   }
-  .step__media video,
-  .step__media img {
-    height: 62vh;
+  .step__display {
+    font-size: clamp(22px, 6vw, 32px);
   }
-  .step__blurb {
-    padding: 18px 18px 26px;
-    font-size: 11px;
+  .step--diptych .step__diptych {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .step__portrait video,
+  .step__portrait img {
+    height: 56vh;
+  }
+  .step__diptych-cell .step__portrait video {
+    height: 56vh;
+  }
+  .step__media-wide img {
+    max-height: 38vh;
   }
 }
 
@@ -409,11 +664,19 @@ body.crosshair-cursor .hero {
   justify-content: space-between;
   padding: 22px 28px;
   pointer-events: none;
-  /* Default mode: no blend — text is plain white. Difference blend lives
-     under body.topbar-classic (debug toggle). It must sit on .topbar
-     specifically because .topbar's z-index:20 forms a stacking context;
-     a blend on .logo/.topnav would be trapped inside that context with a
-     transparent backdrop and have nothing to act on. */
+  /* Subtle gradient backdrop so content scrolling underneath (step head
+     rows, the prefinal label) reads as visually subordinate to the
+     topbar wordmark/nav. Fades to transparent at the bottom — never a
+     hard line. Sits on the .topbar element itself because .topbar's
+     z-index:20 forms a stacking context. */
+  background: linear-gradient(
+    to bottom,
+    rgba(10, 10, 10, 0.85) 0%,
+    rgba(10, 10, 10, 0.6) 65%,
+    rgba(10, 10, 10, 0) 100%
+  );
+  /* Difference-blend (debug) variant retained downstream; here we add a
+     plain backdrop in the default mode. */
 }
 
 .topbar > * {

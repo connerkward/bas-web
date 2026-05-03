@@ -1251,22 +1251,52 @@ export default function Hero({ dpr }: HeroProps) {
     // viewport on top + bottom, so hero is treated as "intersecting" while
     // it's still one section away. Canvas wakes before the user can see
     // hero, so by the snap arrival the render loop is already fluid — no
-    // first-frame catch-up flicker. Pauses only when hero is 2+ sections
-    // away (e.g., user is at footer with projects between).
-    const io = new IntersectionObserver(
-      ([entry]) => setActive(entry.isIntersecting),
+    // first-frame catch-up flicker.
+    //
+    // Past the projects section (which can be multiple viewports tall),
+    // the hero IO would otherwise *still* report intersecting because the
+    // pre-warm bounds reach far up. Combine with a second IO on the
+    // prefinal section: once prefinal is in view, force-pause the canvas
+    // regardless of hero IO state. Resumes when the user scrolls back up
+    // and prefinal leaves the viewport.
+    const prefinalSection = document.querySelector(
+      ".page__section--prefinal",
+    );
+
+    let heroNear = true;
+    let prefinalOrPastVisible = false;
+    const update = () => setActive(heroNear && !prefinalOrPastVisible);
+
+    const heroIO = new IntersectionObserver(
+      ([entry]) => {
+        heroNear = entry.isIntersecting;
+        update();
+      },
       { threshold: 0, rootMargin: "100% 0px", root },
     );
-    io.observe(node);
+    heroIO.observe(node);
+
+    let prefinalIO: IntersectionObserver | null = null;
+    if (prefinalSection) {
+      prefinalIO = new IntersectionObserver(
+        ([entry]) => {
+          prefinalOrPastVisible = entry.isIntersecting;
+          update();
+        },
+        { threshold: 0, root },
+      );
+      prefinalIO.observe(prefinalSection);
+    }
 
     const onVisibility = () => {
       if (document.hidden) setActive(false);
-      else if (node.getBoundingClientRect().bottom > 0) setActive(true);
+      else update();
     };
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
-      io.disconnect();
+      heroIO.disconnect();
+      prefinalIO?.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
