@@ -335,6 +335,13 @@ body.crosshair-cursor .hero {
   justify-content: space-between;
   padding: 22px 28px;
   pointer-events: none;
+  /* Apply the difference blend at the topbar level so it composites against
+     the body's backdrop (the canvas underneath). Putting blend on
+     .logo/.topnav while .topbar has z-index:20 traps the blend inside the
+     topbar's own stacking context — backdrop is transparent, so source
+     colors pass through unchanged (text appears as plain rgb without any
+     chromatic shift). At the topbar level, the blend reaches the canvas. */
+  mix-blend-mode: difference;
 }
 
 .topbar > * {
@@ -356,7 +363,7 @@ body.crosshair-cursor .hero {
   font: inherit;
   cursor: pointer;
   color: var(--topbar-color, #ffffff);
-  mix-blend-mode: difference;
+  /* Blend lives on .topbar — see note there. */
 }
 
 /* Gradual weight via 4-stamped text-shadow whose color alpha animates from
@@ -430,7 +437,7 @@ body.crosshair-cursor .hero {
   align-items: center;
   gap: 28px;
   color: var(--topbar-color, #ffffff);
-  mix-blend-mode: difference;
+  /* Blend lives on .topbar — see note there. */
 }
 
 .topnav__link {
