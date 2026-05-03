@@ -233,7 +233,7 @@ body.crosshair-cursor .hero {
    in the topbar. The E renders mid-cap-height (the font's design quirk
    for that glyph); keeping the wordmark face intentional. */
 .prefinal__title-line--studies {
-  font-family: "IntraNet", "Source Code Pro", ui-monospace, monospace;
+  font-family: "IntraNet", "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-weight: normal;
   letter-spacing: 0.02em;
 }
@@ -242,7 +242,7 @@ body.crosshair-cursor .hero {
    than IntraNet, so a small font-size bump compensates for Mirano Light
    reading optically lighter at the same em. */
 .prefinal__title-line--motion {
-  font-family: "Mirano Extended", "Source Code Pro", ui-monospace, monospace;
+  font-family: "Mirano Extended", "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-style: italic;
   font-weight: 300;
   letter-spacing: -0.01em;
@@ -260,7 +260,7 @@ body.crosshair-cursor .hero {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 10px;
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 10px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -277,7 +277,7 @@ body.crosshair-cursor .hero {
 
 .prefinal__body {
   margin: 0;
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 13px;
   line-height: 1.65;
   letter-spacing: 0.02em;
@@ -289,7 +289,7 @@ body.crosshair-cursor .hero {
   margin: 0;
   padding-top: 16px;
   border-top: 1px solid var(--footer-rule);
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
   line-height: 1.6;
   letter-spacing: 0.04em;
@@ -426,7 +426,7 @@ body.crosshair-cursor .hero {
   grid-template-columns: auto 1fr auto;
   align-items: baseline;
   gap: 32px;
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -484,7 +484,7 @@ body.crosshair-cursor .hero {
 
 .step__blurb {
   margin: 0;
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 13px;
   line-height: 1.7;
   letter-spacing: 0.02em;
@@ -601,7 +601,7 @@ body.crosshair-cursor .hero {
   display: flex;
   gap: 12px;
   align-items: baseline;
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 10px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -642,7 +642,7 @@ body.crosshair-cursor .hero {
 
 .step__caption {
   margin: 0;
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -659,7 +659,7 @@ body.crosshair-cursor .hero {
   row-gap: 6px;
   padding-top: 18px;
   border-top: 1px solid var(--footer-rule);
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -684,7 +684,7 @@ body.crosshair-cursor .hero {
   row-gap: 8px;
   padding-top: 18px;
   border-top: 1px solid var(--footer-rule);
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -840,7 +840,7 @@ body.crosshair-cursor .hero {
 }
 
 .logo__bas {
-  font-family: "IntraNet", "Source Code Pro", ui-monospace, monospace;
+  font-family: "IntraNet", "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 28px;
   letter-spacing: 0.02em;
   color: inherit;
@@ -861,7 +861,7 @@ body.crosshair-cursor .hero {
    transparent → currentColor on hover. Alpha interpolation is perfectly
    smooth (no font-weight discreteness, no stroke pixel-snapping). */
 .logo__studio {
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.18em;
@@ -903,7 +903,7 @@ body.crosshair-cursor .hero {
 }
 
 .topnav__link {
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.18em;
@@ -982,7 +982,7 @@ body.topbar-classic .topnav__link {
 }
 
 .footer__label {
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.22em;
@@ -992,7 +992,7 @@ body.topbar-classic .topnav__link {
 }
 
 .footer__line {
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--footer-text-2);
@@ -1021,7 +1021,7 @@ a.footer__line:hover {
 }
 
 .footer__bas {
-  font-family: "IntraNet", "Source Code Pro", ui-monospace, monospace;
+  font-family: "IntraNet", "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   /* Maximize the wordmark to fill the available content width. Empirical:
      measured on real renders, three IntraNet letters + 0.04em of gaps
      occupy ~2.83em total width. Dividing by 2.85 leaves a hairline of
@@ -1088,7 +1088,7 @@ a.footer__line:hover {
 }
 
 .footer__meta-row {
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.22em;
@@ -1267,7 +1267,7 @@ a.footer__line:hover {
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
   color: #f3e2b8;
-  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.18em;
