@@ -85,19 +85,18 @@ export function useTopBarColor<T extends HTMLElement>() {
       state.current += (target - state.current) * LERP;
 
       if (classic) {
-        // Lerp text color from white toward the actual brightest lit-bg
-        // color (~#825028, sampled from a screenshot of the spotlight peak
-        // under the topbar). With mix-blend-mode: difference:
-        //   - Far from torch (text=white, bg=dark): diff ≈ white → visible
-        //   - Near torch (text≈bg): diff cancels to near-black silhouette
-        // Earlier targets (#d4ad6f) were too light/desaturated, so the
-        // difference left a teal residual instead of black. Match the
-        // actual rendered color so silhouette is properly black at the
-        // bright spot, and warm-tinted (still visible) at the soft edges.
+        // Lerp text color from white toward a saturated dark warm tone
+        // (#5a3818). This sits below the peak lit-bg (~#825028) at roughly
+        // the median bg under a letter footprint, so the difference math
+        // produces near-black across more of the silhouette area instead
+        // of only at the single brightest pixel. Trade-off: the absolute
+        // brightest spot lands at a small warm residual instead of perfect
+        // black, but the overall letter reads as a darker silhouette —
+        // which is what we want.
         const c = state.current;
-        const r = 255 - Math.round((255 - 0x82) * c);
-        const g = 255 - Math.round((255 - 0x50) * c);
-        const b = 255 - Math.round((255 - 0x28) * c);
+        const r = 255 - Math.round((255 - 0x5a) * c);
+        const g = 255 - Math.round((255 - 0x38) * c);
+        const b = 255 - Math.round((255 - 0x18) * c);
         el.style.setProperty("--topbar-color", `rgb(${r}, ${g}, ${b})`);
         el.style.setProperty(
           "--topbar-stroke",

@@ -676,14 +676,14 @@ a.footer__line:hover {
     flex-direction: row;
     align-items: center; /* meta vertically centered on BAS centerline */
     justify-content: space-between;
-    gap: 16px;
+    gap: 80px;
   }
   .footer__bas {
     /* Maximize: 2.85 divisor (real IntraNet 3-letter+gap width is ~2.83em,
        so 2.85 leaves a hairline of slack and lets BAS reach edge to
-       meta-column-start). Reservation 220 (64 padding + 16 gap + 140
+       meta-column-start). Reservation 284 (64 padding + 80 gap + 140
        longest meta row "BROOKLYN HH:MM:SS EDT"). */
-    font-size: calc((100vw - 220px) / 2.85);
+    font-size: calc((100vw - 284px) / 2.85);
   }
   .footer__meta {
     display: flex;
