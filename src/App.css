@@ -229,8 +229,9 @@ body.crosshair-cursor .hero {
   white-space: nowrap;
 }
 
-/* Line 1: "STUDIES" in IntraNet — same display face as the BAS wordmark in
-   the topbar. Subsetted woff2 includes the extra E glyph alongside BASTUDIO. */
+/* Line 1: "STUDIES" in IntraNet — same display face as the BAS wordmark
+   in the topbar. The E renders mid-cap-height (the font's design quirk
+   for that glyph); keeping the wordmark face intentional. */
 .prefinal__title-line--studies {
   font-family: "IntraNet", "Source Code Pro", ui-monospace, monospace;
   font-weight: normal;
@@ -245,8 +246,11 @@ body.crosshair-cursor .hero {
   font-style: italic;
   font-weight: 300;
   letter-spacing: -0.01em;
+  /* Mirano Light reads optically smaller than IntraNet at matched ems —
+     bump 1.05em so the two lines feel weight-matched. Inter-line spacing
+     comes from line-height alone now (the prior 0.05em margin-top was
+     compounding awkwardly with line-height: 1). */
   font-size: 1.05em;
-  margin-top: 0.05em;
 }
 
 /* Show metadata above the title — venue + date in the same small-caps

@@ -1,7 +1,8 @@
 @font-face {
   font-family: "IntraNet";
-  /* Subsetted to "BASTUDIO" + "ENM" (extra letters needed for "STUDIES IN
-     MOTION" on the prefinal page). ~1.2KB woff2. OTF is the Safari fallback:
+  /* Subsetted to "BASTUDIO" + "ENMY" — covers BAS wordmark + "STUDY IN
+     MOTION" on the prefinal page (and any future near-rename). ~1.3KB
+     woff2. OTF is the Safari fallback:
      WOFF2 with CFF (PostScript) outlines has had intermittent glyph-clipping
      bugs in WebKit; if the woff2 fails, browsers fall through to the OTF. */
   src:
