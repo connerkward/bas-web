@@ -208,7 +208,7 @@ body.crosshair-cursor .hero {
   }
 }
 
-/* ----- Experiments marquee --------------------------------------------- */
+/* ----- Experiments strip ----------------------------------------------- */
 
 .projects__strip {
   display: flex;
@@ -228,83 +228,40 @@ body.crosshair-cursor .hero {
   opacity: 0.7;
 }
 
-.marquee {
-  width: 100%;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 6%,
-    #000 94%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 6%,
-    #000 94%,
-    transparent 100%
-  );
-}
-
-.marquee__track {
-  display: flex;
+.projects__grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 14px;
-  width: max-content;
-  animation-name: marquee-shift;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  will-change: transform;
 }
 
-@keyframes marquee-shift {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.marquee__tile {
-  flex: 0 0 auto;
+.projects__tile {
   background: #111;
   border: 1px solid var(--footer-rule);
   overflow: hidden;
+  aspect-ratio: 9 / 8;
 }
 
-.marquee__tile img {
+.projects__tile img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Block native image drag/save preview so the tiles read as fixed art,
+     not draggable assets. */
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
 }
 
-.marquee--landscape .marquee__tile {
-  height: 170px;
-  aspect-ratio: 9 / 8;
-}
-
-.marquee--portrait .marquee__tile {
-  height: 200px;
-  aspect-ratio: 9 / 16;
+@media (max-width: 900px) {
+  .projects__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 @media (max-width: 720px) {
-  .marquee--landscape .marquee__tile {
-    height: 150px;
-  }
-  .marquee--portrait .marquee__tile {
-    height: 190px;
-  }
   .projects__strip {
     gap: 10px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .marquee__track {
-    animation: none;
   }
 }
 

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import Marquee from "./Marquee";
 
 type ProjectEntry = {
   no: string;
@@ -8,26 +7,14 @@ type ProjectEntry = {
   year: string;
 };
 
-const PORTRAIT_TILES = [
-  "/experiments/s01.jpg",
-  "/experiments/c01.jpg",
-  "/experiments/s02.jpg",
-  "/experiments/c02.jpg",
-  "/experiments/s03.jpg",
-  "/experiments/c03.jpg",
-  "/experiments/s04.jpg",
-  "/experiments/c04.jpg",
-  "/experiments/c05.jpg",
-  "/experiments/c06.jpg",
-];
-
-const LANDSCAPE_TILES = [
+// Curated 6-tile strip across the pipeline: raw → dither → pixelate →
+// chroma-direction → orange/dark → line outlines. All landscape (9:8) for a
+// single uniform row.
+const EXPERIMENT_TILES = [
   "/experiments/a01.jpg",
   "/experiments/a02.jpg",
-  "/experiments/a03.jpg",
   "/experiments/a04.jpg",
   "/experiments/a05.jpg",
-  "/experiments/a06.jpg",
   "/experiments/a07.jpg",
   "/experiments/a08.jpg",
 ];
@@ -82,18 +69,19 @@ export default function Projects() {
           <span>EARLY EXPERIMENTS</span>
           <span>R&amp;D · 2024–2025</span>
         </div>
-        <Marquee
-          images={LANDSCAPE_TILES}
-          direction="left"
-          durationSec={90}
-          rowClass="marquee--landscape"
-        />
-        <Marquee
-          images={PORTRAIT_TILES}
-          direction="right"
-          durationSec={70}
-          rowClass="marquee--portrait"
-        />
+        <div className="projects__grid">
+          {EXPERIMENT_TILES.map((src) => (
+            <div className="projects__tile" key={src}>
+              <img
+                src={src}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                draggable={false}
+              />
+            </div>
+          ))}
+        </div>
       </div>
       <ul className="projects__list">
         {ENTRIES.map((p, i) => (
