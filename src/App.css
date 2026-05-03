@@ -428,10 +428,13 @@ body.crosshair-cursor .hero {
 }
 
 /* Classic header mode (debug toggle): the hook drives text grayscale
-   white→black as the torch approaches. mix-blend-mode: difference stays
-   active — at white, text reads as the inverse of the bg (cool/legible);
-   at black, difference is identity so text dissolves into the warm lit bg
-   directly. -webkit-text-stroke adds the subtle weight gain on approach. */
+   white→black as the torch approaches. Drop mix-blend-mode in this mode
+   so the black text reads as a solid silhouette against the warm-lit bg
+   (matches the original f807fca feel). With difference still active,
+   black blends to bg color and the text disappears entirely. */
+body.topbar-classic .topbar {
+  mix-blend-mode: normal;
+}
 body.topbar-classic .logo__bas,
 body.topbar-classic .logo__studio,
 body.topbar-classic .topnav__link {
