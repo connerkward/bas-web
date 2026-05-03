@@ -329,10 +329,14 @@ body.crosshair-cursor .hero {
 
 @media (max-width: 1100px) {
   .prefinal {
-    /* Stack vertically: video on top, copy below. The earlier rules used
-       grid-* properties but the parent is flex, so they were no-ops. */
+    /* Stack vertically: video on top, copy below. flex-direction: column
+       swaps the axes — justify-content drives the y-axis, align-items
+       drives the x-axis. flex-start on y keeps content packed to the
+       top; center on x horizontally centers the poster + copy block in
+       the column instead of sticking them to the left edge. */
     flex-direction: column;
     justify-content: flex-start;
+    align-items: center;
     padding: 88px 24px 32px;
     gap: 28px;
   }
@@ -352,6 +356,7 @@ body.crosshair-cursor .hero {
        in 552px content width. */
     font-size: clamp(34px, 7.4vw, 64px);
   }
+
 }
 
 @media (max-width: 600px) {
@@ -542,9 +547,16 @@ body.crosshair-cursor .hero {
 /* --- 01: wide image, two-column copy beneath ------------------------ */
 
 .step--wide .step__body {
-  display: grid;
-  grid-template-rows: auto auto;
-  gap: 56px;
+  /* Flex column instead of `grid auto auto` because grid's default
+     align-content stretches the rows when the parent has spare height
+     (the step body is `flex: 1` so it grows to ≥100vh). Stretching
+     made the image and copy float apart with empty space between
+     them. Flex column with `gap` keeps the image+copy block as one
+     compact unit, centered in the available step height. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 48px;
 }
 
 /* Break out of the .step horizontal padding so the image can go edge
@@ -560,6 +572,10 @@ body.crosshair-cursor .hero {
   max-width: none;
   display: flex;
   justify-content: center;
+  /* Stretch is the flex default and will deform an image whose intrinsic
+     aspect doesn't match the container — pin to center on the cross
+     axis so the image renders at natural proportions, never stretched. */
+  align-items: center;
 }
 
 .step__media-wide img {
@@ -843,6 +859,31 @@ body.crosshair-cursor .hero {
 .step--finale-in .step__feature-caption {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Install finale mobile — matches the prefinal stacking behavior at
+   <=1100px. Placed AFTER the desktop step--finale rules above so source
+   order resolves the conflict (the two rules have equal specificity). */
+@media (max-width: 1100px) {
+  .step--finale .step__body {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 24px 24px 40px;
+    gap: 28px;
+  }
+  .step__feature-video {
+    height: 56vh;
+    max-height: none;
+  }
+  .step__feature-copy {
+    flex: 0 1 auto;
+    width: 100%;
+    max-width: 560px;
+  }
+  .step__feature-title {
+    font-size: clamp(34px, 7.4vw, 64px);
+  }
 }
 
 /* --- Status callout (mold studies) ---------------------------------- */
