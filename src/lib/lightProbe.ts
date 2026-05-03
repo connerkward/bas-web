@@ -15,6 +15,9 @@ export const lightProbe = {
   // Debug: when true, the top bar drops mix-blend-mode and instead
   // grayscale-modulates text white→black as light approaches (older style).
   headerClassic: false,
+  // 0..1 — MouseLight's lerped presence value. BottomBarLight reads this
+  // so its rise can be staggered after the torch has fully faded out.
+  torchPresence: 1,
 };
 
 let attached = false;

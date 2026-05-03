@@ -483,7 +483,11 @@ function BottomBarLight({
   useFrame((state, delta) => {
     if (!lightRef.current) return;
     const t = state.clock.elapsedTime;
-    const presenceTarget = present.current ? 1 : 0;
+    // Bar's target stays "in" (1) until the torch has fully faded out.
+    // Then it ramps to "out" (0) over the bar's own duration. On entry,
+    // both bar and torch ramp simultaneously fast.
+    const torchOut = lightProbe.torchPresence < 0.001;
+    const presenceTarget = present.current ? 1 : torchOut ? 0 : 1;
     const dur =
       presenceTarget > presence.current
         ? PRESENCE_FADE_IN_SEC
@@ -579,6 +583,8 @@ function MouseLight({ controls }: { controls: LightControls }) {
           ? PRESENCE_FADE_IN_SEC
           : PRESENCE_FADE_OUT_SEC;
       presence.current = rampTo(presence.current, presenceTarget, delta, dur);
+      // Publish for BottomBarLight — it stages its rise on this reaching 0.
+      lightProbe.torchPresence = presence.current;
 
       const introT = intro(state.clock.elapsedTime);
       const flicker = 1 + flameFlicker(state.clock.elapsedTime);

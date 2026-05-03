@@ -228,34 +228,101 @@ body.crosshair-cursor .hero {
   opacity: 0.7;
 }
 
-.projects__grid {
+.projects__feature {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 14px;
+  /* Wide key graphic on the left, narrow secondary on the right. */
+  grid-template-columns: 1fr 220px;
+  gap: 18px;
+  align-items: start;
 }
 
-.projects__tile {
+.projects__feature-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.projects__feature-banner {
+  width: 100%;
+  aspect-ratio: 9 / 4;
   background: #111;
   border: 1px solid var(--footer-rule);
   overflow: hidden;
-  aspect-ratio: 9 / 8;
 }
 
-.projects__tile img {
+.projects__feature-banner img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Block native image drag/save preview so the tiles read as fixed art,
-     not draggable assets. */
   -webkit-user-drag: none;
   user-select: none;
   pointer-events: none;
 }
 
+.projects__feature-blurb {
+  margin: 0;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.65;
+  letter-spacing: 0.02em;
+  color: var(--footer-text-3);
+  max-width: 70ch;
+}
+
+.projects__feature-side {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.projects__feature-side-img {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  background: #111;
+  border: 1px solid var(--footer-rule);
+  overflow: hidden;
+}
+
+.projects__feature-side-img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+.projects__feature-side figcaption {
+  display: flex;
+  justify-content: space-between;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--footer-label);
+}
+
 @media (max-width: 900px) {
-  .projects__grid {
-    grid-template-columns: repeat(3, 1fr);
+  .projects__feature {
+    grid-template-columns: 1fr;
+  }
+  .projects__feature-side {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .projects__feature-side-img {
+    width: 120px;
+    flex: 0 0 auto;
+  }
+  .projects__feature-side figcaption {
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
   }
 }
 
@@ -292,13 +359,11 @@ body.crosshair-cursor .hero {
   justify-content: space-between;
   padding: 22px 28px;
   pointer-events: none;
-  /* Apply the difference blend at the topbar level so it composites against
-     the body's backdrop (the canvas underneath). Putting blend on
-     .logo/.topnav while .topbar has z-index:20 traps the blend inside the
-     topbar's own stacking context — backdrop is transparent, so source
-     colors pass through unchanged (text appears as plain rgb without any
-     chromatic shift). At the topbar level, the blend reaches the canvas. */
-  mix-blend-mode: difference;
+  /* Default mode: no blend — text is plain white. Difference blend lives
+     under body.topbar-classic (debug toggle). It must sit on .topbar
+     specifically because .topbar's z-index:20 forms a stacking context;
+     a blend on .logo/.topnav would be trapped inside that context with a
+     transparent backdrop and have nothing to act on. */
 }
 
 .topbar > * {
@@ -427,13 +492,14 @@ body.crosshair-cursor .hero {
     0 -0.32px 0 currentColor;
 }
 
-/* Classic header mode (debug toggle): the hook drives text grayscale
-   white→black as the torch approaches. Drop mix-blend-mode in this mode
-   so the black text reads as a solid silhouette against the warm-lit bg
-   (matches the original f807fca feel). With difference still active,
-   black blends to bg color and the text disappears entirely. */
+/* Classic header mode (debug toggle): hook drives text grayscale white→
+   black as the torch approaches; difference blend is layered on top so
+   text in dark zones reads as the inverted backdrop (cool blue against
+   warm light), and as it fades to black near the torch it dissolves into
+   the warm lit bg via difference identity. -webkit-text-stroke adds the
+   subtle weight gain on approach. */
 body.topbar-classic .topbar {
-  mix-blend-mode: normal;
+  mix-blend-mode: difference;
 }
 body.topbar-classic .logo__bas,
 body.topbar-classic .logo__studio,
