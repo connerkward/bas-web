@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Marquee from "./Marquee";
 
 type ProjectEntry = {
   no: string;
@@ -6,6 +7,30 @@ type ProjectEntry = {
   type: string;
   year: string;
 };
+
+const PORTRAIT_TILES = [
+  "/experiments/s01.jpg",
+  "/experiments/c01.jpg",
+  "/experiments/s02.jpg",
+  "/experiments/c02.jpg",
+  "/experiments/s03.jpg",
+  "/experiments/c03.jpg",
+  "/experiments/s04.jpg",
+  "/experiments/c04.jpg",
+  "/experiments/c05.jpg",
+  "/experiments/c06.jpg",
+];
+
+const LANDSCAPE_TILES = [
+  "/experiments/a01.jpg",
+  "/experiments/a02.jpg",
+  "/experiments/a03.jpg",
+  "/experiments/a04.jpg",
+  "/experiments/a05.jpg",
+  "/experiments/a06.jpg",
+  "/experiments/a07.jpg",
+  "/experiments/a08.jpg",
+];
 
 // Placeholder list — swap with real entries later. Order = display order;
 // the row number is rendered from `no`, not the array index, so reordering
@@ -51,6 +76,24 @@ export default function Projects() {
         <span className="projects__count">
           {String(ENTRIES.length).padStart(2, "0")}
         </span>
+      </div>
+      <div className="projects__strip">
+        <div className="projects__strip-label">
+          <span>EARLY EXPERIMENTS</span>
+          <span>R&amp;D · 2024–2025</span>
+        </div>
+        <Marquee
+          images={LANDSCAPE_TILES}
+          direction="left"
+          durationSec={90}
+          rowClass="marquee--landscape"
+        />
+        <Marquee
+          images={PORTRAIT_TILES}
+          direction="right"
+          durationSec={70}
+          rowClass="marquee--portrait"
+        />
       </div>
       <ul className="projects__list">
         {ENTRIES.map((p, i) => (

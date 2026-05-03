@@ -87,10 +87,10 @@ body.crosshair-cursor .hero {
   position: relative;
   width: 100%;
   height: 100%;
-  padding: 96px 32px 64px;
+  padding: 80px 32px 48px;
   display: flex;
   flex-direction: column;
-  gap: 36px;
+  gap: 24px;
   color: var(--footer-text);
 }
 
@@ -140,7 +140,7 @@ body.crosshair-cursor .hero {
   grid-template-columns: 56px 1fr 1.4fr 80px;
   align-items: baseline;
   gap: 16px;
-  padding: 18px 0;
+  padding: 12px 0;
   text-decoration: none;
   color: inherit;
   font-family: "Source Code Pro", ui-monospace, monospace;
@@ -205,6 +205,106 @@ body.crosshair-cursor .hero {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+}
+
+/* ----- Experiments marquee --------------------------------------------- */
+
+.projects__strip {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: -8px;
+}
+
+.projects__strip-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--footer-label);
+  opacity: 0.7;
+}
+
+.marquee {
+  width: 100%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 6%,
+    #000 94%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 6%,
+    #000 94%,
+    transparent 100%
+  );
+}
+
+.marquee__track {
+  display: flex;
+  gap: 14px;
+  width: max-content;
+  animation-name: marquee-shift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+@keyframes marquee-shift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee__tile {
+  flex: 0 0 auto;
+  background: #111;
+  border: 1px solid var(--footer-rule);
+  overflow: hidden;
+}
+
+.marquee__tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.marquee--landscape .marquee__tile {
+  height: 170px;
+  aspect-ratio: 9 / 8;
+}
+
+.marquee--portrait .marquee__tile {
+  height: 200px;
+  aspect-ratio: 9 / 16;
+}
+
+@media (max-width: 720px) {
+  .marquee--landscape .marquee__tile {
+    height: 150px;
+  }
+  .marquee--portrait .marquee__tile {
+    height: 190px;
+  }
+  .projects__strip {
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track {
+    animation: none;
   }
 }
 
