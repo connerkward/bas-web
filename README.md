@@ -64,7 +64,43 @@ In `<ReliefDraft>` the GLB is loaded via `useGLTF`, the first mesh's geometry is
 
 - Postprocessing deps: `@react-three/postprocessing` + `postprocessing` (already installed).
 - Type-check: `npx tsc -b --noEmit`.
-- Dev server: `npm run dev` (Vite).
+- Dev server: `npm run dev` (Vite). Add `-- --host` to expose on the LAN.
+
+## Deployment
+
+**Current stack:** GitHub Pages for hosting, Cloudflare for DNS.
+
+```
+Squarespace (registrar)
+  └─ NS → chin.ns.cloudflare.com, thaddeus.ns.cloudflare.com
+       └─ Cloudflare DNS zone "bas.run"
+            ├─ A bas.run → 185.199.108-111.153  (GitHub Pages anycast)
+            └─ CNAME www → connerkward.github.io
+                 └─ GitHub Pages serves the build from `main` via `.github/workflows/deploy.yml`
+```
+
+- **Workflow:** `.github/workflows/deploy.yml` builds with `npm run build` and uploads `dist/` to Pages on every push to `main`.
+- **Custom domain:** set on the GH Pages site (`gh api repos/connerkward/bas-web/pages` shows `cname: bas.run`). The `public/CNAME` file ships `bas.run` into the build so Pages keeps the binding.
+- **TLS:** GitHub provisions a Let's Encrypt cert for `bas.run` automatically — but only when the four CF `A` records are **gray-cloud (DNS only)**, so resolution goes user → GH directly. Orange-cloud (proxied) breaks the cert challenge and produces stacked-CDN cache artifacts (CF cached a stale GH "site not found" page during the migration churn).
+- **Enforce HTTPS** in repo Settings → Pages once the cert shows "Active".
+
+### Stale Cloudflare Pages bits
+
+A previous migration to Cloudflare Pages (commit `b396a67`, reverted in `5dddf2f`) left two things behind that are unused but harmless:
+
+- Cloudflare Pages project `bas-web` (account `809de311af5196443687f347cc8c65cb`) — no git binding, last deploy was via API. Safe to delete in CF dashboard → Workers & Pages.
+- Repo secret `CLOUDFLARE_API_TOKEN` — was used by the old `cloudflare/wrangler-action@v3` step. Safe to delete: `gh secret delete CLOUDFLARE_API_TOKEN -R connerkward/bas-web`.
+
+### Switching to all-Cloudflare later
+
+If GitHub Pages becomes a constraint (bandwidth, no edge functions, no per-branch previews), the migration path is:
+
+1. CF dashboard → Workers & Pages → delete the stale `bas-web` project, then **Create → Pages → Connect to Git**, authorize the CF GitHub app on this repo, set build command `npm run build`, output `dist`, env `NODE_VERSION=20`.
+2. Custom domains tab → add `bas.run` and `www.bas.run` (CF auto-creates orange-clouded CNAMEs and provisions certs).
+3. DNS tab → delete the four `A bas.run → 185.199.x.153` records and the `CNAME www → connerkward.github.io`.
+4. Repo: delete `.github/workflows/deploy.yml`, delete `public/CNAME`, run `gh api -X DELETE repos/connerkward/bas-web/pages`, delete `CLOUDFLARE_API_TOKEN` secret.
+
+The all-CF setup is strictly simpler given DNS already lives on Cloudflare — kept on GH Pages for now to minimize moving parts and avoid an API token in the repo.
 
 ---
 
