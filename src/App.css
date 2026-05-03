@@ -39,7 +39,7 @@ body.crosshair-cursor .hero {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  scroll-snap-type: y proximity;
+  scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
@@ -49,7 +49,10 @@ body.crosshair-cursor .hero {
   width: 100%;
   height: 100%;
   scroll-snap-align: start;
-  scroll-snap-stop: always;
+  /* `normal` lets a fast wheel/trackpad sweep skip past several snap
+     targets in one motion; mandatory still pulls the scroll to the
+     nearest target when the swipe stops. */
+  scroll-snap-stop: normal;
   position: relative;
   /* Skip layout/paint for sections that aren't in the viewport. With
      `contain-intrinsic-size` the browser keeps a placeholder box of the
@@ -88,10 +91,12 @@ body.crosshair-cursor .hero {
   position: relative;
   width: 100%;
   height: 100%;
-  display: grid;
-  grid-template-columns: 1fr minmax(0, auto) minmax(0, 560px);
+  display: flex;
   align-items: center;
-  gap: 56px;
+  /* Center the video+copy pair as a single block so left/right gutters
+     stay symmetrical regardless of viewport width. */
+  justify-content: center;
+  gap: 40px;
   padding: 0 48px;
   box-sizing: border-box;
   color: var(--footer-text);
@@ -99,21 +104,24 @@ body.crosshair-cursor .hero {
 
 .prefinal__video {
   display: block;
-  grid-column: 2;
-  height: 78vh;
+  /* Down from 78vh — at that size the 9:16 frame plus its black margins
+     dwarfed the title and the runner-inside-frame still read small. A
+     tighter video lets the title carry equal visual weight. */
+  height: 64vh;
   width: auto;
   max-width: 100%;
+  flex: 0 0 auto;
   -webkit-user-drag: none;
   user-select: none;
   pointer-events: none;
 }
 
 .prefinal__copy {
-  grid-column: 3;
-  justify-self: start;
-  align-self: end;
-  padding-bottom: 64px;
-  max-width: 560px;
+  /* Tightened to match the rendered title's visual width — earlier 480px
+     left a bare ribbon to the right of "STUDIES" / "MOTION." that read as
+     unbalanced empty space. Body text still wraps comfortably here. */
+  flex: 0 1 400px;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -121,16 +129,38 @@ body.crosshair-cursor .hero {
 
 .prefinal__title {
   margin: 0;
-  /* Orbitron — geometric/sci-fi display face; free Google-Fonts stand-in
-     for Neuropol (which is paid). Letterforms are wider than Source Code
-     Pro, so loosen letter-spacing slightly instead of compressing it. */
-  font-family: "Orbitron", "Source Code Pro", ui-monospace, monospace;
-  font-weight: 900;
-  font-size: clamp(44px, 6.4vw, 88px);
-  line-height: 0.95;
+  /* Sized to match the runner's optical scale within the (now smaller)
+     video poster — two title lines stack to roughly the runner's torso-
+     to-head height, so neither side dominates. */
+  font-size: clamp(40px, 5.2vw, 76px);
+  line-height: 0.98;
   letter-spacing: 0;
-  text-transform: uppercase;
   color: var(--footer-text);
+}
+
+.prefinal__title-line {
+  display: block;
+  text-transform: uppercase;
+}
+
+/* Line 1: "STUDIES" in IntraNet — same display face as the BAS wordmark in
+   the topbar. Subsetted woff2 includes the extra E glyph alongside BASTUDIO. */
+.prefinal__title-line--studies {
+  font-family: "IntraNet", "Source Code Pro", ui-monospace, monospace;
+  font-weight: normal;
+  letter-spacing: 0.02em;
+}
+
+/* Line 2: "IN MOTION." in Mirano Extended Freebie italic. Wider letterforms
+   than IntraNet, so a small font-size bump compensates for Mirano Light
+   reading optically lighter at the same em. */
+.prefinal__title-line--motion {
+  font-family: "Mirano Extended", "Source Code Pro", ui-monospace, monospace;
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  font-size: 1.05em;
+  margin-top: 0.05em;
 }
 
 .prefinal__body {
@@ -223,335 +253,132 @@ body.crosshair-cursor .hero {
   contain-intrinsic-size: none;
 }
 
-/* ----- Projects -------------------------------------------------------- */
+/* ----- Projects (process narrative) ----------------------------------- */
 
+/* Full-width process narrative. Each .step is full-bleed; only the head
+   row and blurb get internal horizontal padding so text stays readable
+   while media goes edge-to-edge. */
 .projects {
   position: relative;
   width: 100%;
-  height: 100%;
-  padding: 80px 32px 48px;
+  padding: 96px 0 64px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
   color: var(--footer-text);
+  opacity: 0;
+  transition: opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.projects__head {
+.projects--in {
+  opacity: 1;
+}
+
+.step {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  border-top: 1px solid var(--footer-rule);
+}
+
+.step:first-child {
+  border-top: none;
+}
+
+.step__head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: baseline;
+  gap: 28px;
+  padding: 26px 32px 22px;
   font-family: "Source Code Pro", ui-monospace, monospace;
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--footer-label);
-  border-bottom: 1px solid var(--footer-rule);
-  padding-bottom: 12px;
 }
 
-.projects__count {
-  font-variant-numeric: tabular-nums;
-}
-
-.projects__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.projects__row {
-  border-bottom: 1px solid var(--footer-rule);
-  /* Stagger entrance — index.tsx applies transitionDelay per row. */
-  opacity: 0;
-  transform: translateY(8px);
-  transition:
-    opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.projects--in .projects__row {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.projects__link {
-  display: grid;
-  grid-template-columns: 56px 1fr 1.4fr 80px;
-  align-items: baseline;
-  gap: 16px;
-  padding: 12px 0;
-  text-decoration: none;
-  color: inherit;
-  font-family: "Source Code Pro", ui-monospace, monospace;
-  font-size: 13px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  transition: color 200ms ease, padding 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.projects__link:hover {
-  color: var(--footer-hover);
-  /* Subtle slide-right on hover; reads as "this row is targetable." */
-  padding-left: 6px;
-}
-
-.projects__no {
+.step__no {
   color: var(--footer-label);
   font-variant-numeric: tabular-nums;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-}
-
-.projects__title {
   font-weight: 500;
-  font-size: 14px;
-  letter-spacing: 0.02em;
 }
 
-.projects__type {
-  color: var(--footer-text-3);
-  font-size: 11px;
-  letter-spacing: 0.14em;
-}
-
-.projects__year {
-  color: var(--footer-text-3);
-  font-size: 11px;
+.step__title {
+  color: var(--footer-text);
+  font-weight: 500;
   letter-spacing: 0.18em;
-  text-align: right;
+}
+
+.step__meta {
+  color: var(--footer-label);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
   font-variant-numeric: tabular-nums;
+}
+
+.step__sep {
+  color: var(--footer-rule);
+}
+
+.step__media {
+  width: 100%;
+  background: #050505;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Container is full-width × fixed height; the media inside is fit via
+   object-fit: contain so true source aspect is always preserved.
+   Portrait clips letterbox horizontally (black flanks); wide images
+   letterbox vertically. Nothing ever stretches. */
+.step__media video,
+.step__media img {
+  display: block;
+  width: 100%;
+  height: 78vh;
+  max-height: 820px;
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+.step__blurb {
+  margin: 0;
+  padding: 22px 32px 30px;
+  max-width: 72ch;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  color: var(--footer-text-3);
 }
 
 @media (max-width: 720px) {
   .projects {
-    padding: 80px 22px 40px;
-    gap: 24px;
+    padding: 72px 0 48px;
   }
-  .projects__link {
-    grid-template-columns: 36px 1fr 64px;
-    gap: 12px;
-    padding: 14px 0;
-    font-size: 12px;
+  .step__head {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 16px;
+    row-gap: 6px;
+    padding: 22px 18px 16px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
   }
-  /* Hide the type column on narrow screens to keep title legible. */
-  .projects__type {
-    display: none;
+  .step__meta {
+    grid-column: 1 / -1;
+    gap: 8px;
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .projects__row {
-    opacity: 1;
-    transform: none;
-    transition: none;
+  .step__media video,
+  .step__media img {
+    height: 62vh;
   }
-}
-
-/* ----- Experiments strip ----------------------------------------------- */
-
-.projects__strip {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: -8px;
-}
-
-.projects__strip-label {
-  display: flex;
-  justify-content: space-between;
-  font-family: "Source Code Pro", ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--footer-label);
-  opacity: 0.7;
-}
-
-.projects__feature {
-  display: grid;
-  /* Wide key graphic on the left, narrow secondary on the right. */
-  grid-template-columns: 1fr 180px;
-  gap: 18px;
-  align-items: start;
-}
-
-.projects__feature-main {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 0;
-}
-
-.projects__feature-banner {
-  width: 100%;
-  /* Fixed height + object-fit: contain so the full 4-panel banner stays
-     intact (letterboxed) instead of being cropped by cover. The source is
-     9:4 wide, far too tall at full-width to fit the section otherwise. */
-  height: 150px;
-  background: #111;
-  border: 1px solid var(--footer-rule);
-  overflow: hidden;
-}
-
-.projects__feature-banner img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  -webkit-user-drag: none;
-  user-select: none;
-  pointer-events: none;
-}
-
-.projects__feature-blurb {
-  margin: 0;
-  font-family: "Source Code Pro", ui-monospace, monospace;
-  font-size: 12px;
-  line-height: 1.65;
-  letter-spacing: 0.02em;
-  color: var(--footer-text-3);
-  max-width: 70ch;
-}
-
-.projects__strip-blurb {
-  margin: 0;
-  font-family: "Source Code Pro", ui-monospace, monospace;
-  font-size: 12px;
-  line-height: 1.65;
-  letter-spacing: 0.02em;
-  color: var(--footer-text-3);
-  max-width: 70ch;
-}
-
-.projects__feature-side {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.projects__feature-side-img {
-  width: 100%;
-  height: 150px;
-  background: #111;
-  border: 1px solid var(--footer-rule);
-  overflow: hidden;
-}
-
-.projects__feature-side-img img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  -webkit-user-drag: none;
-  user-select: none;
-  pointer-events: none;
-}
-
-.projects__feature-side figcaption {
-  display: flex;
-  justify-content: space-between;
-  font-family: "Source Code Pro", ui-monospace, monospace;
-  font-size: 9px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--footer-label);
-}
-
-/* MILLING strip — two vertical 1080x1920 clips side-by-side, autoplaying
-   muted on loop. Aspect ratio is letter-boxed via object-fit: cover and a
-   capped height so the section doesn't blow past the scroll-snap viewport. */
-.projects__milling {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-}
-
-.projects__milling-clip {
-  display: block;
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  background: #111;
-  border: 1px solid var(--footer-rule);
-  -webkit-user-drag: none;
-  user-select: none;
-  pointer-events: none;
-}
-
-.projects__hero-clip {
-  display: flex;
-  justify-content: center;
-  background: #050505;
-  border: 1px solid var(--footer-rule);
-}
-
-.projects__hero-clip video {
-  display: block;
-  max-width: 100%;
-  max-height: 78vh;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  -webkit-user-drag: none;
-  user-select: none;
-  pointer-events: none;
-}
-
-.projects__hero-clip--mid video {
-  max-height: 58vh;
-}
-
-.projects__install {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-}
-
-.projects__install-clip {
-  display: block;
-  width: 100%;
-  height: 480px;
-  object-fit: cover;
-  background: #050505;
-  border: 1px solid var(--footer-rule);
-  -webkit-user-drag: none;
-  user-select: none;
-  pointer-events: none;
-}
-
-@media (max-width: 900px) {
-  .projects__feature {
-    grid-template-columns: 1fr;
-  }
-  .projects__feature-side {
-    flex-direction: row;
-    align-items: stretch;
-    gap: 12px;
-  }
-  .projects__feature-side-img {
-    width: 110px;
-    flex: 0 0 auto;
-  }
-  .projects__feature-side figcaption {
-    flex-direction: column;
-    justify-content: center;
-    gap: 4px;
-  }
-  .projects__milling-clip {
-    height: 130px;
-  }
-  .projects__install-clip {
-    height: 360px;
-  }
-}
-
-@media (max-width: 720px) {
-  .projects__strip {
-    gap: 10px;
+  .step__blurb {
+    padding: 18px 18px 26px;
+    font-size: 11px;
   }
 }
 
