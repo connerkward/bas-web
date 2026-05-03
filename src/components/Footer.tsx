@@ -49,7 +49,12 @@ export default function Footer() {
         </div>
         <div className="footer__col">
           <div className="footer__label">SOCIAL</div>
-          <a className="footer__line" href="#">
+          <a
+            className="footer__line"
+            href="https://www.instagram.com/bas.runn/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             INSTAGRAM ↗
           </a>
           <a className="footer__line" href="#">
