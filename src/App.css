@@ -138,20 +138,24 @@ body.crosshair-cursor .hero {
   transform: scale(1);
 }
 
-.prefinal__video-clip {
+/* Inner clips inside the crossfade container — shared by prefinal and the
+   installation finale. Both stacked absolutely; CrossfadeVideo handles the
+   opacity choreography. */
+.prefinal__video > video,
+.step__feature-video > video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Slow ken-burns: the runner is centered in the source frame; gently
+  /* Slow ken-burns — the figures are centered in the source frame; gently
      drift in over the visible loop so the dissolve feels alive instead of
-     mechanical. Animation duration is long enough that it doesn't read as
-     motion — just makes the still moments feel less still. */
-  animation: prefinal-pan 22s ease-in-out infinite alternate;
+     mechanical. Long enough that it doesn't read as motion — just makes
+     the still moments feel less still. */
+  animation: feature-pan 22s ease-in-out infinite alternate;
 }
 
-@keyframes prefinal-pan {
+@keyframes feature-pan {
   from { transform: scale(1.02); }
   to { transform: scale(1.06); }
 }
@@ -489,6 +493,17 @@ body.crosshair-cursor .hero {
   max-width: 22ch;
 }
 
+/* Center variant — used by full-width media steps (diptych/triptych)
+   where the heading stands alone above the row instead of sitting in a
+   side copy column. Drops max-width clamp so the line breaks where the
+   markup decides, not at 22ch. */
+.step__display--centered {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  max-width: none;
+}
+
 .step__blurb {
   margin: 0;
   font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
@@ -671,29 +686,153 @@ body.crosshair-cursor .hero {
   align-items: center;
 }
 
-/* --- 05: centered finale (title above, video center, caption below)  */
+/* --- 06: installation finale (mirrors the prefinal feature pattern)
+   Side-by-side crossfade video + copy block, vignette, ken-burns drift,
+   staggered reveal cascade. Different content/text but same structural
+   moves so the two "feature" sections (prefinal + install) feel like a
+   matched pair bracketing the project narrative. */
 
 .step--finale .step__body {
   display: flex;
-  flex-direction: column;
+  /* Base .step__body uses flex-direction: column — override here so the
+     finale lays out side-by-side like the prefinal feature pattern. */
+  flex-direction: row;
   align-items: center;
-  text-align: center;
-  gap: 36px;
   justify-content: center;
+  gap: 40px;
+  padding: 24px 32px 48px;
+  box-sizing: border-box;
 }
 
-.step__display--finale {
-  margin: 0 auto;
-  max-width: 28ch;
+.step__feature-video {
+  position: relative;
+  display: block;
+  height: 78vh;
+  max-height: 820px;
+  aspect-ratio: 9 / 16;
+  width: auto;
+  max-width: 100%;
+  flex: 0 0 auto;
+  box-shadow: 0 0 120px 12px rgba(0, 0, 0, 0.85) inset;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+  /* Reveal: the video frame fades in slightly later than the meta+title,
+     so the install poster "drops into focus" after the credit reads. */
+  opacity: 0;
+  transform: scale(1.02);
+  transition:
+    opacity 1200ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms,
+    transform 1600ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms;
 }
 
-.step__caption {
+.step--finale-in .step__feature-video {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.step__feature-copy {
+  flex: 0 1 400px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.step__feature-meta {
+  margin: 0 0 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--footer-label);
+}
+
+.step__feature-meta-label {
+  color: var(--footer-text-2);
+}
+
+.step__feature-meta-detail {
+  color: var(--footer-label);
+}
+
+.step__feature-title {
+  margin: 0 0 28px;
+  font-size: clamp(34px, 4.2vw, 58px);
+  line-height: 1.06;
+  letter-spacing: 0;
+  color: var(--footer-text);
+}
+
+.step__feature-title-line {
+  display: block;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Line 1 carries the same IntraNet display register as the prefinal
+   line 1 — the wordmark voice anchoring this section to the BAS identity. */
+.step__feature-title-line--lead {
+  font-family: "IntraNet", "42dot Sans", "Source Code Pro", ui-monospace, monospace;
+  font-weight: normal;
+  letter-spacing: 0.02em;
+}
+
+/* Line 2: italic display foil to the lead — same Mirano italic that
+   "IN MOTION." uses on the prefinal so the two sections rhyme. */
+.step__feature-title-line--accent {
+  font-family: "Mirano Extended", "42dot Sans", "Source Code Pro", ui-monospace, monospace;
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  font-size: 1.05em;
+}
+
+.step__feature-blurb {
+  margin: 0 0 24px;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  letter-spacing: 0.02em;
+  color: var(--footer-text-3);
+  max-width: 46ch;
+}
+
+.step__feature-caption {
   margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--footer-rule);
   font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--footer-label);
+}
+
+/* Reveal cascade — staggered fade-up driven by per-element --d delay
+   stamped inline. Same idiom as the prefinal section. */
+.step__feature-meta,
+.step__feature-title-line,
+.step__feature-blurb,
+.step__feature-caption {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 700ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--d, 0ms);
+}
+
+.step--finale-in .step__feature-meta,
+.step--finale-in .step__feature-title-line,
+.step--finale-in .step__feature-blurb,
+.step--finale-in .step__feature-caption {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* --- Status callout (mold studies) ---------------------------------- */
@@ -864,19 +1003,11 @@ body.crosshair-cursor .hero {
   justify-content: space-between;
   padding: 22px 28px;
   pointer-events: none;
-  /* Subtle gradient backdrop so content scrolling underneath (step head
-     rows, the prefinal label) reads as visually subordinate to the
-     topbar wordmark/nav. Fades to transparent at the bottom — never a
-     hard line. Sits on the .topbar element itself because .topbar's
-     z-index:20 forms a stacking context. */
-  background: linear-gradient(
-    to bottom,
-    rgba(10, 10, 10, 0.85) 0%,
-    rgba(10, 10, 10, 0.6) 65%,
-    rgba(10, 10, 10, 0) 100%
-  );
-  /* Difference-blend (debug) variant retained downstream; here we add a
-     plain backdrop in the default mode. */
+  /* No backdrop — the topbar text sits on whatever is behind it. The
+     hero canvas drives a difference-blend (see body.topbar-classic.in-hero
+     below) so text inverts against the torchlit relief; on every other
+     section (prefinal/projects/footer) the bg is dark and plain white
+     wordmarks read cleanly without any blend. */
 }
 
 .topbar > * {
@@ -994,18 +1125,21 @@ body.crosshair-cursor .hero {
     0 -0.32px 0 currentColor;
 }
 
-/* Classic header mode (debug toggle): hook drives text grayscale white→
-   black as the torch approaches; difference blend is layered on top so
-   text in dark zones reads as the inverted backdrop (cool blue against
-   warm light), and as it fades to black near the torch it dissolves into
-   the warm lit bg via difference identity. -webkit-text-stroke adds the
-   subtle weight gain on approach. */
-body.topbar-classic .topbar {
+/* Classic header mode: hook drives text grayscale white→black as the
+   torch approaches; difference blend is layered on top so text in dark
+   zones reads as the inverted backdrop (cool blue against warm light),
+   and as it fades to black near the torch it dissolves into the warm lit
+   bg via difference identity. -webkit-text-stroke adds the subtle weight
+   gain on approach.
+   Scoped to body.in-hero so the blend only fires while the hero section
+   is visible — prefinal/projects/footer all show plain white wordmark/
+   nav with no blend. */
+body.topbar-classic.in-hero .topbar {
   mix-blend-mode: difference;
 }
-body.topbar-classic .logo__bas,
-body.topbar-classic .logo__studio,
-body.topbar-classic .topnav__link {
+body.topbar-classic.in-hero .logo__bas,
+body.topbar-classic.in-hero .logo__studio,
+body.topbar-classic.in-hero .topnav__link {
   -webkit-text-stroke: var(--topbar-stroke, 0px) currentColor;
 }
 

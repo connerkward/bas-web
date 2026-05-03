@@ -1,6 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import CrossfadeVideo from "./CrossfadeVideo";
 
 const KEY_GRAPHIC = "/experiments/key.jpg";
+
+// Inline transition-delay stamp for staggered reveal cascades — same idiom
+// as the prefinal section.
+const D = (ms: number): CSSProperties => ({ ["--d" as never]: `${ms}ms` });
 
 type HeadProps = {
   no: string;
@@ -116,6 +121,10 @@ function StepFabrication() {
         date="2025–2026"
       />
       <div className="step__body">
+        <h3 className="step__display step__display--centered">
+          Plan in software.<br />
+          Cut in wood.
+        </h3>
         <div className="step__triptych">
           <figure className="step__triptych-cell">
             <div className="step__portrait">
@@ -240,19 +249,72 @@ function StepLook() {
 }
 
 function StepInstallation() {
+  // Mirrors the prefinal section: side-by-side crossfade-loop video + copy
+  // block with staggered reveal cascade. Triggers its own IO so the
+  // animation only fires when it scrolls into view.
+  const ref = useRef<HTMLElement>(null);
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const root = document.querySelector(".page");
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setRevealed(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.3, root },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <section className="step step--finale" data-step="06">
+    <section
+      ref={ref}
+      className={`step step--finale${revealed ? " step--finale-in" : ""}`}
+      data-step="06"
+    >
       <StepHead no="06" title="INSTALLATION" tech="GALLERY" date="2026" />
       <div className="step__body">
-        <h3 className="step__display step__display--finale">
-          A runner, held in relief.
-        </h3>
-        <div className="step__portrait step__portrait--finale">
-          <Clip src="/videos/install-1.mp4" />
+        <CrossfadeVideo
+          src="/videos/install-1.mp4"
+          className="step__feature-video"
+        />
+        <div className="step__feature-copy">
+          <p className="step__feature-meta" style={D(0)}>
+            <span className="step__feature-meta-label">ON VIEW</span>
+            <span className="step__feature-meta-detail">
+              GRAY AREA GRAND THEATER · BYOB · APRIL 7
+            </span>
+          </p>
+          <h3 className="step__feature-title">
+            <span
+              className="step__feature-title-line step__feature-title-line--lead"
+              style={D(120)}
+            >
+              A runner,
+            </span>
+            <span
+              className="step__feature-title-line step__feature-title-line--accent"
+              style={D(280)}
+            >
+              held in relief.
+            </span>
+          </h3>
+          <p className="step__feature-blurb" style={D(520)}>
+            The piece on the gallery floor — a milled relief panel under raking
+            light, the runner's stride read across surface and shadow as
+            visitors moved past. Source video plays in profile beside the
+            relief; the body in the panel and the body on screen meet in
+            the same beat.
+          </p>
+          <p className="step__feature-caption" style={D(720)}>
+            Piece installed · San Francisco · 2026
+          </p>
         </div>
-        <p className="step__caption">
-          Piece installed · San Francisco · 2026
-        </p>
       </div>
     </section>
   );
