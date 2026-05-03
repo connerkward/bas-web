@@ -7,17 +7,8 @@ type ProjectEntry = {
   year: string;
 };
 
-// Curated 6-tile strip across the pipeline: raw → dither → pixelate →
-// chroma-direction → orange/dark → line outlines. All landscape (9:8) for a
-// single uniform row.
-const EXPERIMENT_TILES = [
-  "/experiments/a01.jpg",
-  "/experiments/a02.jpg",
-  "/experiments/a04.jpg",
-  "/experiments/a05.jpg",
-  "/experiments/a07.jpg",
-  "/experiments/a08.jpg",
-];
+const KEY_GRAPHIC = "/experiments/key.jpg";
+const SECONDARY_GRAPHIC = "/experiments/depth.jpg";
 
 // Placeholder list — swap with real entries later. Order = display order;
 // the row number is rendered from `no`, not the array index, so reordering
@@ -69,18 +60,39 @@ export default function Projects() {
           <span>EARLY EXPERIMENTS</span>
           <span>R&amp;D · 2024–2025</span>
         </div>
-        <div className="projects__grid">
-          {EXPERIMENT_TILES.map((src) => (
-            <div className="projects__tile" key={src}>
+        <div className="projects__feature">
+          <div className="projects__feature-main">
+            <div className="projects__feature-banner">
               <img
-                src={src}
+                src={KEY_GRAPHIC}
                 alt=""
                 loading="lazy"
                 decoding="async"
                 draggable={false}
               />
             </div>
-          ))}
+            <p className="projects__feature-blurb">
+              Process studies on a single source — a runner photographed in
+              profile. Each pass strips the frame to one signal: dithered
+              halftones, pixelation thresholds, contour lines, depth-derived
+              isophotes. Foundation work for the relief geometry above.
+            </p>
+          </div>
+          <figure className="projects__feature-side">
+            <div className="projects__feature-side-img">
+              <img
+                src={SECONDARY_GRAPHIC}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                draggable={false}
+              />
+            </div>
+            <figcaption>
+              <span>DEPTH BANDING</span>
+              <span>BANDS · BLUR · STROKE</span>
+            </figcaption>
+          </figure>
         </div>
       </div>
       <ul className="projects__list">

@@ -231,7 +231,7 @@ body.crosshair-cursor .hero {
 .projects__feature {
   display: grid;
   /* Wide key graphic on the left, narrow secondary on the right. */
-  grid-template-columns: 1fr 220px;
+  grid-template-columns: 1fr 180px;
   gap: 18px;
   align-items: start;
 }
@@ -245,7 +245,10 @@ body.crosshair-cursor .hero {
 
 .projects__feature-banner {
   width: 100%;
-  aspect-ratio: 9 / 4;
+  /* Fixed height + object-fit: contain so the full 4-panel banner stays
+     intact (letterboxed) instead of being cropped by cover. The source is
+     9:4 wide, far too tall at full-width to fit the section otherwise. */
+  height: 220px;
   background: #111;
   border: 1px solid var(--footer-rule);
   overflow: hidden;
@@ -255,7 +258,7 @@ body.crosshair-cursor .hero {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   -webkit-user-drag: none;
   user-select: none;
   pointer-events: none;
@@ -316,7 +319,7 @@ body.crosshair-cursor .hero {
     gap: 12px;
   }
   .projects__feature-side-img {
-    width: 120px;
+    width: 110px;
     flex: 0 0 auto;
   }
   .projects__feature-side figcaption {
