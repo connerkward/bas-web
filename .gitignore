@@ -26,3 +26,9 @@ dist-ssr
 # Local audit/automation artifacts
 .audit-tmp/
 .playwright-mcp/
+
+# Drag-and-dropped screenshots/scratch images at repo root (real assets
+# live under public/, src/, etc.).
+/*.png
+/*.jpg
+/*.jpeg
