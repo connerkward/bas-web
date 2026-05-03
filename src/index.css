@@ -1,14 +1,10 @@
 @font-face {
   font-family: "IntraNet";
-  /* Subsetted to letters used across the BAS wordmark + prefinal title
-     ("STUDY IN MOTION") + installation title ("A RUNNER, HELD IN
-     RELIEF") = BASTUDIOENMYRHLF + space. OTF is the Safari fallback.
-     E/Y/R and other non-wordmark glyphs render with the font's quirky
-     decorative stems by design — verified via fontTools that this is
-     intentional, NOT a subset/conversion artifact. */
-  src:
-    url("/fonts/IntraNet.woff2") format("woff2"),
-    url("/fonts/IntraNet.otf") format("opentype");
+  /* Loading the full unsubsetted OTF — earlier woff2 subsets caused
+     some letters (R in particular) to render visibly smaller than the
+     others. Bypassing the subset rules out subset corruption. ~68KB
+     vs ~2KB but worth it for correct rendering across the full alphabet. */
+  src: url("/fonts/IntraNet.otf") format("opentype");
   font-display: swap;
   unicode-range: U+0020, U+0041-005A;
 }
