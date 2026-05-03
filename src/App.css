@@ -103,6 +103,7 @@ body.crosshair-cursor .hero {
 }
 
 .prefinal__video {
+  position: relative;
   display: block;
   /* Bigger runner — fills the vertical viewport (minus the topbar zone)
      so the figure reads at presence-scale rather than poster-scale. The
@@ -110,12 +111,49 @@ body.crosshair-cursor .hero {
      9:16 at 88vh is only ~50vh wide. */
   height: 88vh;
   max-height: 920px;
+  /* Container is now a div holding two stacked <video> clips for crossfade,
+     so we can't rely on the intrinsic <video> aspect. Pin the 9:16 portrait
+     ratio explicitly. */
+  aspect-ratio: 9 / 16;
   width: auto;
   max-width: 100%;
   flex: 0 0 auto;
+  /* Soft radial vignette around the runner — pulls the eye into the figure
+     and ties the video frame to the matte-black section bg. */
+  box-shadow: 0 0 120px 12px rgba(0, 0, 0, 0.85) inset;
   -webkit-user-drag: none;
   user-select: none;
   pointer-events: none;
+  /* Reveal: fade the whole video frame in slightly later than the meta/
+     title so the runner "drops into focus" after the credit reads. */
+  opacity: 0;
+  transform: scale(1.02);
+  transition:
+    opacity 1200ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms,
+    transform 1600ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms;
+}
+
+.prefinal--in .prefinal__video {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.prefinal__video-clip {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Slow ken-burns: the runner is centered in the source frame; gently
+     drift in over the visible loop so the dissolve feels alive instead of
+     mechanical. Animation duration is long enough that it doesn't read as
+     motion — just makes the still moments feel less still. */
+  animation: prefinal-pan 22s ease-in-out infinite alternate;
+}
+
+@keyframes prefinal-pan {
+  from { transform: scale(1.02); }
+  to { transform: scale(1.06); }
 }
 
 .prefinal__copy {
@@ -127,6 +165,29 @@ body.crosshair-cursor .hero {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+/* Reveal cascade — children fade up in sequence when .prefinal--in lands.
+   Each stage stamps `--d` (delay in ms) so the order is encoded inline,
+   and the timing reads as a natural beat: meta, line 1, line 2, body, def. */
+.prefinal__meta,
+.prefinal__title-line,
+.prefinal__body,
+.prefinal__def {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 700ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--d, 0ms);
+}
+
+.prefinal--in .prefinal__meta,
+.prefinal--in .prefinal__title-line,
+.prefinal--in .prefinal__body,
+.prefinal--in .prefinal__def {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .prefinal__title {
@@ -486,7 +547,7 @@ body.crosshair-cursor .hero {
   max-width: 540px;
 }
 
-/* --- 03: diptych (two portraits side-by-side, blurb beneath) -------- */
+/* --- 03: triptych (three portraits side-by-side, blurb beneath) ----- */
 
 .step--diptych .step__body {
   display: flex;
@@ -495,25 +556,30 @@ body.crosshair-cursor .hero {
   justify-content: center;
 }
 
-.step__diptych {
+.step__triptych {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 32px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
 }
 
-.step__diptych-cell {
+.step__triptych-cell {
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.step__diptych-cell .step__portrait video {
-  height: 56vh;
-  max-height: 600px;
+/* Three portraits side-by-side at full container width are narrow per
+   cell, so cap height a bit lower than the diptych era. Cell width
+   becomes ~33% of the row → at 1440 viewport that's ~440px each. 9:16
+   portrait at 440px wide naturally renders ~782px tall — would blow
+   past the viewport. Cap by height instead so width auto-shrinks. */
+.step__triptych-cell .step__portrait video {
+  height: 52vh;
+  max-height: 560px;
 }
 
-.step__diptych-cell figcaption {
+.step__triptych-cell figcaption {
   display: flex;
   gap: 12px;
   align-items: baseline;
@@ -645,8 +711,13 @@ body.crosshair-cursor .hero {
   .step__portrait img {
     height: 56vh;
   }
-  .step__diptych-cell .step__portrait video {
-    height: 50vh;
+  .step__triptych {
+    /* At sub-880 we still keep the row layout, but compress to 2+1 wrap
+       so cells don't get too narrow. */
+    gap: 16px;
+  }
+  .step__triptych-cell .step__portrait video {
+    height: 44vh;
   }
 }
 
@@ -670,15 +741,15 @@ body.crosshair-cursor .hero {
   .step__display {
     font-size: clamp(22px, 6vw, 32px);
   }
-  .step--diptych .step__diptych {
+  .step--diptych .step__triptych {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 24px;
   }
   .step__portrait video,
   .step__portrait img {
     height: 56vh;
   }
-  .step__diptych-cell .step__portrait video {
+  .step__triptych-cell .step__portrait video {
     height: 56vh;
   }
   .step__media-wide img {
