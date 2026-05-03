@@ -470,17 +470,14 @@ body.crosshair-cursor .hero {
 
 .step__display {
   margin: 0;
-  /* Mirano Extended Light (upright) — same family as the prefinal hero's
-     "IN MOTION." italic, but the regular form so step headings don't
-     compete with that one display moment. Wide geometric letterforms
-     contrast the all-caps mono meta rows above and below. Slight clamp
-     bump since Mirano Light reads optically lighter than Source Code
-     Pro at the same em. */
-  font-family: "Mirano Extended", "Source Code Pro", ui-monospace, monospace;
-  font-weight: 300;
+  /* 42dot Sans @ 500 — contemporary geometric sans with a squared, mildly
+     technical character. Replaces Mirano Extended Light (which read too
+     fashion-magazine-thin against the industrial mono meta rows). */
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
+  font-weight: 500;
   font-size: clamp(32px, 4vw, 56px);
   line-height: 1.08;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   color: var(--footer-text);
   max-width: 22ch;
 }
