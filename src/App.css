@@ -104,10 +104,12 @@ body.crosshair-cursor .hero {
 
 .prefinal__video {
   display: block;
-  /* Down from 78vh — at that size the 9:16 frame plus its black margins
-     dwarfed the title and the runner-inside-frame still read small. A
-     tighter video lets the title carry equal visual weight. */
-  height: 64vh;
+  /* Bigger runner — fills the vertical viewport (minus the topbar zone)
+     so the figure reads at presence-scale rather than poster-scale. The
+     title side still has plenty of horizontal room because portrait
+     9:16 at 88vh is only ~50vh wide. */
+  height: 88vh;
+  max-height: 920px;
   width: auto;
   max-width: 100%;
   flex: 0 0 auto;
@@ -167,6 +169,30 @@ body.crosshair-cursor .hero {
   margin-top: 0.05em;
 }
 
+/* Show metadata above the title — venue + date in the same small-caps
+   label style as the projects strip labels. Slim spacing so it reads as
+   a credit line, not a primary copy block. */
+.prefinal__meta {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  font-family: "Source Code Pro", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--footer-label);
+}
+
+.prefinal__meta-label {
+  color: var(--footer-text-2);
+}
+
+.prefinal__meta-detail {
+  color: var(--footer-label);
+}
+
 .prefinal__body {
   margin: 0;
   font-family: "Source Code Pro", ui-monospace, monospace;
@@ -216,34 +242,51 @@ body.crosshair-cursor .hero {
 
 @media (max-width: 1100px) {
   .prefinal {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
-    padding: 80px 24px 32px;
-    gap: 24px;
+    /* Stack vertically: video on top, copy below. The earlier rules used
+       grid-* properties but the parent is flex, so they were no-ops. */
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 88px 24px 32px;
+    gap: 28px;
   }
   .prefinal__video {
-    grid-column: 1;
-    justify-self: center;
-    height: 52vh;
+    height: 56vh;
+    max-height: none;
   }
   .prefinal__copy {
-    grid-column: 1;
-    justify-self: stretch;
-    align-self: auto;
-    padding-bottom: 0;
-    max-width: 100%;
+    flex: 0 1 auto;
+    width: 100%;
+    max-width: 560px;
   }
   .prefinal__title {
-    font-size: clamp(40px, 9vw, 72px);
+    /* Larger relative to viewport at this width — Mirano Extended needs
+       the room. white-space: nowrap on the lines means we cap by what
+       "IN MOTION." can fit; 7.4vw at 600px viewport ≈ 44px which fits
+       in 552px content width. */
+    font-size: clamp(34px, 7.4vw, 64px);
   }
 }
 
 @media (max-width: 600px) {
   .prefinal {
-    padding: 56px 16px 24px;
+    padding: 72px 16px 20px;
+    gap: 20px;
   }
   .prefinal__video {
-    height: 44vh;
+    height: 50vh;
+  }
+  .prefinal__title {
+    /* On phones the column is the limiting dimension. 8.6vw at 414px =
+       ~36px; "IN MOTION." (Mirano Extended) at that size is ~310px wide,
+       fits in the 382px content area. Lower bound of 28px protects the
+       smallest screens (320px width) from overflow. */
+    font-size: clamp(28px, 8.6vw, 40px);
+  }
+  .prefinal__body {
+    font-size: 12px;
+  }
+  .prefinal__def {
+    font-size: 10px;
   }
 }
 
@@ -345,10 +388,16 @@ body.crosshair-cursor .hero {
 
 .step__display {
   margin: 0;
-  font-family: "Source Code Pro", ui-monospace, monospace;
-  font-size: clamp(28px, 3.4vw, 48px);
-  font-weight: 700;
-  line-height: 1.05;
+  /* Mirano Extended Light (upright) — same family as the prefinal hero's
+     "IN MOTION." italic, but the regular form so step headings don't
+     compete with that one display moment. Wide geometric letterforms
+     contrast the all-caps mono meta rows above and below. Slight clamp
+     bump since Mirano Light reads optically lighter than Source Code
+     Pro at the same em. */
+  font-family: "Mirano Extended", "Source Code Pro", ui-monospace, monospace;
+  font-weight: 300;
+  font-size: clamp(32px, 4vw, 56px);
+  line-height: 1.08;
   letter-spacing: -0.01em;
   color: var(--footer-text);
   max-width: 22ch;

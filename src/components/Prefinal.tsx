@@ -16,6 +16,12 @@ export default function Prefinal() {
       />
 
       <div className="prefinal__copy">
+        <p className="prefinal__meta">
+          <span className="prefinal__meta-label">INSTALLED</span>
+          <span className="prefinal__meta-detail">
+            GRAY AREA GRAND THEATER · BYOB · APRIL 7
+          </span>
+        </p>
         <h2 className="prefinal__title">
           <span className="prefinal__title-line prefinal__title-line--studies">
             STUDIES
