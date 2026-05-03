@@ -10,6 +10,11 @@ type ProjectEntry = {
 const KEY_GRAPHIC = "/experiments/key.jpg";
 const SECONDARY_GRAPHIC = "/experiments/depth.jpg";
 
+const MILLING_VIDEOS = [
+  "/videos/milling-1.mp4",
+  "/videos/milling-2.mp4",
+];
+
 // Placeholder list — swap with real entries later. Order = display order;
 // the row number is rendered from `no`, not the array index, so reordering
 // or filtering doesn't renumber rows.
@@ -93,6 +98,28 @@ export default function Projects() {
               <span>BANDS · BLUR · STROKE</span>
             </figcaption>
           </figure>
+        </div>
+      </div>
+      <div className="projects__strip">
+        <div className="projects__strip-label">
+          <span>MILLING</span>
+          <span>CNC · SHOP FLOOR</span>
+        </div>
+        <div className="projects__milling">
+          {MILLING_VIDEOS.map((src) => (
+            <video
+              key={src}
+              className="projects__milling-clip"
+              src={src}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              disablePictureInPicture
+              aria-hidden="true"
+            />
+          ))}
         </div>
       </div>
       <ul className="projects__list">
