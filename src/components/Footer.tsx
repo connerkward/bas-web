@@ -29,22 +29,12 @@ export default function Footer() {
     <footer ref={ref} className="footer">
       <div className="footer__top">
         <div className="footer__col">
-          <div className="footer__label">CONTACT</div>
-          <a className="footer__line" href="mailto:hello@bas.studio">
-            HELLO@BAS.STUDIO
-          </a>
-          <div className="footer__line">+1 (000) 000—0000</div>
-        </div>
-        <div className="footer__col">
           <div className="footer__label">INDEX</div>
           <a className="footer__line" href="#projects">
             01 — PROJECTS
           </a>
           <a className="footer__line" href="#about">
             02 — ABOUT
-          </a>
-          <a className="footer__line" href="#contact">
-            03 — CONTACT
           </a>
         </div>
         <div className="footer__col">
@@ -57,19 +47,34 @@ export default function Footer() {
           >
             INSTAGRAM ↗
           </a>
-          <a className="footer__line" href="#">
+          <a
+            className="footer__line"
+            href="https://github.com/connerkward/bas"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             GITHUB ↗
           </a>
           <a className="footer__line" href="#">
             ARE.NA ↗
           </a>
         </div>
+        <div className="footer__col">
+          <div className="footer__label">TECHNOLOGIES</div>
+          <div className="footer__line">CNC</div>
+          <div className="footer__line">FUSION 360</div>
+          <div className="footer__line">SHOPBOT</div>
+          <div className="footer__line">TOUCH DESIGNER</div>
+          <div className="footer__line">BLENDER</div>
+          <div className="footer__line">PROJECTION MAPPING</div>
+          <div className="footer__line">STREAM DIFFUSION</div>
+        </div>
         <div className="footer__col footer__col--right">
           <div className="footer__label">LOCATION</div>
           <div className="footer__line">
             <TimeTicker />
           </div>
-          <div className="footer__line">40.689°N, 74.044°W</div>
+          <div className="footer__line">37.775°N, 122.419°W</div>
         </div>
       </div>
 

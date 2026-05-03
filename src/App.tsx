@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Logo from "./components/Logo";
 import TopNav from "./components/TopNav";
 import Hero from "./components/Hero";
+import Prefinal from "./components/Prefinal";
 import Projects from "./components/Projects";
 import Footer from "./components/Footer";
 import Grain from "./components/Grain";
@@ -30,6 +31,12 @@ function App() {
         <section className="page__section page__section--hero">
           <Hero dpr={dpr} />
           <Grain />
+        </section>
+        <section
+          id="prefinal"
+          className="page__section page__section--prefinal"
+        >
+          <Prefinal />
         </section>
         <section
           id="projects"

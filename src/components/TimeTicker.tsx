@@ -5,7 +5,7 @@ const FORMATTER = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
   second: "2-digit",
   hour12: false,
-  timeZone: "America/New_York",
+  timeZone: "America/Los_Angeles",
   timeZoneName: "short",
 });
 
@@ -14,7 +14,7 @@ function format() {
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
   const time = `${get("hour")}:${get("minute")}:${get("second")}`;
   const tz = get("timeZoneName");
-  return `BROOKLYN ${time} ${tz}`;
+  return `SAN FRANCISCO ${time} ${tz}`;
 }
 
 export default function TimeTicker() {

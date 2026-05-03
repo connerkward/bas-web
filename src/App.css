@@ -164,8 +164,26 @@ body.crosshair-cursor .hero {
   max-width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  /* Per-element margins below set the rhythm — meta sits tight above the
+     title (kicker pattern), title gets a wider gap to body, body→def
+     reads as a footnote separation reinforced by the def's border-top. */
+  gap: 0;
 }
+
+.prefinal__meta {
+  margin-bottom: 16px;
+}
+
+.prefinal__title {
+  margin-bottom: 32px;
+}
+
+.prefinal__body {
+  margin-bottom: 28px;
+}
+
+/* def is the last child — no trailing margin, the def's own padding-top
+   + border-top establishes the separation from body. */
 
 /* Reveal cascade — children fade up in sequence when .prefinal--in lands.
    Each stage stamps `--d` (delay in ms) so the order is encoded inline,
@@ -191,13 +209,14 @@ body.crosshair-cursor .hero {
 }
 
 .prefinal__title {
-  margin: 0;
   /* Sized so "IN MOTION." fits on a single line in the 400px copy column.
      At Mirano Extended Freebie italic + 1.05em bump, ~58px is the ceiling
      where the line still fits; tighter clamp prevents it from outgrowing
      the column on wide viewports and wrapping. */
   font-size: clamp(34px, 4.2vw, 58px);
-  line-height: 1;
+  /* 1.06 gives the two stacked title lines breathing room without reading
+     as a paragraph — display copy lives in the 1.0–1.1 range. */
+  line-height: 1.06;
   letter-spacing: 0;
   color: var(--footer-text);
 }
