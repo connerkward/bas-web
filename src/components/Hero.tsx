@@ -41,8 +41,18 @@ function useMousePresence() {
     const enter = () => {
       present.current = true;
     };
-    document.addEventListener("mouseleave", leave);
-    document.addEventListener("mouseenter", enter);
+    // `mouseout` with `relatedTarget === null` is the reliable "cursor
+    // left the document" signal across browsers — `mouseleave` on
+    // `document` is fired inconsistently. We bind on `documentElement`
+    // (html) so it fires when the cursor crosses the viewport boundary.
+    const onOut = (e: MouseEvent) => {
+      if (e.relatedTarget === null) leave();
+    };
+    const onOver = (e: MouseEvent) => {
+      if (e.relatedTarget === null) enter();
+    };
+    document.documentElement.addEventListener("mouseout", onOut);
+    document.documentElement.addEventListener("mouseover", onOver);
     window.addEventListener("blur", leave);
     window.addEventListener("focus", enter);
     // Touch presence: any active touch counts as "engaged."
@@ -56,8 +66,8 @@ function useMousePresence() {
     window.addEventListener("touchend", onTouchEnd, { passive: true });
     window.addEventListener("touchcancel", onTouchEnd, { passive: true });
     return () => {
-      document.removeEventListener("mouseleave", leave);
-      document.removeEventListener("mouseenter", enter);
+      document.documentElement.removeEventListener("mouseout", onOut);
+      document.documentElement.removeEventListener("mouseover", onOver);
       window.removeEventListener("blur", leave);
       window.removeEventListener("focus", enter);
       window.removeEventListener("touchstart", onTouchStart);
@@ -384,8 +394,8 @@ function flameOffset(t: number, seed: number) {
 // to the viewport diagonal at z=0. The actual distance attenuation comes
 // from the bezier LUT (see useFalloffPatch), so PointLight.decay no longer
 // matters — we leave it at 1.
-const DEFAULT_LIGHT_INTENSITY = 0.05;
-const DEFAULT_LIGHT_RADIUS_FRAC = 2.0;
+const DEFAULT_LIGHT_INTENSITY = 0.85;
+const DEFAULT_LIGHT_RADIUS_FRAC = 0.5;
 // Lock the torch to a lower band of the relief and let only horizontal cursor
 // motion move it. Y is in world units (visible vertical half-extent at z=0
 // is ~2.5 with CAMERA_Z=8, fov=35, so -1.5 sits about 60% down from center).
@@ -394,7 +404,7 @@ const LIGHT_LOCK_Y = -1.5;
 // self-shadows on relief bumps via Lambert (N·L approaches 0 for normals
 // not facing the light). 0.7 was perpendicular and washed out detail; 0.25
 // puts the light just above the deepest peaks for raking light.
-const DEFAULT_LIGHT_HEIGHT = 0.25;
+const DEFAULT_LIGHT_HEIGHT = 0.34;
 
 const INTRO_DURATION = 1.8; // seconds
 
@@ -416,12 +426,17 @@ type LightControls = {
   // Subtle warm uplight from a thin bar along the bottom of the relief plane.
   // Grazing angle picks up surface bumps, adding contrast/shadow detail.
   bottomBar: boolean;
-  bottomBarIntensity: number;
+  // Bar intensity when the cursor is OUT of the window (torch dark) — bar
+  // brightens to keep the relief readable.
+  bottomBarOut: number;
+  // Bar intensity when the cursor is IN the window (torch lit) — bar dims
+  // since the torch is carrying primary lighting.
+  bottomBarIn: number;
   // Custom thin-cross mouse pointer (replaces the system cursor everywhere).
   crosshair: boolean;
-  // null = follow the OS prefers-color-scheme setting; "light" / "dark" =
-  // override and force that palette regardless of OS.
-  forcedScheme: "light" | "dark" | null;
+  // Debug: drop mix-blend-mode on the top bar and modulate text grayscale
+  // white→black as the torch approaches (older "approach turns black" feel).
+  headerClassic: boolean;
 };
 
 // Single warm color shared by every light in the scene (torch + uplight bar).
@@ -434,30 +449,51 @@ const BOTTOM_BAR_WIDTH = 7;
 const BOTTOM_BAR_HEIGHT = 0.4;
 const BOTTOM_BAR_POS: [number, number, number] = [0, -2.4, 0.5];
 
-function BottomBarLight({ intensity }: { intensity: number }) {
+// Linear time-based presence ramp (seconds). Fade-out is the user-tuned
+// 2-second handoff from torch → bar; fade-in stays snappy so re-entering
+// the window doesn't feel laggy.
+const PRESENCE_FADE_OUT_SEC = 2.0;
+const PRESENCE_FADE_IN_SEC = 0.4;
+
+// Step `current` linearly toward `target` by at most `dt / duration`.
+function rampTo(current: number, target: number, dt: number, duration: number) {
+  const step = dt / duration;
+  if (target > current) return Math.min(target, current + step);
+  return Math.max(target, current - step);
+}
+
+function BottomBarLight({
+  outIntensity,
+  inIntensity,
+}: {
+  outIntensity: number;
+  inIntensity: number;
+}) {
   const lightRef = useRef<THREE.RectAreaLight>(null);
   const intro = useIntroProgress();
   const present = useMousePresence();
   const presence = useRef(INITIAL_PRESENT ? 1 : 0);
 
-  // Same intro / flicker envelope as the torch so both feel driven by the
-  // same fire. Unlike the torch, the bar keeps a low ember glow when the
-  // cursor leaves the window so the relief never goes fully black.
-  useFrame((state) => {
+  // Same intro / flicker envelope as the torch. Inverse-presence: the bar
+  // brightens when the torch fades out, so the relief never goes fully
+  // dark when the cursor leaves.
+  //
+  // mouse out (presence=0) → bar = outIntensity (baseline, brighter)
+  // mouse in  (presence=1) → bar = inIntensity (dimmer; torch carries the scene)
+  useFrame((state, delta) => {
     if (!lightRef.current) return;
     const t = state.clock.elapsedTime;
     const presenceTarget = present.current ? 1 : 0;
-    const presenceRate =
-      presenceTarget > presence.current ? 0.07 : 0.025;
-    presence.current +=
-      (presenceTarget - presence.current) * presenceRate;
-    const BAR_MIN_PRESENCE = 0.9;
-    const effectivePresence =
-      BAR_MIN_PRESENCE + (1 - BAR_MIN_PRESENCE) * presence.current;
+    const dur =
+      presenceTarget > presence.current
+        ? PRESENCE_FADE_IN_SEC
+        : PRESENCE_FADE_OUT_SEC;
+    presence.current = rampTo(presence.current, presenceTarget, delta, dur);
+    const base =
+      outIntensity + (inIntensity - outIntensity) * presence.current;
     const introT = intro(t);
     const flicker = 1 + flameFlicker(t);
-    lightRef.current.intensity =
-      intensity * introT * flicker * effectivePresence;
+    lightRef.current.intensity = base * introT * flicker;
   });
 
   // Rotate +90° around X so the rect's emission axis (local -Z) points to
@@ -489,7 +525,7 @@ function MouseLight({ controls }: { controls: LightControls }) {
   const present = useMousePresence();
   const presence = useRef(INITIAL_PRESENT ? 1 : 0);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     // r3f's state.pointer reflects mouse pointer events AND touch events
     // (touch devices fire pointermove during finger drag), so the same
     // NDC source feeds both desktop hover and mobile drag.
@@ -533,16 +569,16 @@ function MouseLight({ controls }: { controls: LightControls }) {
       lightRef.current.position.lerp(target.current, 0.18);
     }
     if (lightRef.current) {
-      // Asymmetric presence lerp: comes up quickly when the cursor enters
-      // the window, fades out slowly when it leaves so the room "settles
-      // into the dark" instead of blinking off. On touch, present.current
-      // is true while a finger is down and false on lift, so the same lerp
-      // gives the torch a "lift to dim" behavior.
+      // Linear time-based presence ramp: snappy fade-in on entry, exact
+      // 2-second fade-out when the cursor leaves so the torch hands off
+      // smoothly to the brightening footlight bar. On touch, present is
+      // true while a finger is down → same ramp gives "lift to dim".
       const presenceTarget = present.current ? 1 : 0;
-      const presenceRate =
-        presenceTarget > presence.current ? 0.07 : 0.025;
-      presence.current +=
-        (presenceTarget - presence.current) * presenceRate;
+      const dur =
+        presenceTarget > presence.current
+          ? PRESENCE_FADE_IN_SEC
+          : PRESENCE_FADE_OUT_SEC;
+      presence.current = rampTo(presence.current, presenceTarget, delta, dur);
 
       const introT = intro(state.clock.elapsedTime);
       const flicker = 1 + flameFlicker(state.clock.elapsedTime);
@@ -1021,16 +1057,28 @@ function DebugMenu({
         bottom uplight bar
       </label>
       {controls.bottomBar && (
-        <Slider
-          label="bar intensity"
-          min={0}
-          max={4}
-          step={0.05}
-          value={controls.bottomBarIntensity}
-          onChange={(v) =>
-            onControlsChange({ ...controls, bottomBarIntensity: v })
-          }
-        />
+        <>
+          <Slider
+            label="bar intensity (mouse out)"
+            min={0}
+            max={4}
+            step={0.05}
+            value={controls.bottomBarOut}
+            onChange={(v) =>
+              onControlsChange({ ...controls, bottomBarOut: v })
+            }
+          />
+          <Slider
+            label="bar intensity (mouse in)"
+            min={0}
+            max={4}
+            step={0.05}
+            value={controls.bottomBarIn}
+            onChange={(v) =>
+              onControlsChange({ ...controls, bottomBarIn: v })
+            }
+          />
+        </>
       )}
       <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <input
@@ -1042,6 +1090,17 @@ function DebugMenu({
           style={{ accentColor: "#c9a36a" }}
         />
         thin-cross cursor
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <input
+          type="checkbox"
+          checked={controls.headerClassic}
+          onChange={(e) =>
+            onControlsChange({ ...controls, headerClassic: e.target.checked })
+          }
+          style={{ accentColor: "#c9a36a" }}
+        />
+        header classic (approach → black)
       </label>
 
       {/* Stone material — color picker, roughness slider, preset shortcuts. */}
@@ -1129,41 +1188,6 @@ function DebugMenu({
           ))}
         </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <span style={{ opacity: 0.7 }}>footer scheme</span>
-        <div style={{ display: "flex", gap: 4 }}>
-          {(["auto", "light", "dark"] as const).map((opt) => {
-            const value = opt === "auto" ? null : opt;
-            const active = controls.forcedScheme === value;
-            return (
-              <button
-                key={opt}
-                onClick={() =>
-                  onControlsChange({ ...controls, forcedScheme: value })
-                }
-                style={{
-                  flex: 1,
-                  padding: "3px 6px",
-                  background: active
-                    ? "rgba(255,255,255,0.1)"
-                    : "transparent",
-                  border: active
-                    ? "1px solid rgba(255,255,255,0.3)"
-                    : "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 3,
-                  color: "inherit",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  fontSize: "inherit",
-                  textTransform: "lowercase",
-                }}
-              >
-                {opt}
-              </button>
-            );
-          })}
-        </div>
-      </div>
       <button
         onClick={onResetLight}
         style={{
@@ -1191,9 +1215,10 @@ const DEFAULT_LIGHT_CONTROLS: LightControls = {
   lockY: false,
   height: DEFAULT_LIGHT_HEIGHT,
   bottomBar: true,
-  bottomBarIntensity: 0.5,
+  bottomBarOut: 0.6,
+  bottomBarIn: 0.2,
   crosshair: false,
-  forcedScheme: null,
+  headerClassic: false,
 };
 
 export default function Hero({ dpr }: HeroProps) {
@@ -1212,18 +1237,19 @@ export default function Hero({ dpr }: HeroProps) {
   // EffectComposer passes when the user can't see the canvas.
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(true);
-  // Pause render while the user is actively scrolling. Even though the
-  // hero stays visible during the snap transition, redrawing the WebGL
-  // scene + EffectComposer at 60fps competes with scroll for the main
-  // thread. Pausing both during scroll frees the compositor.
-  const [scrolling, setScrolling] = useState(false);
   useEffect(() => {
     const node = wrapperRef.current;
     if (!node) return;
     const root = document.querySelector(".page");
+    // Pre-warm: rootMargin "100%" expands the root bounds by one full
+    // viewport on top + bottom, so hero is treated as "intersecting" while
+    // it's still one section away. Canvas wakes before the user can see
+    // hero, so by the snap arrival the render loop is already fluid — no
+    // first-frame catch-up flicker. Pauses only when hero is 2+ sections
+    // away (e.g., user is at footer with projects between).
     const io = new IntersectionObserver(
       ([entry]) => setActive(entry.isIntersecting),
-      { threshold: 0.02, root },
+      { threshold: 0, rootMargin: "100% 0px", root },
     );
     io.observe(node);
 
@@ -1233,32 +1259,9 @@ export default function Hero({ dpr }: HeroProps) {
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    // Scroll-pause: ref tracks the live state to avoid setState on every
-    // scroll event; we only re-render on the false→true and true→false
-    // transitions. Body data-attr lets CSS pause grain in parallel.
-    const isScrollingRef = { current: false };
-    let scrollTimer: ReturnType<typeof setTimeout> | undefined;
-    const onScroll = () => {
-      if (!isScrollingRef.current) {
-        isScrollingRef.current = true;
-        document.body.dataset.scrolling = "true";
-        setScrolling(true);
-      }
-      clearTimeout(scrollTimer);
-      scrollTimer = setTimeout(() => {
-        isScrollingRef.current = false;
-        delete document.body.dataset.scrolling;
-        setScrolling(false);
-      }, 180);
-    };
-    root?.addEventListener("scroll", onScroll, { passive: true });
-
     return () => {
       io.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
-      root?.removeEventListener("scroll", onScroll);
-      clearTimeout(scrollTimer);
-      delete document.body.dataset.scrolling;
     };
   }, []);
 
@@ -1270,18 +1273,18 @@ export default function Hero({ dpr }: HeroProps) {
     return () => document.body.classList.remove(cls);
   }, [lightControls.crosshair]);
 
-  // Force a footer color scheme via data-scheme on <html>. CSS reads the
-  // attribute and overrides the prefers-color-scheme media query. null
-  // (auto) clears the attribute and lets the OS preference take over.
+  // Classic header mode: drop mix-blend-mode and let useTopBarColor write
+  // grayscale text. Body class drives CSS; lightProbe flag drives the hook.
   useEffect(() => {
-    const root = document.documentElement;
-    if (lightControls.forcedScheme) {
-      root.setAttribute("data-scheme", lightControls.forcedScheme);
-    } else {
-      root.removeAttribute("data-scheme");
-    }
-    return () => root.removeAttribute("data-scheme");
-  }, [lightControls.forcedScheme]);
+    const cls = "topbar-classic";
+    lightProbe.headerClassic = lightControls.headerClassic;
+    if (lightControls.headerClassic) document.body.classList.add(cls);
+    else document.body.classList.remove(cls);
+    return () => {
+      lightProbe.headerClassic = false;
+      document.body.classList.remove(cls);
+    };
+  }, [lightControls.headerClassic]);
 
   return (
     <div ref={wrapperRef} className="hero">
@@ -1289,13 +1292,16 @@ export default function Hero({ dpr }: HeroProps) {
         camera={{ position: [0, 0, CAMERA_Z], fov: 35 }}
         dpr={dpr}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
-        frameloop={active && !scrolling ? "always" : "never"}
+        frameloop={active ? "always" : "never"}
       >
         <color attach="background" args={["#0a0a0a"]} />
         <ambientLight intensity={0} />
         <MouseLight controls={lightControls} />
         {lightControls.bottomBar && (
-          <BottomBarLight intensity={lightControls.bottomBarIntensity} />
+          <BottomBarLight
+            outIntensity={lightControls.bottomBarOut}
+            inIntensity={lightControls.bottomBarIn}
+          />
         )}
         <CameraRig />
         <Backdrop

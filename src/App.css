@@ -6,9 +6,8 @@
      where a single warm tone reads better than monochrome. */
   --warm-cream: #d4ad6f;
 
-  /* Footer palette — defaults are the dark scheme. Light scheme overrides
-     below via prefers-color-scheme. Only the footer reads these; the hero
-     stays dark either way (the canvas + grain are tuned for black bg). */
+  /* Footer palette — single dark scheme. Site is monochrome white-on-black
+     across all sections; no light-mode handling. */
   --footer-bg: #0a0a0a;
   --footer-text: #ededed;
   --footer-text-2: #d6d6d6;
@@ -17,44 +16,6 @@
   --footer-display: #f4f4f4;
   --footer-hover: #ffffff;
   --footer-rule: #2a2a2a;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --footer-bg: #f1ece2;
-    --footer-text: #1c1c1c;
-    --footer-text-2: #2a2a2a;
-    --footer-text-3: #383838;
-    --footer-label: #8a8478;
-    --footer-display: #0d0d0d;
-    --footer-hover: #000000;
-    --footer-rule: #d4cfc2;
-  }
-}
-
-/* Debug menu can force a scheme via data-scheme on <html>, overriding the
-   media query. data-scheme="dark" restores the dark palette even on a
-   light-mode OS; data-scheme="light" applies the light palette regardless. */
-:root[data-scheme="dark"] {
-  --footer-bg: #0a0a0a;
-  --footer-text: #ededed;
-  --footer-text-2: #d6d6d6;
-  --footer-text-3: #cfcfcf;
-  --footer-label: #6a6a6a;
-  --footer-display: #f4f4f4;
-  --footer-hover: #ffffff;
-  --footer-rule: #2a2a2a;
-}
-
-:root[data-scheme="light"] {
-  --footer-bg: #f1ece2;
-  --footer-text: #1c1c1c;
-  --footer-text-2: #2a2a2a;
-  --footer-text-3: #383838;
-  --footer-label: #8a8478;
-  --footer-display: #0d0d0d;
-  --footer-hover: #000000;
-  --footer-rule: #d4cfc2;
 }
 
 /* Thin sharp white cross cursor, scoped to the 3D hero canvas only — DOM
@@ -112,6 +73,12 @@ body.crosshair-cursor .hero {
 
 .page__section--footer {
   background: var(--footer-bg);
+  /* Opt out of content-visibility for the footer: with `contain: paint`
+     implied, Safari paints the placeholder-sized box for one frame as the
+     section enters view, clipping BAS at the top until the actual layout
+     settles. Footer is text-only so always-render is essentially free. */
+  content-visibility: visible;
+  contain-intrinsic-size: none;
 }
 
 /* ----- Projects -------------------------------------------------------- */
@@ -290,7 +257,6 @@ body.crosshair-cursor .hero {
   cursor: pointer;
   color: var(--topbar-color, #ffffff);
   mix-blend-mode: difference;
-  isolation: isolate;
 }
 
 /* Gradual weight via 4-stamped text-shadow whose color alpha animates from
@@ -302,7 +268,14 @@ body.crosshair-cursor .hero {
   font-size: 28px;
   letter-spacing: 0.02em;
   color: inherit;
-  line-height: 1;
+  /* Safari clips the IntraNet ascender to the line-box (made worse by
+     `mix-blend-mode: difference` promoting .logo to its own compositor
+     layer). Generous line-height + matching padding/margin gives the box
+     vertical headroom for the glyph without changing visual position. */
+  line-height: 1.3;
+  padding-top: 0.3em;
+  margin-top: -0.3em;
+  margin-bottom: -0.18em;
   text-shadow:
     0.7px 0 0 transparent,
     -0.7px 0 0 transparent,
@@ -358,7 +331,6 @@ body.crosshair-cursor .hero {
   gap: 28px;
   color: var(--topbar-color, #ffffff);
   mix-blend-mode: difference;
-  isolation: isolate;
 }
 
 .topnav__link {
@@ -389,6 +361,19 @@ body.crosshair-cursor .hero {
     -0.32px 0 0 currentColor,
     0 0.32px 0 currentColor,
     0 -0.32px 0 currentColor;
+}
+
+/* Classic header mode (debug toggle): drop mix-blend-mode so the hook's
+   grayscale modulation (white→black as torch approaches) shows through
+   directly, plus apply -webkit-text-stroke for the subtle weight gain. */
+body.topbar-classic .logo,
+body.topbar-classic .topnav {
+  mix-blend-mode: normal;
+}
+body.topbar-classic .logo__bas,
+body.topbar-classic .logo__studio,
+body.topbar-classic .topnav__link {
+  -webkit-text-stroke: var(--topbar-stroke, 0px) currentColor;
 }
 
 
@@ -471,21 +456,32 @@ a.footer__line:hover {
      occupy ~2.83em total width. Dividing by 2.85 leaves a hairline of
      slack and lets BAS reach essentially edge to edge. */
   font-size: calc((100vw - 64px) / 2.85);
-  line-height: 0.82;
+  /* IntraNet's font metrics under-report its actual ascender height. Safari
+     is strict about clipping glyphs to the line-box. At footer scale (huge
+     font-size) the absolute pixel overflow is large too, so headroom must
+     scale generously. */
+  line-height: 1.4;
+  padding-top: 0.6em;
+  margin-top: -0.6em;
   letter-spacing: -0.01em;
   color: var(--footer-display);
   user-select: none;
-  margin-bottom: -0.06em;
+  margin-bottom: -0.18em;
   display: flex;
   gap: 0.02em;
   min-width: 0;
+  /* Last-resort: explicitly let glyph paint extend outside the box.
+     content-visibility on the section enables `contain: paint` which can
+     clip painted overflow; this lets the letters render past it. */
+  overflow: visible;
 }
 
 .footer__bas-letter {
-  display: inline-block;
+  /* Opacity-only intro — no transform. Safari promotes any transformed
+     element to a compositor layer sized to the box bounds, and clips
+     glyph ascenders that extend outside it. Plain opacity transition
+     stays on the main paint pipeline so glyph overflow renders normally. */
   opacity: 0;
-  transform: translateY(0.35em);
-  will-change: transform, opacity;
 }
 
 .footer__bas--in .footer__bas-letter {
@@ -493,14 +489,8 @@ a.footer__line:hover {
 }
 
 @keyframes bas-letter-rise {
-  from {
-    opacity: 0;
-    transform: translateY(0.35em);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -555,11 +545,11 @@ a.footer__line:hover {
     gap: 16px;
   }
   .footer__bas {
-    /* Maximize: 3.15 divisor (matches narrow rule, accounts for IntraNet's
-       letterform overshoot) and a tight 240px reservation (64 padding +
-       16 gap + 160 meta). meta uses min-content so it stays as narrow
-       as its longest row needs. */
-    font-size: calc((100vw - 240px) / 3.15);
+    /* Maximize: 2.85 divisor (real IntraNet 3-letter+gap width is ~2.83em,
+       so 2.85 leaves a hairline of slack and lets BAS reach edge to
+       meta-column-start). Reservation 220 (64 padding + 16 gap + 140
+       longest meta row "BROOKLYN HH:MM:SS EDT"). */
+    font-size: calc((100vw - 220px) / 2.85);
   }
   .footer__meta {
     display: flex;
@@ -632,9 +622,9 @@ a.footer__line:hover {
     gap: 16px;
   }
   .footer__bas {
-    /* Slightly looser line-height when stacked vertically so the descender
-       below the wordmark doesn't kiss the meta block. */
-    line-height: 0.85;
+    /* Glyph extends past line-box at tight line-heights, clipping the
+       letter tops. 1.0 keeps the full em-square so the B/A/S have room. */
+    line-height: 1;
   }
   .footer__meta {
     align-items: flex-start;
@@ -644,13 +634,6 @@ a.footer__line:hover {
   }
   .footer__meta-row {
     text-align: left;
-  }
-  /* Icons collapse from 1×N row → 2-column grid in narrow stacked mode.
-     Five total marks, so they stack as 2 + 2 + 1. */
-  .footer__meta-row--icons {
-    display: grid;
-    grid-template-columns: repeat(2, max-content);
-    gap: 6px 14px;
   }
 }
 
@@ -782,13 +765,6 @@ a.footer__line:hover {
   .grain { animation: none; }
 }
 
-/* Pause the stepped grain transform during active scroll. The grain itself
-   uses mix-blend-mode: overlay, which forces a full-page composite per
-   animation tick; pausing it frees the compositor for the scroll motion.
-   Hero.tsx toggles body[data-scrolling] from a debounced scroll listener. */
-body[data-scrolling] .grain {
-  animation-play-state: paused;
-}
 
 /* ----- Cinematic intro fade-in ----------------------------------------- */
 

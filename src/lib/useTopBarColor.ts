@@ -58,12 +58,14 @@ export function useTopBarColor<T extends HTMLElement>() {
       const el = ref.current;
       if (!el) return;
 
+      const classic = lightProbe.headerClassic;
+
       // Fast-path: nothing to do if the light is off and our text already
-      // settled at white.
+      // settled at the right resting state.
       if (
         lightProbe.intensity < STABLE_EPS &&
         state.current < STABLE_EPS &&
-        state.lastWritten === 0
+        state.lastWritten === (classic ? 2 : 1)
       ) {
         return;
       }
@@ -82,14 +84,26 @@ export function useTopBarColor<T extends HTMLElement>() {
       );
       state.current += (target - state.current) * LERP;
 
-      // Text color stays white — let mix-blend-mode: difference do all the
-      // chromatic work. No warm-cream lerp, no per-channel matching tricks.
-      // The "difference effect" intensifies naturally as the lit bg gets
-      // brighter and pulls the inverted text further from white. Stroke
-      // still scales below to add the subtle weight gain we want.
-      if (state.lastWritten !== 1) {
-        state.lastWritten = 1;
-        el.style.setProperty("--topbar-color", "rgb(255, 255, 255)");
+      if (classic) {
+        // Direct grayscale modulation: text fades white → black as the
+        // torch approaches. No blend mode involved — CSS drops
+        // mix-blend-mode when body has .topbar-classic. Stroke weight
+        // scales subtly with lit factor so glyphs gain a hair of mass.
+        const v = Math.round((1 - state.current) * 255);
+        el.style.setProperty("--topbar-color", `rgb(${v}, ${v}, ${v})`);
+        el.style.setProperty(
+          "--topbar-stroke",
+          `${(state.current * 0.5).toFixed(2)}px`,
+        );
+        state.lastWritten = 2;
+      } else {
+        // Default: text stays white — mix-blend-mode: difference does the
+        // chromatic work, intensifying as the lit bg gets brighter.
+        if (state.lastWritten !== 1) {
+          state.lastWritten = 1;
+          el.style.setProperty("--topbar-color", "rgb(255, 255, 255)");
+          el.style.setProperty("--topbar-stroke", "0px");
+        }
       }
     };
 

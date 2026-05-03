@@ -12,6 +12,9 @@ export const lightProbe = {
   // 0..1, already includes scroll dim, intro fade, presence, and flame
   // flicker. Hero writes this each frame.
   intensity: 0,
+  // Debug: when true, the top bar drops mix-blend-mode and instead
+  // grayscale-modulates text white→black as light approaches (older style).
+  headerClassic: false,
 };
 
 let attached = false;

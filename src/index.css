@@ -1,7 +1,12 @@
 @font-face {
   font-family: "IntraNet";
-  /* Subsetted to BASTUDIO + space, woff2-encoded — ~1KB total. */
-  src: url("/fonts/IntraNet.woff2") format("woff2");
+  /* Subsetted to BASTUDIO + space, woff2-encoded — ~1KB total. OTF is the
+     Safari fallback: WOFF2 with CFF (PostScript) outlines has had
+     intermittent glyph-clipping bugs in WebKit; if the woff2 fails or
+     renders wrong, browsers fall through to the OTF source. */
+  src:
+    url("/fonts/IntraNet.woff2") format("woff2"),
+    url("/fonts/IntraNet.otf") format("opentype");
   font-display: swap;
   unicode-range: U+0020, U+0041-005A;
 }
