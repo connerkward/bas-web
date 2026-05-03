@@ -39,7 +39,7 @@ body.crosshair-cursor .hero {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  scroll-snap-type: y proximity;
+  scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
@@ -170,16 +170,15 @@ body.crosshair-cursor .hero {
   gap: 0;
 }
 
-.prefinal__meta {
-  margin-bottom: 16px;
-}
-
+/* Per-child rhythm — copy container uses gap:0 so each child owns its
+   bottom margin. Tight kicker → wider title → footnote-style def. */
 .prefinal__title {
-  margin-bottom: 32px;
+  margin-top: 0;
+  margin-bottom: 28px;
 }
 
 .prefinal__body {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 /* def is the last child — no trailing margin, the def's own padding-top
@@ -251,20 +250,28 @@ body.crosshair-cursor .hero {
   font-size: 1.05em;
 }
 
-/* Show metadata above the title — venue + date in the same small-caps
-   label style as the projects strip labels. Slim spacing so it reads as
-   a credit line, not a primary copy block. */
+/* Kicker block above the title — `INSTALLED` label, then the venue/date
+   detail line. Stacked as a column with a tight 4px gap so the two lines
+   read as one credit unit, separated from the title by a clear 18px
+   gap. The label and detail rendered in different colors so the eye
+   parses the hierarchy without reading both lines first. */
 .prefinal__meta {
-  margin: 0;
+  margin: 0 0 18px;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 10px;
+  line-height: 1.35;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--footer-label);
+}
+
+.prefinal__meta-label,
+.prefinal__meta-detail {
+  display: block;
 }
 
 .prefinal__meta-label {
@@ -615,6 +622,46 @@ body.crosshair-cursor .hero {
   color: var(--footer-text);
 }
 
+/* --- 05: pair (two portraits side-by-side, blurb beneath) ----------- */
+
+.step--pair .step__body {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  justify-content: center;
+}
+
+.step__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+  justify-items: center;
+}
+
+.step__pair-cell {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 100%;
+}
+
+.step__pair-cell .step__portrait video,
+.step__pair-cell .step__portrait img {
+  height: 60vh;
+  max-height: 640px;
+}
+
+.step__pair-cell figcaption {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
 /* --- 04: left-media (portrait video left, text right) --------------- */
 
 .step--left-media .step__body {
@@ -737,6 +784,13 @@ body.crosshair-cursor .hero {
   .step__triptych-cell .step__portrait video {
     height: 44vh;
   }
+  .step__pair {
+    gap: 16px;
+  }
+  .step__pair-cell .step__portrait video,
+  .step__pair-cell .step__portrait img {
+    height: 48vh;
+  }
 }
 
 @media (max-width: 720px) {
@@ -762,6 +816,14 @@ body.crosshair-cursor .hero {
   .step--diptych .step__triptych {
     grid-template-columns: 1fr;
     gap: 24px;
+  }
+  .step--pair .step__pair {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .step__pair-cell .step__portrait video,
+  .step__pair-cell .step__portrait img {
+    height: 56vh;
   }
   .step__portrait video,
   .step__portrait img {

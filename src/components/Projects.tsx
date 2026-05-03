@@ -193,10 +193,56 @@ function StepController() {
   );
 }
 
+function StepLook() {
+  return (
+    <section className="step step--pair" data-step="05">
+      <StepHead
+        no="05"
+        title="LOOK"
+        tech="DAVINCI RESOLVE · GRADE"
+        date="2025–2026"
+      />
+      <div className="step__body">
+        <div className="step__pair">
+          <figure className="step__pair-cell">
+            <div className="step__portrait">
+              <img
+                src="/experiments/davinci-grade.png"
+                alt=""
+                loading="lazy"
+                decoding="async"
+                draggable={false}
+              />
+            </div>
+            <figcaption>
+              <span className="step__cap-label">FRAME</span>
+              <span className="step__cap-value">Look study · still</span>
+            </figcaption>
+          </figure>
+          <figure className="step__pair-cell">
+            <div className="step__portrait">
+              <Clip src="/videos/look-grade.mp4" />
+            </div>
+            <figcaption>
+              <span className="step__cap-label">LOOP</span>
+              <span className="step__cap-value">Iterations · v1</span>
+            </figcaption>
+          </figure>
+        </div>
+        <p className="step__blurb step__blurb--centered">
+          Iterating the look in DaVinci Resolve — pushing contrast, crushing
+          midtones, and tuning chroma until the depth-mapped figure read
+          cleanly off the milled relief at gallery throw distance.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function StepInstallation() {
   return (
-    <section className="step step--finale" data-step="05">
-      <StepHead no="05" title="INSTALLATION" tech="GALLERY" date="2026" />
+    <section className="step step--finale" data-step="06">
+      <StepHead no="06" title="INSTALLATION" tech="GALLERY" date="2026" />
       <div className="step__body">
         <h3 className="step__display step__display--finale">
           A runner, held in relief.
@@ -239,6 +285,7 @@ export default function Projects() {
       <StepMold />
       <StepFabrication />
       <StepController />
+      <StepLook />
       <StepInstallation />
     </div>
   );
