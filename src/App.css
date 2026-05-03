@@ -174,20 +174,6 @@ body.crosshair-cursor .hero {
   gap: 0;
 }
 
-/* Per-child rhythm — copy container uses gap:0 so each child owns its
-   bottom margin. Tight kicker → wider title → footnote-style def. */
-.prefinal__title {
-  margin-top: 0;
-  margin-bottom: 28px;
-}
-
-.prefinal__body {
-  margin-bottom: 24px;
-}
-
-/* def is the last child — no trailing margin, the def's own padding-top
-   + border-top establishes the separation from body. */
-
 /* Reveal cascade — children fade up in sequence when .prefinal--in lands.
    Each stage stamps `--d` (delay in ms) so the order is encoded inline,
    and the timing reads as a natural beat: meta, line 1, line 2, body, def. */
@@ -212,14 +198,16 @@ body.crosshair-cursor .hero {
 }
 
 .prefinal__title {
+  /* 40px gap to body — clear hierarchy break, on the 8pt grid. */
+  margin: 0 0 40px;
   /* Sized so "IN MOTION." fits on a single line in the 400px copy column.
-     At Mirano Extended Freebie italic + 1.05em bump, ~58px is the ceiling
-     where the line still fits; tighter clamp prevents it from outgrowing
-     the column on wide viewports and wrapping. */
+     At Mirano Extended italic + 1.05em bump, ~58px is the ceiling where
+     the line still fits; tighter clamp prevents wrapping on wide vps. */
   font-size: clamp(34px, 4.2vw, 58px);
-  /* 1.06 gives the two stacked title lines breathing room without reading
-     as a paragraph — display copy lives in the 1.0–1.1 range. */
-  line-height: 1.06;
+  /* 1.08 gives the two stacked title lines breathing room without reading
+     as a paragraph — display copy lives in the 1.0–1.1 range and 1.06 had
+     the bulb-tops of "STUDY" kissing the descenders of "IN MOTION." */
+  line-height: 1.08;
   letter-spacing: 0;
   color: var(--footer-text);
 }
@@ -254,13 +242,11 @@ body.crosshair-cursor .hero {
   font-size: 1.05em;
 }
 
-/* Kicker block above the title — `INSTALLED` label, then the venue/date
-   detail line. Stacked as a column with a tight 4px gap so the two lines
-   read as one credit unit, separated from the title by a clear 18px
-   gap. The label and detail rendered in different colors so the eye
-   parses the hierarchy without reading both lines first. */
+/* Kicker block above the title — INSTALLED label + venue/date detail.
+   Stacked column with a tight 4px gap so the two credit lines read as
+   one unit; 24px to the title below. */
 .prefinal__meta {
-  margin: 0 0 18px;
+  margin: 0 0 24px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -287,7 +273,9 @@ body.crosshair-cursor .hero {
 }
 
 .prefinal__body {
-  margin: 0;
+  /* 32px gap to def below — paragraph break wider than the kicker→title
+     16/24 transition since this is the body→footnote stride change. */
+  margin: 0 0 32px;
   font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 13px;
   line-height: 1.65;
@@ -298,7 +286,11 @@ body.crosshair-cursor .hero {
 
 .prefinal__def {
   margin: 0;
-  padding-top: 16px;
+  /* Rule + 20px breathing space below before the term/text — was 16px
+     and felt cramped against the rule line. Total body→def-text spacing
+     is body's 32 + 20 + 1 (rule) = 53px which reads as a deliberate
+     footnote break. */
+  padding-top: 20px;
   border-top: 1px solid var(--footer-rule);
   font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
@@ -308,7 +300,9 @@ body.crosshair-cursor .hero {
   max-width: 56ch;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  /* 8px between the term-head and the descriptive text — was 6 and felt
+     muddled, 10 felt loose; 8 reads as deliberate at this scale. */
+  gap: 8px;
 }
 
 .prefinal__def-head {
@@ -553,11 +547,27 @@ body.crosshair-cursor .hero {
   gap: 56px;
 }
 
+/* Break out of the .step horizontal padding so the image can go edge
+   to edge on tall screens. `.page` has overflow-x: hidden so 100vw
+   won't cause a horizontal scrollbar. The flex centering kicks in once
+   `max-height: 60vh` clamps the image at wide aspect ratios — at that
+   point the banner stops being edge-to-edge and leaves vertical room
+   for the title + blurb beneath to share the viewport. */
+.step__media-wide {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  max-width: none;
+  display: flex;
+  justify-content: center;
+}
+
 .step__media-wide img {
   display: block;
-  width: 100%;
-  max-height: 56vh;
-  object-fit: contain;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 60vh;
   -webkit-user-drag: none;
   user-select: none;
   pointer-events: none;
