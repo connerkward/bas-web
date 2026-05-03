@@ -391,10 +391,6 @@ body.crosshair-cursor .hero {
   /* Blend lives on .topbar — see note there. */
 }
 
-/* Gradual weight via 4-stamped text-shadow whose color alpha animates from
-   transparent → currentColor over 2s. Alpha interpolation is perfectly
-   smooth on every browser/font (no font-weight discreteness, no stroke
-   pixel-snapping). The shadow offsets are fixed; only the color transitions. */
 .logo__bas {
   font-family: "IntraNet", "Source Code Pro", ui-monospace, monospace;
   font-size: 28px;
@@ -408,14 +404,14 @@ body.crosshair-cursor .hero {
   padding-top: 0.3em;
   margin-top: -0.3em;
   margin-bottom: -0.18em;
-  text-shadow:
-    0.7px 0 0 transparent,
-    -0.7px 0 0 transparent,
-    0 0.7px 0 transparent,
-    0 -0.7px 0 transparent;
-  transition: text-shadow 2000ms cubic-bezier(0.4, 0, 0.6, 1);
+  /* No hover-weight animation: IntraNet (CFF outlines) flickers with
+     interpolated text-shadow stamps, so BAS stays a fixed weight. STUDIO
+     and the nav links carry the hover feedback for the whole row. */
 }
 
+/* Gradual weight via 4-stamped text-shadow whose color alpha animates from
+   transparent → currentColor on hover. Alpha interpolation is perfectly
+   smooth (no font-weight discreteness, no stroke pixel-snapping). */
 .logo__studio {
   font-family: "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
@@ -430,17 +426,10 @@ body.crosshair-cursor .hero {
     -0.4px 0 0 transparent,
     0 0.4px 0 transparent,
     0 -0.4px 0 transparent;
-  transition: text-shadow 2000ms cubic-bezier(0.4, 0, 0.6, 1);
+  transition: text-shadow 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-.logo:hover .logo__bas {
-  text-shadow:
-    0.5px 0 0 currentColor,
-    -0.5px 0 0 currentColor,
-    0 0.5px 0 currentColor,
-    0 -0.5px 0 currentColor;
-}
-
+/* Hover anywhere on the .logo (BAS or STUDIO) bumps STUDIO's weight. */
 .logo:hover .logo__studio {
   text-shadow:
     0.32px 0 0 currentColor,
