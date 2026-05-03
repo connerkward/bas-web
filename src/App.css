@@ -1217,6 +1217,14 @@ body.topbar-classic.in-hero .topnav__link {
   -webkit-text-stroke: var(--topbar-stroke, 0px) currentColor;
 }
 
+/* Tint past hero: once the hero scrolls offscreen, override the topbar
+   color token with the user-picked tint. Scoped to :not(.in-hero) so the
+   hero's own colorway (white wordmark, optional difference blend, classic
+   approach-to-black) is left untouched. */
+body.topbar-tinted:not(.in-hero) .topbar {
+  --topbar-color: var(--topbar-tint-color, #b5462a);
+}
+
 
 /* ----- Footer ----------------------------------------------------------- */
 

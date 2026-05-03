@@ -58,6 +58,19 @@ export function useTopBarColor<T extends HTMLElement>() {
       const el = ref.current;
       if (!el) return;
 
+      // Out of hero, the hook has nothing to drive (no torch, no diff blend)
+      // — let the CSS cascade own --topbar-color so debug tints / future
+      // section-scoped colorways can apply. Strip any leftover inline values.
+      if (!document.body.classList.contains("in-hero")) {
+        if (state.lastWritten !== 0) {
+          el.style.removeProperty("--topbar-color");
+          el.style.removeProperty("--topbar-stroke");
+          state.current = 0;
+          state.lastWritten = 0;
+        }
+        return;
+      }
+
       const classic = lightProbe.headerClassic;
 
       // Fast-path: nothing to do if the light is off and our text already

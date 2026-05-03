@@ -437,6 +437,11 @@ type LightControls = {
   // Debug: drop mix-blend-mode on the top bar and modulate text grayscale
   // white→black as the torch approaches (older "approach turns black" feel).
   headerClassic: boolean;
+  // Tint the topbar (logo + nav) once the hero scrolls offscreen so the
+  // wordmark warms up against the dark sections below. Inert while in hero
+  // — there the difference-blend / classic mode owns the colorway.
+  topbarTint: boolean;
+  topbarTintColor: string;
 };
 
 // Single warm color shared by every light in the scene (torch + uplight bar).
@@ -1003,10 +1008,10 @@ function DebugMenu({
         flexDirection: "column",
         gap: 8,
         padding: 12,
-        background: "rgba(181, 70, 42, 0.78)",
+        background: "rgba(0,0,0,0.6)",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
-        border: "1px solid rgba(255, 200, 180, 0.18)",
+        border: "1px solid rgba(255,255,255,0.08)",
         borderRadius: 6,
         fontFamily: "ui-monospace, monospace",
         fontSize: 10,
@@ -1122,6 +1127,55 @@ function DebugMenu({
           style={{ accentColor: "#c9a36a" }}
         />
         header classic (approach → black)
+      </label>
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8,
+        }}
+      >
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <input
+            type="checkbox"
+            checked={controls.topbarTint}
+            onChange={(e) =>
+              onControlsChange({ ...controls, topbarTint: e.target.checked })
+            }
+            style={{ accentColor: "#c9a36a" }}
+          />
+          tint header past hero
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span
+            style={{
+              fontVariantNumeric: "tabular-nums",
+              opacity: 0.6,
+              fontSize: 9,
+            }}
+          >
+            {controls.topbarTintColor.toUpperCase()}
+          </span>
+          <input
+            type="color"
+            value={controls.topbarTintColor}
+            onChange={(e) =>
+              onControlsChange({
+                ...controls,
+                topbarTintColor: e.target.value,
+              })
+            }
+            style={{
+              width: 28,
+              height: 18,
+              padding: 0,
+              border: "1px solid rgba(255,255,255,0.15)",
+              background: "transparent",
+              cursor: "pointer",
+            }}
+          />
+        </span>
       </label>
 
       {/* Stone material — color picker, roughness slider, preset shortcuts. */}
@@ -1240,6 +1294,8 @@ const DEFAULT_LIGHT_CONTROLS: LightControls = {
   bottomBarIn: 0.2,
   crosshair: false,
   headerClassic: true,
+  topbarTint: true,
+  topbarTintColor: "#b5462a",
 };
 
 export default function Hero({ dpr }: HeroProps) {
@@ -1368,6 +1424,23 @@ export default function Hero({ dpr }: HeroProps) {
       document.body.classList.remove(cls);
     };
   }, [lightControls.headerClassic]);
+
+  // Topbar tint past hero: stamp the chosen color into a CSS custom property
+  // and gate the override with a body class. CSS picks it up only when the
+  // body lacks `in-hero`, so the hero's blend/classic colorway is untouched.
+  useEffect(() => {
+    const cls = "topbar-tinted";
+    document.body.style.setProperty(
+      "--topbar-tint-color",
+      lightControls.topbarTintColor,
+    );
+    if (lightControls.topbarTint) document.body.classList.add(cls);
+    else document.body.classList.remove(cls);
+    return () => {
+      document.body.classList.remove(cls);
+      document.body.style.removeProperty("--topbar-tint-color");
+    };
+  }, [lightControls.topbarTint, lightControls.topbarTintColor]);
 
   return (
     <div ref={wrapperRef} className="hero">
