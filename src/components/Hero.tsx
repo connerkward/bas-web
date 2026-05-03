@@ -636,6 +636,21 @@ function CameraRig() {
   return null;
 }
 
+// R3F can drop a frame after a frameloop="never" → "always" toggle, leaving
+// the canvas frozen on the last paint until the user nudges something. Force
+// a render on the rising edge so the loop reliably restarts when the hero
+// scrolls back into view.
+function ResumeOnActive({ active }: { active: boolean }) {
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    if (!active) return;
+    invalidate();
+    const id = requestAnimationFrame(() => invalidate());
+    return () => cancelAnimationFrame(id);
+  }, [active, invalidate]);
+  return null;
+}
+
 // --- Dust motes ---------------------------------------------------------
 //
 // Lightweight Points system: ~250 particles drifting in a thin volume in
@@ -1224,7 +1239,7 @@ const DEFAULT_LIGHT_CONTROLS: LightControls = {
   bottomBarOut: 0.6,
   bottomBarIn: 0.2,
   crosshair: false,
-  headerClassic: false,
+  headerClassic: true,
 };
 
 export default function Hero({ dpr }: HeroProps) {
@@ -1264,8 +1279,19 @@ export default function Hero({ dpr }: HeroProps) {
     );
 
     let heroNear = true;
+    let heroInView = true;
     let prefinalOrPastVisible = false;
-    const update = () => setActive(heroNear && !prefinalOrPastVisible);
+    const update = () => {
+      setActive(heroNear && !prefinalOrPastVisible);
+      // body.in-hero is the gate for the topbar-classic difference blend
+      // (see App.css) — only flip the topbar text-blend mode when the
+      // hero section is actually in view, never on prefinal/projects/
+      // footer where the blend would just produce plain white anyway.
+      document.body.classList.toggle(
+        "in-hero",
+        heroInView && !prefinalOrPastVisible,
+      );
+    };
 
     const heroIO = new IntersectionObserver(
       ([entry]) => {
@@ -1276,11 +1302,30 @@ export default function Hero({ dpr }: HeroProps) {
     );
     heroIO.observe(node);
 
+    // Second hero IO without the pre-warm rootMargin — tracks whether the
+    // hero section is *actually* on screen (vs. one section away). Drives
+    // the `body.in-hero` class. Threshold 0.05 so a 1-pixel sliver of hero
+    // peeking past the edge doesn't keep the blend on past the snap.
+    const heroVisIO = new IntersectionObserver(
+      ([entry]) => {
+        heroInView = entry.isIntersecting;
+        update();
+      },
+      { threshold: 0.05, root },
+    );
+    heroVisIO.observe(node);
+
     let prefinalIO: IntersectionObserver | null = null;
     if (prefinalSection) {
       prefinalIO = new IntersectionObserver(
         ([entry]) => {
-          prefinalOrPastVisible = entry.isIntersecting;
+          // `threshold: 0` reports `isIntersecting: true` even when a
+          // section's top edge sits flush with the viewport bottom (zero-
+          // area intersection — the browsers count adjacent edges as a
+          // touch). At scrollTop:0 that flips the canvas off before the
+          // first frame ever renders. Require a real, non-zero overlap.
+          prefinalOrPastVisible =
+            entry.isIntersecting && entry.intersectionRect.height > 0;
           update();
         },
         { threshold: 0, root },
@@ -1296,7 +1341,9 @@ export default function Hero({ dpr }: HeroProps) {
 
     return () => {
       heroIO.disconnect();
+      heroVisIO.disconnect();
       prefinalIO?.disconnect();
+      document.body.classList.remove("in-hero");
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
@@ -1330,6 +1377,7 @@ export default function Hero({ dpr }: HeroProps) {
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
         frameloop={active ? "always" : "never"}
       >
+        <ResumeOnActive active={active} />
         <color attach="background" args={["#0a0a0a"]} />
         <ambientLight intensity={0} />
         <MouseLight controls={lightControls} />
