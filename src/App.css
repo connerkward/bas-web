@@ -242,14 +242,13 @@ body.crosshair-cursor .hero {
    than IntraNet, so a small font-size bump compensates for Mirano Light
    reading optically lighter at the same em. */
 .prefinal__title-line--motion {
-  font-family: "DM Serif Display", "Source Code Pro", ui-monospace, monospace;
+  font-family: "Mirano Extended", "Source Code Pro", ui-monospace, monospace;
   font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.005em;
-  /* DM Serif Display has a generous x-height; matching ems with IntraNet
-     leaves it reading slightly heavier — keep the line size at 1em (was
-     1.05 with Mirano which needed compensation). */
-  font-size: 1em;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  /* Mirano Light reads optically smaller than IntraNet at matched ems —
+     bump 1.05em so the two lines feel weight-matched. */
+  font-size: 1.05em;
 }
 
 /* Show metadata above the title — venue + date in the same small-caps
