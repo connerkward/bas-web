@@ -1071,17 +1071,6 @@ body.crosshair-cursor .hero {
      below) so text inverts against the torchlit relief; on every other
      section (prefinal/projects/footer) the bg is dark and plain white
      wordmarks read cleanly without any blend. */
-  transition: opacity 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-/* Dim the bar once the hero scrolls offscreen — the wordmark and nav are
-   still legible but no longer compete with the content. Full opacity is
-   restored on any hover over the bar so links remain readable on demand. */
-body:not(.in-hero) .topbar {
-  opacity: 0.4;
-}
-body:not(.in-hero) .topbar:has(:hover) {
-  opacity: 1;
 }
 
 .topbar > * {
