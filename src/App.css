@@ -1367,6 +1367,10 @@ body.crosshair-cursor .hero {
   font: inherit;
   cursor: pointer;
   color: var(--topbar-color, #ffffff);
+  /* Smooth white↔tint crossfade as the body class toggles when the hero
+     scrolls in/out of view. Without this the resolved color flips
+     instantly, which read as a jarring "snap" on the topbar. */
+  transition: color 480ms cubic-bezier(0.2, 0.7, 0.2, 1);
   /* Blend lives on .topbar — see note there. */
 }
 
@@ -1430,6 +1434,8 @@ body.crosshair-cursor .hero {
   align-items: center;
   gap: 28px;
   color: var(--topbar-color, #ffffff);
+  /* Match .logo: fade the resolved color when topbar-tinted toggles. */
+  transition: color 480ms cubic-bezier(0.2, 0.7, 0.2, 1);
   /* Blend lives on .topbar — see note there. */
 }
 
@@ -1692,6 +1698,15 @@ a.footer__line:hover {
 
 /* ----- Mobile: phone / small tablet (<= 720px) ----------------------- */
 @media (max-width: 720px) {
+  /* Mobile portrait: drop mandatory snap to proximity. Mandatory was
+     fighting iOS touch swipes — small swipes felt sticky and the page
+     could feel "caught between" sections. Proximity still pulls the
+     scroll to a section boundary when the user lets go near one, but
+     doesn't yank back during the gesture itself. Desktop and landscape
+     keep mandatory for the clean lock-to-step experience. */
+  .page {
+    scroll-snap-type: y proximity;
+  }
   /* Topbar — keep logo + nav at sizes that respect mobile tap-target
      guidance (44–48px hit area). Padding on the interactive elements is
      bumped explicitly so buttons remain easy to tap. */
@@ -1705,6 +1720,13 @@ a.footer__line:hover {
   }
   .logo__bas {
     font-size: 26px;
+    /* Safari iOS clips the IntraNet ascender at the topbar's compositor
+       layer top edge once mix-blend-mode: difference is in play (post-hero
+       sections). Bump line-height + padding-top so the glyph has more
+       headroom inside the line-box, well clear of the layer boundary. */
+    line-height: 1.55;
+    padding-top: 0.4em;
+    margin-top: -0.4em;
   }
   .logo__studio {
     font-size: 11px;
