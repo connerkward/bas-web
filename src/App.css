@@ -39,14 +39,18 @@ body.crosshair-cursor .hero {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  /* Mandatory snap — steps are locked to 100dvh (see .step below) so
-     every snap target sits at a clean viewport-aligned offset. Each
-     section AND each project sub-step is a snap target. The
-     `(max-height: 600px)` override below switches to `proximity` for
-     ultra-short viewports (landscape phone) where content can't fit
-     even with aggressive tightening. */
+  /* Mandatory snap. Every snap target lands at a viewport-aligned offset
+     because `.step` and `.page__section` (excluding projects) are all
+     locked to 100dvh / 100% of .page. The `(max-height: 600px)`
+     override below drops to `proximity` for ultra-short viewports
+     (landscape phone) where content can't fit. */
   scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
+  /* No `scroll-behavior: smooth` here — it queues a smoothed animation
+     for *programmatic* scrolls (window.scrollTo, hash navigation,
+     etc) which then fights the mandatory snap algorithm. User wheel /
+     touch scroll skips this property and reaches snap directly. The
+     Logo click handler explicitly opts into smooth scroll via the
+     `behavior: smooth` argument when needed. */
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -94,12 +98,16 @@ body.crosshair-cursor .hero {
 .page__section--projects {
   background: var(--footer-bg);
   /* Projects has grown past one viewport with multiple video strips —
-     let it size to content. Snap-align stays so wheel-to-projects still
-     lands at the top, but the section is no longer height-clamped. */
+     let it size to content. Snap-align is removed because each child
+     `.step` is already a snap target; keeping it on the section
+     produced two coincident snap points at projects-start (the section
+     and step 01) which confused the browser's "next snap" choice when
+     scrolling between hero/prefinal/projects. */
   height: auto;
   min-height: 100%;
   content-visibility: visible;
   contain-intrinsic-size: none;
+  scroll-snap-align: none;
 }
 
 .page__section--prefinal {
@@ -481,7 +489,11 @@ body.crosshair-cursor .hero {
   gap: 24px;
   box-sizing: border-box;
   scroll-snap-align: start;
-  scroll-snap-stop: always;
+  /* `normal` (not `always`) so a fast wheel/swipe can pass several steps
+     in one motion — `always` made the page feel sticky, like every
+     step physically blocked the scroll. Mandatory still pulls the
+     scroll to the nearest target on rest. */
+  scroll-snap-stop: normal;
 }
 
 .step:first-child {
@@ -1057,40 +1069,91 @@ body.crosshair-cursor .hero {
 
 @media (max-width: 880px) {
   .step {
-    padding: 56px 28px 28px;
+    padding: 56px 24px 12px;
     gap: 18px;
   }
   .step--right-media .step__body,
   .step--left-media .step__body {
     grid-template-columns: 1fr;
-    gap: 18px;
+    gap: 14px;
   }
-  /* Always show text first when collapsed (visual order keeps copy
-     above its companion media). step--left-media wraps in source order
-     where media comes first, so flip with order. */
+  /* Always lead with the figure on stacked layouts — visual hero up
+     top, copy below. Source order has copy first / portrait second
+     (right-media) or portrait first / copy second (left-media). Flip
+     both to a unified portrait-then-copy order. */
+  .step--right-media .step__portrait,
   .step--left-media .step__portrait {
-    order: 2;
+    order: 1;
   }
   .step--right-media .step__copy,
   .step--left-media .step__copy {
-    max-width: 720px;
+    order: 2;
+    max-width: none;
   }
   .step__copy--two-col {
     grid-template-columns: 1fr;
     gap: 14px;
   }
-  /* Media-dominant: portrait fills most of the visible step. Copy is
-     dense supporting block below the figure. */
+  /* Edge-to-edge cinematic media: portrait breaks out of the step's
+     horizontal padding to reach screen edges, height pinned to 56dvh,
+     source video cropped top/bottom via object-fit: cover so the
+     figure feels present instead of a small portrait in black margins.
+     `.page` has overflow-x: hidden so 100vw can't introduce a
+     horizontal scrollbar. */
+  .step__portrait {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    align-items: stretch;
+  }
   .step__portrait video,
   .step__portrait img {
+    width: 100%;
     height: 56dvh;
+    max-height: 56dvh;
+    max-width: none;
+    object-fit: cover;
+    object-position: center;
+  }
+  /* Triptych & pair: container breaks out edge-to-edge, individual
+     cells split the width via flex. Caption stays inside the original
+     padding box so it doesn't kiss the screen edge. */
+  .step__triptych,
+  .step__pair {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    gap: 0;
+  }
+  .step__triptych-cell,
+  .step__pair-cell {
+    flex: 1;
+    min-width: 0;
+  }
+  .step__triptych-cell .step__portrait,
+  .step__pair-cell .step__portrait {
+    width: 100%;
+    margin: 0;
   }
   .step__triptych-cell .step__portrait video {
-    height: 44dvh;
+    height: 50dvh;
+    max-height: 50dvh;
   }
   .step__pair-cell .step__portrait video,
   .step__pair-cell .step__portrait img {
-    height: 52dvh;
+    height: 56dvh;
+    max-height: 56dvh;
+  }
+  .step__triptych-cell figcaption,
+  .step__pair-cell figcaption {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  /* Wide image (step 01): already breaks out via `width: 100vw`. Bump
+     the height cap so the runner sequence reads big instead of as a
+     thin strip. */
+  .step__media-wide img {
+    max-height: 44dvh;
   }
 }
 
@@ -1163,47 +1226,28 @@ body.crosshair-cursor .hero {
   .step__blurb--centered {
     max-width: 38ch;
   }
-  /* Media-dominant phone composition: the figure takes ~half the
-     viewport, head + copy pack densely above and below. */
-  .step__portrait video,
-  .step__portrait img {
-    height: 50dvh;
-  }
+  /* Media-dominant phone composition: the figure fills more than half
+     the viewport. Heights inherit from the 880px block (56dvh single,
+     50dvh triptych cell, 56dvh pair cell) — phone-specific bumps
+     would make them clip the locked 100dvh step. */
   .step__media-wide img {
-    max-height: 44dvh;
-  }
-
-  /* --- 03 triptych & 05 pair: multi-cell grid on mobile so all media
-     reads side-by-side. Cells get narrow but each portrait + caption
-     stays visible. */
-  .step__triptych {
-    gap: 6px;
+    max-height: 38dvh;
   }
   .step__triptych-cell {
     gap: 6px;
   }
-  .step__triptych-cell .step__portrait video {
-    height: 38dvh;
-  }
   .step__triptych-cell figcaption {
-    font-size: 8px;
+    font-size: 8.5px;
     letter-spacing: 0.14em;
     gap: 4px;
     flex-direction: column;
     align-items: flex-start;
   }
-  .step__pair {
-    gap: 10px;
-  }
   .step__pair-cell {
     gap: 6px;
   }
-  .step__pair-cell .step__portrait video,
-  .step__pair-cell .step__portrait img {
-    height: 46dvh;
-  }
   .step__pair-cell figcaption {
-    font-size: 9px;
+    font-size: 9.5px;
     letter-spacing: 0.16em;
     gap: 8px;
   }

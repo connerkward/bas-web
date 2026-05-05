@@ -280,7 +280,11 @@ function StepInstallation() {
       className={`step step--finale${revealed ? " step--finale-in" : ""}`}
       data-step="06"
     >
-      <StepHead no="06" title="INSTALLATION" tech="GALLERY" date="2026" />
+      {/* No step__head: the finale mirrors the prefinal's "feature page"
+          composition (meta kicker → display title → body → footnote). The
+          step number is folded into the meta line so the project sequence
+          still reads, without the extra row that pushed everything down
+          and broke spacing parity with prefinal. */}
       <div className="step__body">
         <CrossfadeVideo
           src="/videos/install-1.mp4"
@@ -288,7 +292,9 @@ function StepInstallation() {
         />
         <div className="step__feature-copy">
           <p className="step__feature-meta" style={D(0)}>
-            <span className="step__feature-meta-label">ON VIEW</span>
+            <span className="step__feature-meta-label">
+              06 · INSTALLATION
+            </span>
             <span className="step__feature-meta-detail">
               GRAY AREA GRAND THEATER · BYOB · APRIL 7
             </span>
