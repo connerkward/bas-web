@@ -39,13 +39,14 @@ body.crosshair-cursor .hero {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  /* Proximity snap — pulls cleanly between sections / steps but
-     doesn't lock the scroll mid-gesture, so a fast trackpad swipe
-     can pass several steps in one motion without each one acting
-     like a magnet. Mandatory was correct in theory but felt
-     "sensitive" on real input — every wobble of the wheel got
-     pulled. Proximity reads as a soft snap-on-rest. */
-  scroll-snap-type: y proximity;
+  /* Mandatory snap — the scroll always rests at a step boundary, never
+     mid-section. Combined with `scroll-snap-stop: normal` on each step
+     (further down) so a fast trackpad swipe can pass several steps in
+     one continuous motion without each acting like a hard magnet. The
+     previous "sensitive" complaint was `stop: always`, which made every
+     step a wall. Mandatory + stop:normal = land on a boundary, but
+     don't fight momentum scroll. */
+  scroll-snap-type: y mandatory;
   /* No `scroll-behavior: smooth` here — it queues a smoothed animation
      for *programmatic* scrolls (window.scrollTo, hash navigation,
      etc) which then fights the mandatory snap algorithm. User wheel /
@@ -56,11 +57,15 @@ body.crosshair-cursor .hero {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Ultra-short viewports (landscape phone, ~half-screen browsers) drop
-   the height lock so tall step content can scroll naturally. Snap is
-   already proximity at every height; here we just unblock the bottom
-   of overflowing steps. */
+/* Ultra-short viewports (landscape phone, ~half-screen browsers): drop
+   the height lock so tall step content can scroll naturally, AND
+   downgrade snap to proximity so mandatory doesn't yank the scroll back
+   to the step start while the user is mid-read. At normal heights
+   content fits 100dvh and mandatory + lock holds. */
 @media (max-height: 600px) {
+  .page {
+    scroll-snap-type: y proximity;
+  }
   .step {
     height: auto;
     max-height: none;
