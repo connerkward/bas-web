@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import CrossfadeVideo from "./CrossfadeVideo";
 
 const KEY_GRAPHIC = "/experiments/key.jpg";
@@ -6,6 +6,33 @@ const KEY_GRAPHIC = "/experiments/key.jpg";
 // Inline transition-delay stamp for staggered reveal cascades — same idiom
 // as the prefinal section.
 const D = (ms: number): CSSProperties => ({ ["--d" as never]: `${ms}ms` });
+
+// Per-step entrance reveal. Mirrors the prefinal hook: fires once when the
+// section crosses the threshold, then disconnects so the cascade never
+// re-runs on re-entry (consistent with prefinal's "stay revealed" behavior).
+function useReveal<T extends Element>(threshold = 0.25): {
+  ref: RefObject<T | null>;
+  revealed: boolean;
+} {
+  const ref = useRef<T>(null);
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setRevealed(true);
+          io.disconnect();
+        }
+      },
+      { threshold },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, [threshold]);
+  return { ref, revealed };
+}
 
 type HeadProps = {
   no: string;
@@ -16,7 +43,7 @@ type HeadProps = {
 
 function StepHead({ no, title, tech, date }: HeadProps) {
   return (
-    <header className="step__head">
+    <header className="step__head" style={D(0)}>
       <span className="step__no">{no}</span>
       <span className="step__head-title">{title}</span>
       <span className="step__meta">
@@ -44,11 +71,16 @@ function Clip({ src }: { src: string }) {
 }
 
 function StepEarly() {
+  const { ref, revealed } = useReveal<HTMLElement>();
   return (
-    <section className="step step--wide" data-step="01">
+    <section
+      ref={ref}
+      className={`step step--wide${revealed ? " step--in" : ""}`}
+      data-step="01"
+    >
       <StepHead no="01" title="EARLY EXPERIMENTS" tech="R&D" date="2024–2025" />
       <div className="step__body">
-        <div className="step__media-wide">
+        <div className="step__media-wide" style={D(450)}>
           <img
             src={KEY_GRAPHIC}
             alt=""
@@ -58,11 +90,11 @@ function StepEarly() {
           />
         </div>
         <div className="step__copy step__copy--two-col">
-          <h3 className="step__display">
+          <h3 className="step__display" style={D(150)}>
             One source.<br />
             Many signals.
           </h3>
-          <p className="step__blurb">
+          <p className="step__blurb" style={D(300)}>
             Process studies on a single subject — a runner photographed in
             profile. Each pass strips the frame to one channel: dithered
             halftones, pixelation thresholds, contour lines, depth-derived
@@ -76,8 +108,13 @@ function StepEarly() {
 }
 
 function StepMold() {
+  const { ref, revealed } = useReveal<HTMLElement>();
   return (
-    <section className="step step--right-media" data-step="02">
+    <section
+      ref={ref}
+      className={`step step--right-media${revealed ? " step--in" : ""}`}
+      data-step="02"
+    >
       <StepHead
         no="02"
         title="MOLD STUDIES"
@@ -86,24 +123,24 @@ function StepMold() {
       />
       <div className="step__body">
         <div className="step__copy">
-          <h3 className="step__display">
+          <h3 className="step__display" style={D(150)}>
             Cast first.<br />
             Then we hit the limit.
           </h3>
-          <p className="step__blurb">
+          <p className="step__blurb" style={D(300)}>
             First fabrication path: 3D-print the relief, ABS-vapor smooth, pour
             a silicone rubber mold, cast in resin. Surface quality was there.
             Print volume wasn't — scaling to gallery panels would have meant
             tiling the mold and chasing seams.
           </p>
-          <dl className="step__status">
+          <dl className="step__status" style={D(450)}>
             <dt>Status</dt>
             <dd>Abandoned</dd>
             <dt>Replaced by</dt>
             <dd>Direct CNC</dd>
           </dl>
         </div>
-        <div className="step__portrait">
+        <div className="step__portrait" style={D(450)}>
           <Clip src="/videos/mold-2.mp4" />
         </div>
       </div>
@@ -112,8 +149,13 @@ function StepMold() {
 }
 
 function StepFabrication() {
+  const { ref, revealed } = useReveal<HTMLElement>();
   return (
-    <section className="step step--diptych" data-step="03">
+    <section
+      ref={ref}
+      className={`step step--diptych${revealed ? " step--in" : ""}`}
+      data-step="03"
+    >
       <StepHead
         no="03"
         title="FABRICATION"
@@ -121,11 +163,11 @@ function StepFabrication() {
         date="2025–2026"
       />
       <div className="step__body">
-        <h3 className="step__display step__display--centered">
+        <h3 className="step__display step__display--centered" style={D(150)}>
           Plan in software.<br />
           Cut in wood.
         </h3>
-        <div className="step__triptych">
+        <div className="step__triptych" style={D(450)}>
           <figure className="step__triptych-cell">
             <div className="step__portrait">
               <Clip src="/videos/toolpath.mp4" />
@@ -154,7 +196,7 @@ function StepFabrication() {
             </figcaption>
           </figure>
         </div>
-        <p className="step__blurb step__blurb--centered">
+        <p className="step__blurb step__blurb--centered" style={D(300)}>
           Toolpath generated in Fusion, run on the ShopBot at gallery scale.
           One sheet, one pass — no tiling, no seams.
         </p>
@@ -164,8 +206,13 @@ function StepFabrication() {
 }
 
 function StepController() {
+  const { ref, revealed } = useReveal<HTMLElement>();
   return (
-    <section className="step step--left-media" data-step="04">
+    <section
+      ref={ref}
+      className={`step step--left-media${revealed ? " step--in" : ""}`}
+      data-step="04"
+    >
       <StepHead
         no="04"
         title="CONTROLLER"
@@ -173,20 +220,20 @@ function StepController() {
         date="2026"
       />
       <div className="step__body">
-        <div className="step__portrait">
+        <div className="step__portrait" style={D(450)}>
           <Clip src="/videos/controller.mp4" />
         </div>
         <div className="step__copy">
-          <h3 className="step__display">
+          <h3 className="step__display" style={D(150)}>
             A tactile authoring surface.
           </h3>
-          <p className="step__blurb">
+          <p className="step__blurb" style={D(300)}>
             Hardware MIDI controller patched into TouchDesigner — a tactile
             authoring tool for the depth-map layering. The same unit sat in
             the gallery as a public input, letting visitors recompose the
             projection live.
           </p>
-          <dl className="step__specs">
+          <dl className="step__specs" style={D(450)}>
             <dt>Signal</dt>
             <dd>MIDI out</dd>
             <dt>Host</dt>
@@ -203,8 +250,13 @@ function StepController() {
 }
 
 function StepLook() {
+  const { ref, revealed } = useReveal<HTMLElement>();
   return (
-    <section className="step step--pair" data-step="05">
+    <section
+      ref={ref}
+      className={`step step--pair${revealed ? " step--in" : ""}`}
+      data-step="05"
+    >
       <StepHead
         no="05"
         title="LOOK"
@@ -212,10 +264,10 @@ function StepLook() {
         date="2025–2026"
       />
       <div className="step__body">
-        <h3 className="step__display step__display--centered">
+        <h3 className="step__display step__display--centered" style={D(150)}>
           Grade for the dark.
         </h3>
-        <div className="step__pair">
+        <div className="step__pair" style={D(450)}>
           <figure className="step__pair-cell">
             <div className="step__portrait">
               <img
@@ -241,7 +293,7 @@ function StepLook() {
             </figcaption>
           </figure>
         </div>
-        <p className="step__blurb step__blurb--centered">
+        <p className="step__blurb step__blurb--centered" style={D(300)}>
           Iterating the look in DaVinci Resolve — pushing contrast, crushing
           midtones, and tuning chroma until the depth-mapped figure read
           cleanly off the milled relief at gallery throw distance.
@@ -255,24 +307,7 @@ function StepInstallation() {
   // Mirrors the prefinal section: side-by-side crossfade-loop video + copy
   // block with staggered reveal cascade. Triggers its own IO so the
   // animation only fires when it scrolls into view.
-  const ref = useRef<HTMLElement>(null);
-  const [revealed, setRevealed] = useState(false);
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    // Document is the scroll container — null root = viewport.
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setRevealed(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.3 },
-    );
-    io.observe(node);
-    return () => io.disconnect();
-  }, []);
+  const { ref, revealed } = useReveal<HTMLElement>(0.3);
 
   return (
     <section

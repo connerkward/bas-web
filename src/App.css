@@ -507,6 +507,73 @@ body.crosshair-cursor .hero {
   color: var(--footer-rule);
 }
 
+/* --- Reveal cascade (per-step entrance) ----------------------------- */
+
+/* Same idiom as the prefinal section: each step owns its own
+   IntersectionObserver and toggles `step--in` once it scrolls into view.
+   Children stamp `--d` (delay in ms) inline to encode the beat. The
+   observer disconnects after firing, so the cascade never re-runs on
+   re-entry — once revealed, stay revealed.
+
+   Stagger: head 0ms → display 150ms → blurb 300ms → media/dl 450ms.
+   Mirrors the prefinal rhythm (meta → title → body → def). The finale
+   step (.step--finale) runs its own separate cascade further down — these
+   selectors are scoped to non-finale steps so they don't double-bind. */
+/* Children that animate. .step__body > .step__portrait targets only the
+   *outer* portrait used in side-media layouts (steps 02, 04). Portraits
+   nested inside .step__triptych-cell / .step__pair-cell animate with
+   their parent grid container, not individually. */
+.step:not(.step--finale) .step__head,
+.step:not(.step--finale) .step__display,
+.step:not(.step--finale) .step__blurb,
+.step:not(.step--finale) .step__media-wide,
+.step:not(.step--finale) > .step__body > .step__portrait,
+.step:not(.step--finale) .step__triptych,
+.step:not(.step--finale) .step__pair,
+.step:not(.step--finale) .step__status,
+.step:not(.step--finale) .step__specs {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 700ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--d, 0ms);
+}
+
+/* Specificity-matched to the hidden state above (uses :not() to align with
+   the .step:not(.step--finale) selector). Without this, the hidden rule
+   wins on tie and the cascade never fires. */
+.step--in:not(.step--finale) .step__head,
+.step--in:not(.step--finale) .step__display,
+.step--in:not(.step--finale) .step__blurb,
+.step--in:not(.step--finale) .step__media-wide,
+.step--in:not(.step--finale) > .step__body > .step__portrait,
+.step--in:not(.step--finale) .step__triptych,
+.step--in:not(.step--finale) .step__pair,
+.step--in:not(.step--finale) .step__status,
+.step--in:not(.step--finale) .step__specs {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Reduced motion: instant reveal, no transition. Steps are still hidden
+   until they enter view — but they snap on rather than animate. */
+@media (prefers-reduced-motion: reduce) {
+  .step:not(.step--finale) .step__head,
+  .step:not(.step--finale) .step__display,
+  .step:not(.step--finale) .step__blurb,
+  .step:not(.step--finale) .step__media-wide,
+  .step:not(.step--finale) > .step__body > .step__portrait,
+  .step:not(.step--finale) .step__triptych,
+  .step:not(.step--finale) .step__pair,
+  .step:not(.step--finale) .step__status,
+  .step:not(.step--finale) .step__specs {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* --- Body shell (per-step layout overrides this) -------------------- */
 
 .step__body {
@@ -1372,6 +1439,10 @@ body.crosshair-cursor .hero {
     height: 42dvh;
     max-height: 42dvh;
     object-fit: cover;
+    /* Bias the crop toward the left side of the source — the runner sits
+       slightly left-of-center in the frame and the left edge has more
+       interesting silhouette content; centered crop loses it. */
+    object-position: left center;
   }
 
   /* --- Head row (step number + title + meta band) ------------------ */
