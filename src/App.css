@@ -1462,6 +1462,18 @@ body.crosshair-cursor .hero {
      below) so text inverts against the torchlit relief; on every other
      section (prefinal/projects/footer) the bg is dark and plain white
      wordmarks read cleanly without any blend. */
+  /* Permanent compositor layer. The mix-blend-mode rules below toggle on
+     the hero/post-hero boundary, and section snap-rests (esp. into the
+     footer, which sits beneath content-visibility:auto siblings) trigger
+     a recomposite frame on iOS Safari that flashes a black cutoff at
+     the top of the BAS wordmark — the layer is sampled before the new
+     section beneath has finished painting. Promoting the topbar to a
+     persistent GPU layer keeps it warm so blend-state and behind-content
+     changes never re-allocate it. translateZ(0) is the broadest hint
+     (Safari ignores `will-change: mix-blend-mode`); no visual effect
+     since the layer is already 2D. */
+  transform: translateZ(0);
+  will-change: mix-blend-mode;
 }
 
 .topbar > * {
