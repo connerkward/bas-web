@@ -1734,11 +1734,17 @@ a.footer__line:hover {
 }
 
 .footer__bas-letter {
-  /* Opacity-only intro — no transform. Safari promotes any transformed
-     element to a compositor layer sized to the box bounds, and clips
-     glyph ascenders that extend outside it. Plain opacity transition
-     stays on the main paint pipeline so glyph overflow renders normally. */
-  opacity: 0;
+  /* Color-fade intro, NOT opacity. iOS Safari hardware-accelerates CSS
+     opacity animations onto a compositor layer sized to the line-box.
+     IntraNet's font metrics under-report ascender height, so glyph paint
+     extends ABOVE the line-box; while the opacity layer is live (~1.1s)
+     Safari clips that overflow to the layer bounds, then de-promotes
+     when the animation ends — the exact "BAS top is cut off, then a
+     moment later it isn't" transient. Animating `color` (transparent →
+     inherited display color) is computed on the paint pipeline per
+     frame, never promotes a layer, and the glyph overflow renders
+     normally throughout. Same visual fade-in, no compositor clip. */
+  color: transparent;
 }
 
 .footer__bas--in .footer__bas-letter {
@@ -1746,14 +1752,13 @@ a.footer__line:hover {
 }
 
 @keyframes bas-letter-rise {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { color: transparent; }
+  to   { color: var(--footer-display); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .footer__bas-letter {
-    opacity: 1;
-    transform: none;
+    color: var(--footer-display);
     animation: none !important;
   }
 }
