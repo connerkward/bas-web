@@ -1235,15 +1235,23 @@ body.crosshair-cursor .hero {
   }
   .page__section--prefinal {
     height: auto;
-    min-height: 100%;
+    min-height: 100dvh;
   }
   .prefinal {
+    display: flex;
+    flex-direction: column;
     height: auto;
-    min-height: 100%;
+    min-height: 100dvh;
   }
   .step,
   .step:first-child {
-    min-height: 100%;             /* still fills viewport when content is short */
+    /* dvh (not %) — `.projects` parent has auto height so 100% would
+       compute to auto and short steps wouldn't reach the viewport
+       boundary. dvh always resolves to live viewport, so each step
+       is at least one viewport tall — snap to its top puts the next
+       step's head row safely below the fold, not peeking in. Tall
+       content (e.g. stacked triptych in step 03) still grows past. */
+    min-height: 100dvh;
     height: auto;
     max-height: none;
     overflow: visible;
