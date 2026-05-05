@@ -39,12 +39,13 @@ body.crosshair-cursor .hero {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  /* Mandatory snap. Every snap target lands at a viewport-aligned offset
-     because `.step` and `.page__section` (excluding projects) are all
-     locked to 100dvh / 100% of .page. The `(max-height: 600px)`
-     override below drops to `proximity` for ultra-short viewports
-     (landscape phone) where content can't fit. */
-  scroll-snap-type: y mandatory;
+  /* Proximity snap — pulls cleanly between sections / steps but
+     doesn't lock the scroll mid-gesture, so a fast trackpad swipe
+     can pass several steps in one motion without each one acting
+     like a magnet. Mandatory was correct in theory but felt
+     "sensitive" on real input — every wobble of the wheel got
+     pulled. Proximity reads as a soft snap-on-rest. */
+  scroll-snap-type: y proximity;
   /* No `scroll-behavior: smooth` here — it queues a smoothed animation
      for *programmatic* scrolls (window.scrollTo, hash navigation,
      etc) which then fights the mandatory snap algorithm. User wheel /
@@ -55,14 +56,11 @@ body.crosshair-cursor .hero {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Ultra-short viewports (landscape phone, ~half-screen browsers) — drop
-   the height lock and switch to proximity so tall step content doesn't
-   fight scrolling. Snap still pulls between sections when nearby. At
-   typical screens (>=600px tall) the lock + mandatory combo holds. */
+/* Ultra-short viewports (landscape phone, ~half-screen browsers) drop
+   the height lock so tall step content can scroll naturally. Snap is
+   already proximity at every height; here we just unblock the bottom
+   of overflowing steps. */
 @media (max-height: 600px) {
-  .page {
-    scroll-snap-type: y proximity;
-  }
   .step {
     height: auto;
     max-height: none;
@@ -400,15 +398,16 @@ body.crosshair-cursor .hero {
      room — generous gaps, looser line-height, deliberate paragraph
      rhythm so nothing feels crammed. */
   .prefinal {
-    padding: 56px 22px 20px;
-    gap: 22px;
+    padding: 48px 22px 8px;
+    gap: 18px;
   }
-  /* 50vh = ~448px on a 414×896 phone. Dominant figure with room below
-     for the full meta/title/body/def stack to breathe and not clip. */
+  /* 56vh = ~501px on a 414×896 phone. Dominant figure with the full
+     meta/title/body/def stack still fitting below at the new tighter
+     bottom padding (8px vs the old 20). */
   .prefinal__video {
-    height: 50vh;
-    /* Override desktop's 88vh + max-height: 920 chain so 50vh wins. */
-    max-height: 50vh;
+    height: 56vh;
+    /* Override desktop's 88vh + max-height: 920 chain so 56vh wins. */
+    max-height: 56vh;
   }
   .prefinal__meta {
     margin: 0 0 18px;
@@ -981,17 +980,19 @@ body.crosshair-cursor .hero {
 @media (max-width: 600px) {
   .step--finale {
     /* Tighten outer padding so the bookend feels visually equivalent
-       to the prefinal section (no step__head row, no big top margin). */
-    padding: 32px 22px 20px;
+       to the prefinal section (no step__head row, no big top margin).
+       Bottom drops to 8px to match the new prefinal — content fills
+       the locked 100dvh as much as possible. */
+    padding: 24px 22px 8px;
     gap: 0;
   }
   .step--finale .step__body {
     padding: 0;
-    gap: 22px;
+    gap: 18px;
   }
   .step__feature-video {
-    height: 50vh;
-    max-height: 50vh;
+    height: 56vh;
+    max-height: 56vh;
   }
   .step__feature-meta {
     margin: 0 0 18px;
@@ -1113,21 +1114,22 @@ body.crosshair-cursor .hero {
   .step__portrait video,
   .step__portrait img {
     width: 100%;
-    height: 56dvh;
-    max-height: 56dvh;
+    height: 62dvh;
+    max-height: 62dvh;
     max-width: none;
     object-fit: cover;
     object-position: center;
   }
   /* Stacked text+media steps (02 mold, 04 controller) carry a dl
      status/specs table beneath the blurb, so the portrait shrinks to
-     leave room for all the copy without cutting the bottom row. */
+     leave room for all the copy with breathing gaps and not clip the
+     bottom row. */
   .step--right-media .step__portrait video,
   .step--right-media .step__portrait img,
   .step--left-media .step__portrait video,
   .step--left-media .step__portrait img {
-    height: 40dvh;
-    max-height: 40dvh;
+    height: 38dvh;
+    max-height: 38dvh;
   }
   /* Triptych & pair: container breaks out edge-to-edge, individual
      cells split the width via flex. Caption stays inside the original
@@ -1150,13 +1152,13 @@ body.crosshair-cursor .hero {
     margin: 0;
   }
   .step__triptych-cell .step__portrait video {
-    height: 50dvh;
-    max-height: 50dvh;
+    height: 56dvh;
+    max-height: 56dvh;
   }
   .step__pair-cell .step__portrait video,
   .step__pair-cell .step__portrait img {
-    height: 56dvh;
-    max-height: 56dvh;
+    height: 62dvh;
+    max-height: 62dvh;
   }
   .step__triptych-cell figcaption,
   .step__pair-cell figcaption {
@@ -1172,11 +1174,13 @@ body.crosshair-cursor .hero {
 }
 
 @media (max-width: 720px) {
-  /* Phone rhythm with real breathing room: generous padding, big gaps
-     between sections, looser line-height so the text never feels
-     packed against itself. */
+  /* Phone rhythm: aggressive bottom padding pull-back so the content
+     fills more of the locked viewport. Top padding still clears the
+     fixed topbar, side padding gives text gutters, but bottom drops to
+     8px because content packs flex-start. Big inter-element gap (24px)
+     preserves breathing room between head and media. */
   .step {
-    padding: 60px 22px 32px;
+    padding: 48px 22px 8px;
     gap: 24px;
   }
   /* Pack body to the top so the head + media + copy stack as one
@@ -1218,14 +1222,14 @@ body.crosshair-cursor .hero {
   .step--left-media .step__body,
   .step--diptych .step__body,
   .step--pair .step__body {
-    gap: 24px;
+    gap: 28px;
   }
   /* Copy column rhythm: title → body → footnote table all inside one
-     stack, so a moderate 14px gap reads as paragraph break (not the
-     wider section break that the body gap above does). */
+     stack. 18px reads as a clear paragraph break without competing
+     with the wider 28px section break the body gap creates. */
   .step--right-media .step__copy,
   .step--left-media .step__copy {
-    gap: 14px;
+    gap: 18px;
   }
   .step__display {
     font-size: clamp(28px, 8vw, 36px);
