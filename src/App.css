@@ -39,10 +39,25 @@ body.crosshair-cursor .hero {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Mandatory snap by default — steps designed to fit one viewport so the
+     scroll always rests at a step boundary; feels snappy on portrait
+     phone and standard desktop. The `(max-height: 720px)` override below
+     drops to `proximity` so short viewports (landscape phone, small
+     browsers) don't yank back when steps grow taller than the visible
+     area. */
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Short viewports (landscape phone, ~half-screen browsers) — drop to
+   proximity so step content that's taller than the visible area doesn't
+   fight scrolling. Snap still pulls between sections when nearby. */
+@media (max-height: 720px) {
+  .page {
+    scroll-snap-type: y proximity;
+  }
 }
 
 .page__section {
@@ -438,15 +453,13 @@ body.crosshair-cursor .hero {
 
 .step {
   position: relative;
-  /* Lock every step to exactly one dynamic viewport so y-snap lands cleanly
-     on every sub-section — desktop and mobile. `100dvh` tracks the visible
-     viewport on iOS (chrome collapsed/expanded). Combined with overflow:
-     hidden, the step is one screen, one snap point. Inside, layouts shrink
-     to fit (smaller portraits, tighter type) rather than grow vertically. */
+  /* Each step fills at least one dynamic viewport — sets a tight floor so
+     short content centers cleanly and proximity snap rests with one step
+     per screen at typical aspect ratios. Steps with media-heavy layouts
+     (triptych, pair, finale) can grow taller than viewport at small sizes;
+     `proximity` snap on .page lets the user scroll through that overflow
+     instead of being yanked back to the step start. */
   min-height: 100dvh;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
   border-top: 1px solid var(--footer-rule);
   padding: 72px 64px 56px;
   display: flex;
@@ -1051,8 +1064,8 @@ body.crosshair-cursor .hero {
 }
 
 @media (max-width: 720px) {
-  /* Step container — sized by the global rule (100dvh + overflow:hidden);
-     here we just tighten the padding rhythm for narrow phones. */
+  /* Tighter padding rhythm for narrow phones; height handled by the
+     global rule (`min-height: 100dvh` floor only). */
   .step {
     padding: 56px 18px 24px;
     gap: 14px;
