@@ -1315,18 +1315,26 @@ body.crosshair-cursor .hero {
     object-position: center;
   }
 
+  /* Triptych & pair: stack cells vertically on phone. Side-by-side
+     three (or two) portraits at this width crowd both the figures
+     and the captions; stacked, each cell becomes a full-width hero
+     beat in the sequence with a clean horizontal label/value
+     caption underneath. */
   .step__triptych,
   .step__pair {
     width: 100vw;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
-    gap: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--m-gap-block);
   }
   .step__triptych-cell,
   .step__pair-cell {
-    flex: 1;
+    flex: none;
     min-width: 0;
-    gap: var(--m-gap-tight);
+    width: 100%;
+    gap: var(--m-gap-text);
   }
   .step__triptych-cell .step__portrait,
   .step__pair-cell .step__portrait {
@@ -1339,18 +1347,18 @@ body.crosshair-cursor .hero {
   .step__pair-cell .step__portrait img {
     width: 100%;
     height: auto;
-    aspect-ratio: 9 / 16;
+    aspect-ratio: 4 / 5;
     max-height: none;
     object-fit: cover;
   }
   .step__triptych-cell figcaption,
   .step__pair-cell figcaption {
     padding: 0 var(--m-gutter);
-    font-size: var(--m-caption);
-    letter-spacing: 0.14em;
-    gap: var(--m-gap-tight);
-    flex-direction: column;
-    align-items: flex-start;
+    font-size: var(--m-meta);
+    letter-spacing: var(--m-meta-tracking);
+    gap: var(--m-gutter);
+    flex-direction: row;
+    align-items: baseline;
   }
 
   /* Wide image (step 01) — full-bleed, native aspect. */
