@@ -641,17 +641,24 @@ function CameraRig() {
   return null;
 }
 
-// R3F can drop a frame after a frameloop="never" → "always" toggle, leaving
-// the canvas frozen on the last paint until the user nudges something. Force
-// a render on the rising edge so the loop reliably restarts when the hero
-// scrolls back into view.
-function ResumeOnActive({ active }: { active: boolean }) {
+// Drive the canvas explicitly via requestAnimationFrame while active. We
+// run the Canvas in `frameloop="demand"` and call `invalidate()` every
+// frame here. This is more reliable than toggling `frameloop="never"
+// → "always"` — that transition occasionally left the canvas frozen on
+// the last paint after the hero scrolled back into view. With demand +
+// manual RAF, the rising-edge of `active` immediately schedules the next
+// frame and keeps scheduling until the hero leaves view again.
+function FrameDriver({ active }: { active: boolean }) {
   const invalidate = useThree((s) => s.invalidate);
   useEffect(() => {
     if (!active) return;
-    invalidate();
-    const id = requestAnimationFrame(() => invalidate());
-    return () => cancelAnimationFrame(id);
+    let raf = 0;
+    const tick = () => {
+      invalidate();
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [active, invalidate]);
   return null;
 }
@@ -1349,6 +1356,38 @@ export default function Hero({ dpr }: HeroProps) {
       );
     };
 
+    // Scroll-driven backup: IntersectionObserver callbacks can lag a
+    // mandatory-snap transition (especially on iOS), occasionally leaving
+    // `in-hero` and `active` stale after the user scrolls back to the
+    // hero. A direct geometric check on every scroll re-derives the
+    // state from element rects so the topbar tint clears and the canvas
+    // resumes the same frame the hero re-enters view. Cheap (3 rect
+    // reads per scroll event) and idempotent with the IO updates.
+    const reconcile = () => {
+      const heroRect = node.getBoundingClientRect();
+      const pageEl = root as HTMLElement | null;
+      const pageRect = pageEl?.getBoundingClientRect() ?? {
+        top: 0,
+        bottom: window.innerHeight,
+        height: window.innerHeight,
+      };
+      const overlap =
+        Math.min(heroRect.bottom, pageRect.bottom) -
+        Math.max(heroRect.top, pageRect.top);
+      heroInView = overlap > pageRect.height * 0.05;
+      heroNear =
+        heroRect.bottom > pageRect.top - pageRect.height &&
+        heroRect.top < pageRect.bottom + pageRect.height;
+      if (prefinalSection) {
+        const pf = (prefinalSection as HTMLElement).getBoundingClientRect();
+        const pfOverlap =
+          Math.min(pf.bottom, pageRect.bottom) -
+          Math.max(pf.top, pageRect.top);
+        prefinalOrPastVisible = pfOverlap > 0;
+      }
+      update();
+    };
+
     const heroIO = new IntersectionObserver(
       ([entry]) => {
         heroNear = entry.isIntersecting;
@@ -1395,12 +1434,19 @@ export default function Hero({ dpr }: HeroProps) {
     };
     document.addEventListener("visibilitychange", onVisibility);
 
+    const scrollEl = (root as HTMLElement | null) ?? window;
+    scrollEl.addEventListener("scroll", reconcile, { passive: true });
+    // Run once on mount so the initial frame doesn't depend on the IOs
+    // having fired yet.
+    reconcile();
+
     return () => {
       heroIO.disconnect();
       heroVisIO.disconnect();
       prefinalIO?.disconnect();
       document.body.classList.remove("in-hero");
       document.removeEventListener("visibilitychange", onVisibility);
+      scrollEl.removeEventListener("scroll", reconcile);
     };
   }, []);
 
@@ -1448,9 +1494,9 @@ export default function Hero({ dpr }: HeroProps) {
         camera={{ position: [0, 0, CAMERA_Z], fov: 35 }}
         dpr={dpr}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
-        frameloop={active ? "always" : "never"}
+        frameloop="demand"
       >
-        <ResumeOnActive active={active} />
+        <FrameDriver active={active} />
         <color attach="background" args={["#0a0a0a"]} />
         <ambientLight intensity={0} />
         <MouseLight controls={lightControls} />
