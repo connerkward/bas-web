@@ -368,11 +368,21 @@ body.crosshair-cursor .hero {
 
 @media (max-width: 600px) {
   .prefinal {
-    padding: 72px 16px 20px;
-    gap: 20px;
+    padding: 60px 16px 20px;
+    gap: 16px;
   }
+  /* Shorter video so the meta/title/body/def column fits the same screen
+     without the def clipping at the bottom. 38vh at 414×896 = 340px,
+     leaves ~440px of breathing room for the copy stack. */
   .prefinal__video {
-    height: 50vh;
+    height: 38vh;
+  }
+  .prefinal__meta {
+    /* Slightly tighter than desktop so the kicker reads as a label, not
+       a paragraph above the title. */
+    margin: 0 0 14px;
+    font-size: 9px;
+    letter-spacing: 0.18em;
   }
   .prefinal__title {
     /* On phones the column is the limiting dimension. 8.6vw at 414px =
@@ -380,12 +390,19 @@ body.crosshair-cursor .hero {
        fits in the 382px content area. Lower bound of 28px protects the
        smallest screens (320px width) from overflow. */
     font-size: clamp(28px, 8.6vw, 40px);
+    margin: 0 0 18px;
+    line-height: 1.05;
   }
   .prefinal__body {
     font-size: 12px;
+    line-height: 1.55;
+    margin: 0 0 16px;
   }
   .prefinal__def {
     font-size: 10px;
+    line-height: 1.5;
+    padding-top: 12px;
+    gap: 6px;
   }
 }
 
@@ -421,7 +438,12 @@ body.crosshair-cursor .hero {
 
 .step {
   position: relative;
-  min-height: 100vh;
+  /* `100dvh` tracks the *dynamic* viewport — on iOS Safari this collapses
+     when the address bar is visible and grows when it hides, matching the
+     actual `.page` height. Plain `100vh` resolves to the *large* viewport
+     and made every step 50–100px taller than the snap container, breaking
+     y-snap on mobile. */
+  min-height: 100dvh;
   border-top: 1px solid var(--footer-rule);
   padding: 96px 64px 80px;
   display: flex;
@@ -898,6 +920,42 @@ body.crosshair-cursor .hero {
   }
 }
 
+/* Phone-tight finale: with the step locked to one viewport on mobile, the
+   feature video + meta + title + blurb + caption stack must fit. Pull the
+   video shorter and tighten the copy rhythm so the whole composition lands
+   in one screen. */
+@media (max-width: 720px) {
+  .step--finale .step__body {
+    padding: 0;
+    gap: 16px;
+  }
+  .step__feature-video {
+    height: 42vh;
+    max-height: 42vh;
+  }
+  .step__feature-meta {
+    margin: 0 0 10px;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    gap: 6px;
+  }
+  .step__feature-title {
+    margin: 0 0 14px;
+    font-size: clamp(28px, 7.6vw, 40px);
+    line-height: 1.05;
+  }
+  .step__feature-blurb {
+    margin: 0 0 14px;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .step__feature-caption {
+    padding-top: 10px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+  }
+}
+
 /* --- Status callout (mold studies) ---------------------------------- */
 
 .step__status {
@@ -996,9 +1054,18 @@ body.crosshair-cursor .hero {
 }
 
 @media (max-width: 720px) {
+  /* Lock each step to exactly one dynamic viewport so y-snap lands
+     cleanly on every step. `100dvh` matches `.page`'s visible height on
+     iOS (chrome collapsed or not). max-height + overflow:hidden ensure
+     no in-between scroll between snap points. Each step = one sub-snap
+     target; swipe up = next step. */
   .step {
-    padding: 72px 18px 56px;
-    gap: 32px;
+    padding: 64px 18px 32px;
+    gap: 18px;
+    min-height: 100dvh;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
   }
   .step__head {
     grid-template-columns: auto 1fr;
@@ -1012,30 +1079,99 @@ body.crosshair-cursor .hero {
     grid-column: 1 / -1;
     gap: 8px;
   }
+  /* Tight rhythm so the head/title/media/blurb stack reads as one
+     composition in a single screen. Per-layout selectors below carry
+     020 specificity, so we match that to override their desktop gaps. */
+  .step--wide .step__body,
+  .step--right-media .step__body,
+  .step--left-media .step__body,
+  .step--diptych .step__body,
+  .step--pair .step__body {
+    gap: 20px;
+  }
   .step__display {
-    font-size: clamp(22px, 6vw, 32px);
+    font-size: clamp(22px, 6.6vw, 30px);
+    line-height: 1.1;
+    letter-spacing: -0.012em;
+    max-width: 18ch;
   }
-  .step--diptych .step__triptych {
-    grid-template-columns: 1fr;
-    gap: 24px;
+  .step__display--centered {
+    max-width: none;
   }
-  .step--pair .step__pair {
-    grid-template-columns: 1fr;
-    gap: 24px;
+  .step__blurb {
+    font-size: 12px;
+    line-height: 1.6;
+    letter-spacing: 0.015em;
   }
-  .step__pair-cell .step__portrait video,
-  .step__pair-cell .step__portrait img {
-    height: 56vh;
+  .step__blurb--centered {
+    max-width: 38ch;
   }
+  /* Single column copy + media — pull media height in so the head/copy
+     pair shares the screen with the figure instead of pushing it off. */
   .step__portrait video,
   .step__portrait img {
-    height: 56vh;
-  }
-  .step__triptych-cell .step__portrait video {
-    height: 56vh;
+    height: 44vh;
+    max-height: 44vh;
   }
   .step__media-wide img {
-    max-height: 38vh;
+    max-height: 32vh;
+  }
+
+  /* --- 03 triptych & 05 pair → horizontal scroll-snap carousels ------
+     Stacking 3 portraits vertically on mobile balloons the step to ~2000px
+     and breaks vertical snap. Convert to a sideways swipe carousel so each
+     portrait fills the screen and a horizontal flick reveals the next one;
+     vertical scroll continues to the next step uninterrupted. */
+  .step--diptych .step__triptych,
+  .step--pair .step__pair {
+    display: flex;
+    grid-template-columns: none;
+    gap: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0;
+    -webkit-overflow-scrolling: touch;
+    /* Edge-to-edge so the cells reach the screen edges; counter the
+       step's horizontal padding. */
+    margin-left: -18px;
+    margin-right: -18px;
+    padding: 0 18px;
+    scrollbar-width: none;
+  }
+  .step--diptych .step__triptych::-webkit-scrollbar,
+  .step--pair .step__pair::-webkit-scrollbar {
+    display: none;
+  }
+  .step__triptych-cell,
+  .step__pair-cell {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    width: 100%;
+    max-width: 100%;
+  }
+  .step__triptych-cell .step__portrait video,
+  .step__pair-cell .step__portrait video,
+  .step__pair-cell .step__portrait img {
+    height: 50vh;
+    max-height: 50vh;
+  }
+
+  /* Step 02 (right-media) and 04 (left-media) — the dl status/specs grid
+     uses a lot of vertical room; tighten so the portrait still lands
+     above the fold. */
+  .step__status,
+  .step__specs {
+    padding-top: 12px;
+    row-gap: 4px;
+    column-gap: 18px;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+  }
+  .step--right-media .step__copy,
+  .step--left-media .step__copy {
+    gap: 14px;
   }
 }
 
