@@ -1324,7 +1324,8 @@ export default function Hero({ dpr }: HeroProps) {
   useEffect(() => {
     const node = wrapperRef.current;
     if (!node) return;
-    const root = document.querySelector(".page");
+    // Document is the scroll container — null root = viewport.
+    const root: Element | null = null;
     // Pre-warm: rootMargin "100%" expands the root bounds by one full
     // viewport on top + bottom, so hero is treated as "intersecting" while
     // it's still one section away. Canvas wakes before the user can see
@@ -1365,8 +1366,8 @@ export default function Hero({ dpr }: HeroProps) {
     // reads per scroll event) and idempotent with the IO updates.
     const reconcile = () => {
       const heroRect = node.getBoundingClientRect();
-      const pageEl = root as HTMLElement | null;
-      const pageRect = pageEl?.getBoundingClientRect() ?? {
+      // Viewport rect — top/bottom are 0/innerHeight in document-scroll mode.
+      const pageRect = {
         top: 0,
         bottom: window.innerHeight,
         height: window.innerHeight,
@@ -1435,8 +1436,7 @@ export default function Hero({ dpr }: HeroProps) {
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    const scrollEl = (root as HTMLElement | null) ?? window;
-    scrollEl.addEventListener("scroll", reconcile, { passive: true });
+    window.addEventListener("scroll", reconcile, { passive: true });
     // Run once on mount so the initial frame doesn't depend on the IOs
     // having fired yet.
     reconcile();
@@ -1447,7 +1447,7 @@ export default function Hero({ dpr }: HeroProps) {
       prefinalIO?.disconnect();
       document.body.classList.remove("in-hero");
       document.removeEventListener("visibilitychange", onVisibility);
-      scrollEl.removeEventListener("scroll", reconcile);
+      window.removeEventListener("scroll", reconcile);
     };
   }, []);
 

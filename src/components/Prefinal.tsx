@@ -14,7 +14,7 @@ export default function Prefinal() {
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
-    const root = document.querySelector(".page");
+    // Document is the scroll container — null root = viewport.
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -22,7 +22,7 @@ export default function Prefinal() {
           io.disconnect();
         }
       },
-      { threshold: 0.35, root },
+      { threshold: 0.35 },
     );
     io.observe(node);
     return () => io.disconnect();

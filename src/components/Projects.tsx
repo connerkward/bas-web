@@ -260,7 +260,7 @@ function StepInstallation() {
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
-    const root = document.querySelector(".page");
+    // Document is the scroll container — null root = viewport.
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -268,7 +268,7 @@ function StepInstallation() {
           io.disconnect();
         }
       },
-      { threshold: 0.3, root },
+      { threshold: 0.3 },
     );
     io.observe(node);
     return () => io.disconnect();
@@ -336,7 +336,6 @@ export default function Projects() {
   useEffect(() => {
     if (!ref.current) return;
     const node = ref.current;
-    const root = document.querySelector(".page");
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -344,7 +343,7 @@ export default function Projects() {
           observer.disconnect();
         }
       },
-      { threshold: 0.05, root },
+      { threshold: 0.05 },
     );
     observer.observe(node);
     return () => observer.disconnect();
