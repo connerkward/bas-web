@@ -401,40 +401,42 @@ body.crosshair-cursor .hero {
 @media (max-width: 600px) {
   /* Video dominates the screen; copy block below has real breathing
      room — generous gaps, looser line-height, deliberate paragraph
-     rhythm so nothing feels crammed. */
+     rhythm so nothing feels crammed. Top padding clears the fixed
+     topbar (~57px) with a clean breath; bottom drops tight so the
+     def line sits above the section bottom edge. */
   .prefinal {
-    padding: 48px 22px 8px;
+    padding: 64px 22px 8px;
     gap: 18px;
   }
-  /* 56vh = ~501px on a 414×896 phone. Dominant figure with the full
-     meta/title/body/def stack still fitting below at the new tighter
-     bottom padding (8px vs the old 20). */
+  /* Sized to fit: video + meta + title + body + def must clear 100dvh
+     after the 64+8 padding. The full body blurb wraps to ~5 lines and
+     the def runs ~3 lines, so the video has to stay below ~50vh to
+     leave room for everything to land inside the section. */
   .prefinal__video {
-    height: 56vh;
-    /* Override desktop's 88vh + max-height: 920 chain so 56vh wins. */
-    max-height: 56vh;
+    height: 48vh;
+    max-height: 48vh;
   }
   .prefinal__meta {
-    margin: 0 0 18px;
+    margin: 0 0 14px;
     font-size: 10px;
     letter-spacing: 0.2em;
     gap: 4px;
   }
   .prefinal__title {
     font-size: clamp(28px, 8.4vw, 38px);
-    margin: 0 0 22px;
+    margin: 0 0 18px;
     line-height: 1.05;
   }
   .prefinal__body {
     font-size: 12.5px;
-    line-height: 1.7;
-    margin: 0 0 22px;
+    line-height: 1.65;
+    margin: 0 0 14px;
   }
   .prefinal__def {
     font-size: 10.5px;
-    line-height: 1.6;
-    padding-top: 16px;
-    gap: 8px;
+    line-height: 1.55;
+    padding-top: 12px;
+    gap: 6px;
   }
 }
 
@@ -984,11 +986,13 @@ body.crosshair-cursor .hero {
    to leave headroom inside the lock. */
 @media (max-width: 600px) {
   .step--finale {
-    /* Tighten outer padding so the bookend feels visually equivalent
-       to the prefinal section (no step__head row, no big top margin).
-       Bottom drops to 8px to match the new prefinal — content fills
-       the locked 100dvh as much as possible. */
-    padding: 24px 22px 8px;
+    /* Mirrors the prefinal phone padding for bookend parity — top
+       clears the topbar with a breath, bottom drops tight. The .step
+       @720 rule above sets 80px top padding for steps with a head
+       row (head row needs the clearance); finale has no head row
+       (meta is folded into the copy block) so the video can sit a
+       bit higher than the head-row top, but still below the topbar. */
+    padding: 64px 22px 8px;
     gap: 0;
   }
   .step--finale .step__body {
@@ -996,8 +1000,8 @@ body.crosshair-cursor .hero {
     gap: 18px;
   }
   .step__feature-video {
-    height: 56vh;
-    max-height: 56vh;
+    height: 48vh;
+    max-height: 48vh;
   }
   .step__feature-meta {
     margin: 0 0 18px;
@@ -1132,15 +1136,17 @@ body.crosshair-cursor .hero {
     object-position: center;
   }
   /* Stacked text+media steps (02 mold, 04 controller) carry a dl
-     status/specs table beneath the blurb. Figure claims ~46dvh — big
-     enough to feel dominant, tight enough that the copy column below
-     has room for title + blurb + bottom-pinned dl without clipping. */
+     status/specs table beneath the blurb. Figure claims ~42dvh —
+     dominant enough to feel like the hero element, tight enough that
+     the copy column below has room for title + blurb + bottom-pinned
+     dl without clipping inside the locked 100dvh step (now with 80px
+     top padding to clear the topbar). */
   .step--right-media .step__portrait video,
   .step--right-media .step__portrait img,
   .step--left-media .step__portrait video,
   .step--left-media .step__portrait img {
-    height: 46dvh;
-    max-height: 46dvh;
+    height: 42dvh;
+    max-height: 42dvh;
   }
   /* Triptych & pair: container breaks out edge-to-edge, individual
      cells split the width via flex. Caption stays inside the original
@@ -1186,12 +1192,14 @@ body.crosshair-cursor .hero {
 
 @media (max-width: 720px) {
   /* Phone rhythm: aggressive bottom padding pull-back so the content
-     fills more of the locked viewport. Top padding still clears the
-     fixed topbar, side padding gives text gutters, but bottom drops to
-     8px because content packs flex-start. Big inter-element gap (24px)
-     preserves breathing room between head and media. */
+     fills more of the locked viewport. Top padding clears the fixed
+     topbar (~57px tall) AND leaves a clean ~25px breath between the
+     topbar text and the step__head row — was 48px which made the
+     head row visually kiss the nav band. Side padding gives text
+     gutters; bottom drops to 8px since stacked layouts pin the dl
+     to the bottom anyway. */
   .step {
-    padding: 48px 22px 8px;
+    padding: 80px 22px 8px;
     gap: 24px;
   }
   /* Pack body to the top for stacked text+media steps where the dl
@@ -1462,8 +1470,7 @@ body.crosshair-cursor .hero {
    bg via difference identity. -webkit-text-stroke adds the subtle weight
    gain on approach.
    Scoped to body.in-hero so the blend only fires while the hero section
-   is visible — prefinal/projects/footer all show plain white wordmark/
-   nav with no blend. */
+   is visible. Post-hero sections get their own difference rule below. */
 body.topbar-classic.in-hero .topbar {
   mix-blend-mode: difference;
 }
@@ -1479,6 +1486,14 @@ body.topbar-classic.in-hero .topnav__link {
    approach-to-black) is left untouched. */
 body.topbar-tinted:not(.in-hero) .topbar {
   --topbar-color: var(--topbar-tint-color, #b5462a);
+}
+
+/* Difference blend on post-hero sections (prefinal/projects/footer). The
+   text color (white default or tint override above) stays as-is; the blend
+   inverts it against whatever's behind, so the bar reads as the negative of
+   the section beneath while preserving the chosen coloration. */
+body:not(.in-hero) .topbar {
+  mix-blend-mode: difference;
 }
 
 
