@@ -398,45 +398,49 @@ body.crosshair-cursor .hero {
   }
 }
 
+/* Prefinal phone — uses the same tokens as the steps so the rhythm
+   reads as one continuous design system end to end. Video full-bleed
+   with a 9:16 portrait crop, copy follows underneath with the same
+   24px text-gap and 15/1.6 body type as every step. */
 @media (max-width: 600px) {
-  /* Video dominates the screen; copy block below has real breathing
-     room — generous gaps, looser line-height, deliberate paragraph
-     rhythm so nothing feels crammed. Top padding clears the fixed
-     topbar (~57px) with a clean breath; bottom drops tight so the
-     def line sits above the section bottom edge. */
   .prefinal {
-    padding: 64px 22px 8px;
-    gap: 18px;
+    padding: var(--m-section-top) var(--m-gutter) var(--m-section-bottom);
+    gap: var(--m-gap-block);
   }
-  /* Sized to fit: video + meta + title + body + def must clear 100dvh
-     after the 64+8 padding. The full body blurb wraps to ~5 lines and
-     the def runs ~3 lines, so the video has to stay below ~50vh to
-     leave room for everything to land inside the section. */
   .prefinal__video {
-    height: 48vh;
-    max-height: 48vh;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    aspect-ratio: 9 / 16;
+  }
+  .prefinal__copy {
+    flex: 0 1 auto;
+    width: 100%;
+    max-width: none;
   }
   .prefinal__meta {
-    margin: 0 0 14px;
-    font-size: 10px;
-    letter-spacing: 0.2em;
+    margin: 0 0 var(--m-gap-text);
+    font-size: var(--m-meta);
+    letter-spacing: var(--m-meta-tracking);
     gap: 4px;
   }
   .prefinal__title {
-    font-size: clamp(28px, 8.4vw, 38px);
-    margin: 0 0 18px;
-    line-height: 1.05;
+    margin: 0 0 var(--m-gap-text);
+    font-size: var(--m-display);
+    line-height: var(--m-display-leading);
   }
   .prefinal__body {
-    font-size: 12.5px;
-    line-height: 1.65;
-    margin: 0 0 14px;
+    margin: 0 0 var(--m-gap-text);
+    font-size: var(--m-body);
+    line-height: var(--m-body-leading);
+    max-width: none;
   }
   .prefinal__def {
-    font-size: 10.5px;
-    line-height: 1.55;
-    padding-top: 12px;
-    gap: 6px;
+    padding-top: var(--m-gap-text);
+    font-size: var(--m-meta);
+    line-height: 1.5;
+    gap: var(--m-gap-tight);
+    max-width: none;
   }
 }
 
@@ -984,45 +988,48 @@ body.crosshair-cursor .hero {
    step locks to 100dvh + overflow:hidden whereas the prefinal section
    doesn't, so the finale video sits a notch shorter than prefinal's
    to leave headroom inside the lock. */
+/* Finale (step 06) phone — bookends the prefinal with identical
+   rhythm. Same tokens, same video aspect, same type scale. */
 @media (max-width: 600px) {
   .step--finale {
-    /* Mirrors the prefinal phone padding for bookend parity — top
-       clears the topbar with a breath, bottom drops tight. The .step
-       @720 rule above sets 80px top padding for steps with a head
-       row (head row needs the clearance); finale has no head row
-       (meta is folded into the copy block) so the video can sit a
-       bit higher than the head-row top, but still below the topbar. */
-    padding: 64px 22px 8px;
+    padding: var(--m-section-top) var(--m-gutter) var(--m-section-bottom);
     gap: 0;
   }
   .step--finale .step__body {
     padding: 0;
-    gap: 18px;
+    gap: var(--m-gap-block);
   }
   .step__feature-video {
-    height: 48vh;
-    max-height: 48vh;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    aspect-ratio: 9 / 16;
+  }
+  .step__feature-copy {
+    width: 100%;
+    max-width: none;
   }
   .step__feature-meta {
-    margin: 0 0 18px;
-    font-size: 10px;
-    letter-spacing: 0.2em;
+    margin: 0 0 var(--m-gap-text);
+    font-size: var(--m-meta);
+    letter-spacing: var(--m-meta-tracking);
     gap: 4px;
   }
   .step__feature-title {
-    margin: 0 0 22px;
-    font-size: clamp(28px, 8.4vw, 38px);
-    line-height: 1.05;
+    margin: 0 0 var(--m-gap-text);
+    font-size: var(--m-display);
+    line-height: var(--m-display-leading);
   }
   .step__feature-blurb {
-    margin: 0 0 22px;
-    font-size: 12.5px;
-    line-height: 1.7;
+    margin: 0 0 var(--m-gap-text);
+    font-size: var(--m-body);
+    line-height: var(--m-body-leading);
+    max-width: none;
   }
   .step__feature-caption {
-    padding-top: 16px;
-    font-size: 10.5px;
-    line-height: 1.6;
+    padding-top: var(--m-gap-text);
+    font-size: var(--m-meta);
+    line-height: 1.5;
     letter-spacing: 0.04em;
   }
 }
@@ -1190,31 +1197,82 @@ body.crosshair-cursor .hero {
   }
 }
 
+/* === Phone (≤720px) — content-flow design system =====================
+   The desktop locks every step to 100dvh and packs content inside.
+   Phones drop that lock entirely: each step sizes to its content,
+   snap softens to proximity (so reading inside a tall step doesn't
+   fight the scroll), and one spacing + type system applies across
+   every layout. No more dvh-pegged figures, no more margin-top:auto
+   tricks, no more per-step magic numbers — one rhythm, applied
+   consistently. */
 @media (max-width: 720px) {
-  /* Phone rhythm: aggressive bottom padding pull-back so the content
-     fills more of the locked viewport. Top padding clears the fixed
-     topbar (~57px tall) AND leaves a clean ~25px breath between the
-     topbar text and the step__head row — was 48px which made the
-     head row visually kiss the nav band. Side padding gives text
-     gutters; bottom drops to 8px since stacked layouts pin the dl
-     to the bottom anyway. */
-  .step {
-    padding: 80px 22px 8px;
-    gap: 24px;
+  /* --- Tokens (phone) ----------------------------------------------
+     One 8-multiple spacing scale + one type scale, used by every
+     step, the prefinal, and the finale below. */
+  :root {
+    --m-gutter: 24px;
+    --m-section-top: 88px;       /* topbar (~57px) + 32px breath */
+    --m-section-bottom: 64px;    /* breath before next snap target */
+    --m-gap-block: 40px;         /* major composition seams (media↔copy) */
+    --m-gap-text: 24px;          /* title↔blurb↔footnote */
+    --m-gap-tight: 12px;         /* within a single block (caption rows) */
+
+    --m-display: clamp(32px, 9vw, 44px);
+    --m-display-leading: 1.1;
+    --m-body: 15px;
+    --m-body-leading: 1.6;
+    --m-meta: 11px;
+    --m-meta-tracking: 0.18em;
+    --m-caption: 12px;
   }
-  /* Pack body to the top for stacked text+media steps where the dl
-     anchors the bottom (02 mold, 04 controller). For full-width media
-     steps without a footer element (01 wide, 03 diptych, 05 pair) the
-     body stays centered so the figure+title+blurb composition floats
-     in the middle of the viewport — feels intentional rather than
-     top-packed-with-empty-black-below. */
+
+  /* --- Snap & section heights --------------------------------------
+     Proximity snap (not mandatory) so reading inside a tall step
+     doesn't get yanked back to the start. Sections + steps size to
+     content; the page scroller handles the overflow naturally. */
+  .page {
+    scroll-snap-type: y proximity;
+  }
+  .page__section--prefinal {
+    height: auto;
+    min-height: 100%;
+  }
+  .prefinal {
+    height: auto;
+    min-height: 100%;
+  }
+  .step,
+  .step:first-child {
+    min-height: 100%;             /* still fills viewport when content is short */
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    padding: var(--m-section-top) var(--m-gutter) var(--m-section-bottom);
+    gap: var(--m-gap-block);
+    border-top: 1px solid var(--footer-rule);
+  }
+  .step:first-child {
+    border-top: none;
+  }
+
+  /* --- Body layouts collapse to a single vertical flow -------------
+     Every layout variant becomes a flex column with one block-gap.
+     No grids, no auto-1fr, no flex:1 height-fill. Natural content
+     height is the layout. */
   .step__body,
+  .step--wide .step__body,
   .step--right-media .step__body,
-  .step--left-media .step__body {
+  .step--left-media .step__body,
+  .step--diptych .step__body,
+  .step--pair .step__body {
+    display: flex;
+    flex-direction: column;
     justify-content: flex-start;
-    align-content: start;
+    align-items: stretch;
+    gap: var(--m-gap-block);
   }
-  /* Stacked layouts: lead with the figure (media at top, copy below). */
+
+  /* Stacked layouts: lead with the figure (visual hero up top). */
   .step--right-media .step__portrait,
   .step--left-media .step__portrait {
     order: 1;
@@ -1222,95 +1280,137 @@ body.crosshair-cursor .hero {
   .step--right-media .step__copy,
   .step--left-media .step__copy {
     order: 2;
+    display: flex;
+    flex-direction: column;
+    gap: var(--m-gap-text);
+    max-width: none;
+    height: auto;
   }
+
+  /* Two-col copy block (step 01) collapses to one column. */
+  .step__copy--two-col {
+    grid-template-columns: 1fr;
+    gap: var(--m-gap-text);
+  }
+
+  /* --- Edge-to-edge media using aspect-ratio (not dvh) -------------
+     Single portrait fills the viewport width with a 4:5 crop —
+     dominant on the screen but not so tall it pushes the title
+     below the fold. Triptych and pair cells use 9:16 (true portrait)
+     since they're divided across the row. */
+  .step__portrait {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    align-items: stretch;
+  }
+  .step__portrait video,
+  .step__portrait img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    max-height: none;
+    max-width: none;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .step__triptych,
+  .step__pair {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    gap: 0;
+  }
+  .step__triptych-cell,
+  .step__pair-cell {
+    flex: 1;
+    min-width: 0;
+    gap: var(--m-gap-tight);
+  }
+  .step__triptych-cell .step__portrait,
+  .step__pair-cell .step__portrait {
+    width: 100%;
+    margin: 0;
+  }
+  .step__triptych-cell .step__portrait video,
+  .step__triptych-cell .step__portrait img,
+  .step__pair-cell .step__portrait video,
+  .step__pair-cell .step__portrait img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 9 / 16;
+    max-height: none;
+    object-fit: cover;
+  }
+  .step__triptych-cell figcaption,
+  .step__pair-cell figcaption {
+    padding: 0 var(--m-gutter);
+    font-size: var(--m-caption);
+    letter-spacing: 0.14em;
+    gap: var(--m-gap-tight);
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Wide image (step 01) — full-bleed, native aspect. */
+  .step__media-wide {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
+  .step__media-wide img {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: cover;
+  }
+
+  /* --- Head row (step number + title + meta band) ------------------ */
   .step__head {
     grid-template-columns: auto 1fr;
     grid-template-rows: auto auto;
-    column-gap: 14px;
-    row-gap: 6px;
-    font-size: 10px;
-    letter-spacing: 0.2em;
+    column-gap: var(--m-gap-tight);
+    row-gap: var(--m-gap-tight);
+    font-size: var(--m-meta);
+    letter-spacing: var(--m-meta-tracking);
   }
   .step__meta {
     grid-column: 1 / -1;
-    gap: 10px;
+    gap: var(--m-gap-tight);
   }
-  /* Body gaps — generous breath between media block and copy block,
-     since that's the major composition seam. */
-  .step--wide .step__body,
-  .step--right-media .step__body,
-  .step--left-media .step__body,
-  .step--diptych .step__body,
-  .step--pair .step__body {
-    gap: 28px;
-  }
-  /* Copy column rhythm: title → body → bottom-pinned footnote table.
-     Copy fills the body's 1fr row (set above) so flex-column with a
-     trailing margin-top: auto on .step__status / .step__specs anchors
-     the footer to the bottom of the available space. Title and blurb
-     hug the top; status sits at the bottom; the empty middle reads
-     as an intentional breath. */
-  .step--right-media .step__copy,
-  .step--left-media .step__copy {
-    gap: 22px;
-    height: 100%;
-  }
-  .step__display {
-    font-size: clamp(30px, 8.6vw, 40px);
-    line-height: 1.06;
+
+  /* --- Type scale -------------------------------------------------- */
+  .step__display,
+  .step__display--centered {
+    font-size: var(--m-display);
+    line-height: var(--m-display-leading);
     letter-spacing: -0.02em;
     max-width: none;
   }
   .step__display--centered {
+    text-align: center;
+  }
+  .step__blurb,
+  .step__blurb--centered {
+    font-size: var(--m-body);
+    line-height: var(--m-body-leading);
+    letter-spacing: 0;
     max-width: none;
   }
-  .step__blurb {
-    font-size: 13.5px;
-    line-height: 1.78;
-    letter-spacing: 0.02em;
-  }
   .step__blurb--centered {
-    max-width: 38ch;
-  }
-  /* Media-dominant phone composition: the figure fills more than half
-     the viewport. Heights inherit from the 880px block (56dvh single,
-     50dvh triptych cell, 56dvh pair cell) — phone-specific bumps
-     would make them clip the locked 100dvh step. */
-  .step__media-wide img {
-    max-height: 38dvh;
-  }
-  .step__triptych-cell {
-    gap: 6px;
-  }
-  .step__triptych-cell figcaption {
-    font-size: 8.5px;
-    letter-spacing: 0.14em;
-    gap: 4px;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .step__pair-cell {
-    gap: 6px;
-  }
-  .step__pair-cell figcaption {
-    font-size: 9.5px;
-    letter-spacing: 0.16em;
-    gap: 8px;
+    text-align: center;
   }
 
-  /* Pin the status/specs dl to the bottom of the copy column. Combined
-     with the body's `auto 1fr` rows + copy column `height: 100%`, the
-     dl sits flush against the bottom padding line — reads as a footer
-     credit row, anchors the composition, and lets the title+blurb
-     breathe in the upper half of the copy column. */
+  /* --- Status/specs dl: flow inline below blurb ------------------- */
   .step__status,
   .step__specs {
-    margin-top: auto;
-    padding-top: 18px;
-    row-gap: 8px;
-    column-gap: 22px;
-    font-size: 10.5px;
-    letter-spacing: 0.18em;
+    margin-top: 0;
+    padding-top: var(--m-gap-text);
+    row-gap: var(--m-gap-tight);
+    column-gap: var(--m-gutter);
+    font-size: var(--m-meta);
+    letter-spacing: var(--m-meta-tracking);
   }
 }
 
@@ -1500,6 +1600,15 @@ body.topbar-tinted:not(.in-hero) .topbar {
    the section beneath while preserving the chosen coloration. */
 body:not(.in-hero) .topbar {
   mix-blend-mode: difference;
+}
+
+/* Kill the color transition while the hero is in view — useTopBarColor
+   writes `--topbar-color` per frame as the torch moves, and a transition
+   would smooth/lag those updates. The fade is only desired at the hero/
+   post-hero boundary cross, not during torch interaction. */
+body.in-hero .logo,
+body.in-hero .topnav {
+  transition: none;
 }
 
 
