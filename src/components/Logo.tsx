@@ -1,11 +1,8 @@
 import { useTopBarColor } from "../lib/useTopBarColor";
 
-// The actual scroll container is `.page` (fixed inset:0; html/body scroll
-// is locked — see App.css). `window.scrollTo` is a no-op here, so we have
-// to address `.page` directly.
+// Document is the scroll container — standard full-page snap pattern.
 function scrollToHero() {
-  const page = document.querySelector(".page");
-  if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: "smooth" });
   // Also clear the section hash so the URL reflects "at top / hero".
   if (window.location.hash) {
     history.replaceState(

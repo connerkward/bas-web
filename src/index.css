@@ -35,16 +35,25 @@ html,
 body,
 #root {
   width: 100%;
-  height: 100%;
-  /* Document itself doesn't scroll — `.page` does (see App.css). Locking
-     the document scroll prevents iOS Safari from auto-collapsing the
-     address bar mid-scroll, which was making mandatory snap jump. With
-     no document scroll, the viewport size never changes during scroll
-     and snap math stays stable across hero/projects/footer. */
-  overflow: hidden;
   background: var(--footer-bg, #0a0a0a);
   color: #e8e8e8;
   font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Document is the scroll container — standard full-page snap pattern.
+   Apple/Stripe/etc. all do this. iOS Safari auto-collapses its address
+   bar based on document scroll; sections use `100dvh` so they always
+   match the live viewport. No fixed inner scroller, no double-scroll
+   weirdness, native momentum/snap behavior end to end. */
+html {
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
 }

@@ -25,92 +25,58 @@ body.crosshair-cursor .hero {
   cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='25' height='25' viewBox='0 0 25 25'><line x1='12.5' y1='0' x2='12.5' y2='25' stroke='black' stroke-opacity='0.55' stroke-width='3'/><line x1='0' y1='12.5' x2='25' y2='12.5' stroke='black' stroke-opacity='0.55' stroke-width='3'/><line x1='12.5' y1='0' x2='12.5' y2='25' stroke='white' stroke-width='1'/><line x1='0' y1='12.5' x2='25' y2='12.5' stroke='white' stroke-width='1'/></svg>") 12 12, crosshair;
 }
 
-/* ----- Page / scroll-snap ---------------------------------------------- */
+/* ----- Page / scroll-snap ----------------------------------------------
 
-/* `.page` is the actual scroll container, not the document. By scrolling
-   inside a fixed inner element, iOS Safari doesn't auto-collapse its
-   address bar — viewport stays constant for the session, so mandatory
-   scroll-snap doesn't fight the chrome. Sections size at 100% of `.page`
-   which equals the live visible viewport. */
+   Standard full-page snap landing-page pattern — the document is the
+   scroller (Option A: Apple, Stripe, every modern landing page).
+   `html` carries `scroll-snap-type: y mandatory` (in index.css) and
+   each `.page__section` / `.step` is `100dvh` with `scroll-snap-align:
+   start`. iOS Safari's address-bar collapse is handled by `dvh`
+   (dynamic viewport units) — the section always matches the live
+   visible viewport, so snap never lands mid-section.
+
+   `.page` here is just a flow container — no scrolling, no fixed
+   inset. Scripts/observers use `null` root (the viewport). */
 .page {
-  position: fixed;
-  inset: 0;
+  position: relative;
   width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  /* Mandatory snap — the scroll always rests at a step boundary, never
-     mid-section. Combined with `scroll-snap-stop: normal` on each step
-     (further down) so a fast trackpad swipe can pass several steps in
-     one continuous motion without each acting like a hard magnet. The
-     previous "sensitive" complaint was `stop: always`, which made every
-     step a wall. Mandatory + stop:normal = land on a boundary, but
-     don't fight momentum scroll. */
-  scroll-snap-type: y mandatory;
-  /* No `scroll-behavior: smooth` here — it queues a smoothed animation
-     for *programmatic* scrolls (window.scrollTo, hash navigation,
-     etc) which then fights the mandatory snap algorithm. User wheel /
-     touch scroll skips this property and reaches snap directly. The
-     Logo click handler explicitly opts into smooth scroll via the
-     `behavior: smooth` argument when needed. */
-  overscroll-behavior-y: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Ultra-short viewports (landscape phone, ~half-screen browsers): drop
-   the height lock so tall step content can scroll naturally, AND
-   downgrade snap to proximity so mandatory doesn't yank the scroll back
-   to the step start while the user is mid-read. At normal heights
-   content fits 100dvh and mandatory + lock holds. */
-@media (max-height: 600px) {
-  .page {
-    scroll-snap-type: y proximity;
-  }
-  .step {
-    height: auto;
-    max-height: none;
-    overflow: visible;
-  }
 }
 
 .page__section {
   width: 100%;
-  height: 100%;
+  height: 100dvh;
   scroll-snap-align: start;
-  /* `normal` lets a fast wheel/trackpad sweep skip past several snap
-     targets in one motion; mandatory still pulls the scroll to the
-     nearest target when the swipe stops. */
+  /* `normal` (not `always`) lets a fast wheel/touch swipe pass several
+     sections in one continuous motion — the snap engine still pulls to
+     the nearest target on rest. `always` makes every section a hard
+     magnet, which feels broken. */
   scroll-snap-stop: normal;
   position: relative;
   /* Skip layout/paint for sections that aren't in the viewport. With
      `contain-intrinsic-size` the browser keeps a placeholder box of the
-     section's known size so scroll-snap targets remain correct. Big
-     scroll-fps win — only the visible section ever renders. */
+     section's known size so scroll-snap targets remain correct. */
   content-visibility: auto;
-  contain-intrinsic-size: 100% 100%;
+  contain-intrinsic-size: 100vw 100dvh;
 }
 
 .page__section--hero {
   background: #0a0a0a;
   /* Grain layer is `position: absolute; inset: -10%` and would otherwise
-     bleed into the footer below, painting its overlay-blended shimmer over
-     the footer top edge. Clip it to the hero. */
+     bleed into adjacent sections. */
   overflow: hidden;
 }
 
 .page__section--projects {
   background: var(--footer-bg);
-  /* Projects has grown past one viewport with multiple video strips —
-     let it size to content. Snap-align is removed because each child
-     `.step` is already a snap target; keeping it on the section
-     produced two coincident snap points at projects-start (the section
-     and step 01) which confused the browser's "next snap" choice when
-     scrolling between hero/prefinal/projects. */
+  /* Projects holds multiple `.step` snap targets, so the section itself
+     is NOT a single 100dvh slot — it grows to contain all steps, each
+     of which is its own snap target. Removing snap-align on the section
+     so we don't have two coincident snap points at the projects-start
+     boundary (section + step 01). */
   height: auto;
-  min-height: 100%;
+  scroll-snap-align: none;
   content-visibility: visible;
   contain-intrinsic-size: none;
-  scroll-snap-align: none;
 }
 
 .page__section--prefinal {
@@ -122,7 +88,7 @@ body.crosshair-cursor .hero {
 .prefinal {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 100dvh;
   display: flex;
   align-items: center;
   /* Center the video+copy pair as a single block so left/right gutters
@@ -398,25 +364,34 @@ body.crosshair-cursor .hero {
   }
 }
 
-/* Prefinal phone — uses the same tokens as the steps so the rhythm
-   reads as one continuous design system end to end. Video full-bleed
-   with a 9:16 portrait crop, copy follows underneath with the same
-   24px text-gap and 15/1.6 body type as every step. */
-@media (max-width: 600px) {
+/* Prefinal phone — locked one-viewport snap target. Video gets a fixed
+   dvh slice so video + copy together fit inside 100dvh. */
+@media (max-width: 720px) {
   .prefinal {
+    height: 100dvh;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
     padding: var(--m-section-top) var(--m-gutter) var(--m-section-bottom);
     gap: var(--m-gap-block);
+    overflow: hidden;
   }
   .prefinal__video {
     width: 100%;
-    height: auto;
-    max-height: none;
-    aspect-ratio: 9 / 16;
+    height: 42dvh;
+    max-height: 42dvh;
+    aspect-ratio: auto;
+    flex: 0 0 auto;
+  }
+  .prefinal__video > video {
+    object-fit: cover;
   }
   .prefinal__copy {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     width: 100%;
     max-width: none;
+    min-height: 0;
+    overflow: hidden;
   }
   .prefinal__meta {
     margin: 0 0 var(--m-gap-text);
@@ -436,10 +411,10 @@ body.crosshair-cursor .hero {
     max-width: none;
   }
   .prefinal__def {
-    padding-top: var(--m-gap-text);
-    font-size: var(--m-meta);
-    line-height: 1.5;
-    gap: var(--m-gap-tight);
+    padding-top: var(--m-gap-tight);
+    font-size: 10px;
+    line-height: 1.45;
+    gap: 4px;
     max-width: none;
   }
 }
@@ -476,16 +451,10 @@ body.crosshair-cursor .hero {
 
 .step {
   position: relative;
-  /* Lock every step to one dynamic viewport. Mandatory snap on .page
-     needs snap targets at clean, predictable offsets — variable step
-     heights produced uneven targets and the scroll felt "snap-broken"
-     past the first step. Pinning height + overflow:hidden keeps each
-     step exactly viewport-tall so snap engages on every transition.
-     Per-layout content is tuned in media queries below to actually
-     fit in 100dvh at every common viewport. */
-  min-height: 100dvh;
+  /* Every step is exactly one dynamic viewport — mandatory snap on
+     `html` needs every snap target at predictable offsets. Content is
+     sized to fit in 100dvh; nothing scrolls inside a step. */
   height: 100dvh;
-  max-height: 100dvh;
   overflow: hidden;
   border-top: 1px solid var(--footer-rule);
   padding: 64px 64px 48px;
@@ -494,10 +463,6 @@ body.crosshair-cursor .hero {
   gap: 24px;
   box-sizing: border-box;
   scroll-snap-align: start;
-  /* `normal` (not `always`) so a fast wheel/swipe can pass several steps
-     in one motion — `always` made the page feel sticky, like every
-     step physically blocked the scroll. Mandatory still pulls the
-     scroll to the nearest target on rest. */
   scroll-snap-stop: normal;
 }
 
@@ -983,31 +948,39 @@ body.crosshair-cursor .hero {
   }
 }
 
-/* Finale phone — mirrors the prefinal one-for-one so the bookend
-   sections read as a matched pair with identical breathing room. The
-   step locks to 100dvh + overflow:hidden whereas the prefinal section
-   doesn't, so the finale video sits a notch shorter than prefinal's
-   to leave headroom inside the lock. */
-/* Finale (step 06) phone — bookends the prefinal with identical
-   rhythm. Same tokens, same video aspect, same type scale. */
-@media (max-width: 600px) {
+/* Finale (step 06) phone — locked one-viewport snap target. Mirrors
+   the prefinal: video on top with a fixed dvh slice, copy below
+   filling the remainder. */
+@media (max-width: 720px) {
   .step--finale {
     padding: var(--m-section-top) var(--m-gutter) var(--m-section-bottom);
-    gap: 0;
+    gap: var(--m-gap-block);
   }
   .step--finale .step__body {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
     padding: 0;
     gap: var(--m-gap-block);
+    flex: 1;
+    min-height: 0;
   }
   .step__feature-video {
     width: 100%;
-    height: auto;
-    max-height: none;
-    aspect-ratio: 9 / 16;
+    height: 42dvh;
+    max-height: 42dvh;
+    aspect-ratio: auto;
+    flex: 0 0 auto;
+  }
+  .step__feature-video > video {
+    object-fit: cover;
   }
   .step__feature-copy {
     width: 100%;
     max-width: none;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
   }
   .step__feature-meta {
     margin: 0 0 var(--m-gap-text);
@@ -1027,9 +1000,9 @@ body.crosshair-cursor .hero {
     max-width: none;
   }
   .step__feature-caption {
-    padding-top: var(--m-gap-text);
-    font-size: var(--m-meta);
-    line-height: 1.5;
+    padding-top: var(--m-gap-tight);
+    font-size: 10px;
+    line-height: 1.45;
     letter-spacing: 0.04em;
   }
 }
@@ -1197,64 +1170,43 @@ body.crosshair-cursor .hero {
   }
 }
 
-/* === Phone (≤720px) — content-flow design system =====================
-   The desktop locks every step to 100dvh and packs content inside.
-   Phones drop that lock entirely: each step sizes to its content,
-   snap softens to proximity (so reading inside a tall step doesn't
-   fight the scroll), and one spacing + type system applies across
-   every layout. No more dvh-pegged figures, no more margin-top:auto
-   tricks, no more per-step magic numbers — one rhythm, applied
-   consistently. */
+/* === Phone (≤720px) — fit-to-viewport design system =================
+   Every section AND every step is EXACTLY one 100dvh snap target.
+   Content fits inside that box: media is sized via dvh-fractions,
+   text is tight, no internal overflow. This is the standard landing-
+   page contract — Apple, Stripe, every modern marketing site does
+   exactly this. */
 @media (max-width: 720px) {
-  /* --- Tokens (phone) ----------------------------------------------
-     One 8-multiple spacing scale + one type scale, used by every
-     step, the prefinal, and the finale below. */
+  /* --- Tokens (phone) -----------------------------------------------
+     Tight scale tuned to fit a single phone viewport. Display type is
+     smaller, gaps are smaller, body is smaller — every step has to
+     hold head + media + title + body inside ~700 px after topbar/safe-
+     area padding. */
   :root {
-    --m-gutter: 24px;
-    --m-section-top: 88px;       /* topbar (~57px) + 32px breath */
-    --m-section-bottom: 64px;    /* breath before next snap target */
-    --m-gap-block: 40px;         /* major composition seams (media↔copy) */
-    --m-gap-text: 24px;          /* title↔blurb↔footnote */
-    --m-gap-tight: 12px;         /* within a single block (caption rows) */
+    --m-gutter: 20px;
+    --m-section-top: 72px;       /* topbar (~52px) + 20px breath */
+    --m-section-bottom: 24px;
+    --m-gap-block: 18px;         /* media↔copy seam */
+    --m-gap-text: 12px;          /* title↔blurb */
+    --m-gap-tight: 8px;
 
-    --m-display: clamp(32px, 9vw, 44px);
+    --m-display: clamp(26px, 7.5vw, 34px);
     --m-display-leading: 1.1;
-    --m-body: 15px;
-    --m-body-leading: 1.6;
-    --m-meta: 11px;
+    --m-body: 13px;
+    --m-body-leading: 1.5;
+    --m-meta: 10px;
     --m-meta-tracking: 0.18em;
-    --m-caption: 12px;
+    --m-caption: 10px;
   }
 
   /* --- Snap & section heights --------------------------------------
-     Proximity snap (not mandatory) so reading inside a tall step
-     doesn't get yanked back to the start. Sections + steps size to
-     content; the page scroller handles the overflow naturally. */
-  .page {
-    scroll-snap-type: y proximity;
-  }
-  .page__section--prefinal {
-    height: auto;
-    min-height: 100dvh;
-  }
-  .prefinal {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    min-height: 100dvh;
-  }
-  .step,
-  .step:first-child {
-    /* dvh (not %) — `.projects` parent has auto height so 100% would
-       compute to auto and short steps wouldn't reach the viewport
-       boundary. dvh always resolves to live viewport, so each step
-       is at least one viewport tall — snap to its top puts the next
-       step's head row safely below the fold, not peeking in. Tall
-       content (e.g. stacked triptych in step 03) still grows past. */
-    min-height: 100dvh;
-    height: auto;
-    max-height: none;
-    overflow: visible;
+     Each step is locked to ONE viewport — same contract as desktop.
+     `100dvh` adjusts to iOS Safari's live visible height (with or
+     without the address bar) so the section always matches the
+     viewport. Mandatory snap on `html` (index.css) lands cleanly. */
+  .step {
+    height: 100dvh;
+    overflow: hidden;
     padding: var(--m-section-top) var(--m-gutter) var(--m-section-bottom);
     gap: var(--m-gap-block);
     border-top: 1px solid var(--footer-rule);
@@ -1263,10 +1215,10 @@ body.crosshair-cursor .hero {
     border-top: none;
   }
 
-  /* --- Body layouts collapse to a single vertical flow -------------
-     Every layout variant becomes a flex column with one block-gap.
-     No grids, no auto-1fr, no flex:1 height-fill. Natural content
-     height is the layout. */
+  /* --- Body layouts: media-first vertical stack ---------------------
+     Every variant collapses to figure + copy inside the locked step.
+     `flex: 1` on body fills the leftover height; figure takes a fixed
+     dvh slice, copy fills the rest. */
   .step__body,
   .step--wide .step__body,
   .step--right-media .step__body,
@@ -1278,12 +1230,15 @@ body.crosshair-cursor .hero {
     justify-content: flex-start;
     align-items: stretch;
     gap: var(--m-gap-block);
+    flex: 1;
+    min-height: 0;
   }
 
-  /* Stacked layouts: lead with the figure (visual hero up top). */
+  /* Stacked text+media layouts: figure first, copy second. */
   .step--right-media .step__portrait,
   .step--left-media .step__portrait {
     order: 1;
+    flex: 0 0 auto;
   }
   .step--right-media .step__copy,
   .step--left-media .step__copy {
@@ -1292,7 +1247,9 @@ body.crosshair-cursor .hero {
     flex-direction: column;
     gap: var(--m-gap-text);
     max-width: none;
-    height: auto;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 
   /* Two-col copy block (step 01) collapses to one column. */
@@ -1301,11 +1258,10 @@ body.crosshair-cursor .hero {
     gap: var(--m-gap-text);
   }
 
-  /* --- Edge-to-edge media using aspect-ratio (not dvh) -------------
-     Single portrait fills the viewport width with a 4:5 crop —
-     dominant on the screen but not so tall it pushes the title
-     below the fold. Triptych and pair cells use 9:16 (true portrait)
-     since they're divided across the row. */
+  /* --- Single edge-to-edge portrait (steps 02 mold, 04 controller) ---
+     Pinned to a dvh-fraction so the figure + copy together fit inside
+     100dvh. 42dvh leaves room for topbar, head row, title, blurb, and
+     the small dl status/specs block. */
   .step__portrait {
     width: 100vw;
     margin-left: calc(50% - 50vw);
@@ -1315,61 +1271,97 @@ body.crosshair-cursor .hero {
   .step__portrait video,
   .step__portrait img {
     width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 5;
-    max-height: none;
+    height: 42dvh;
+    max-height: 42dvh;
     max-width: none;
     object-fit: cover;
     object-position: center;
   }
 
-  /* Triptych & pair: stack cells vertically on phone. Side-by-side
-     three (or two) portraits at this width crowd both the figures
-     and the captions; stacked, each cell becomes a full-width hero
-     beat in the sequence with a clean horizontal label/value
-     caption underneath. */
-  .step__triptych,
-  .step__pair {
+  /* --- Triptych (step 03): three SIDE-BY-SIDE on mobile -------------
+     User intent: each project sub-step is a snap target, the triptych
+     reads as a single composition (three frames, one beat). Container
+     breaks edge-to-edge, three equal columns split the width. Each
+     cell's portrait is sized by dvh so they all fit + leave headroom
+     for the title above and blurb below inside the locked 100dvh. */
+  .step__triptych {
     width: 100vw;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
-    display: flex;
-    flex-direction: column;
-    gap: var(--m-gap-block);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
   }
-  .step__triptych-cell,
-  .step__pair-cell {
+  .step__triptych-cell {
     flex: none;
     min-width: 0;
     width: 100%;
-    gap: var(--m-gap-text);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--m-gap-tight);
   }
-  .step__triptych-cell .step__portrait,
-  .step__pair-cell .step__portrait {
+  .step__triptych-cell .step__portrait {
     width: 100%;
     margin: 0;
   }
   .step__triptych-cell .step__portrait video,
-  .step__triptych-cell .step__portrait img,
+  .step__triptych-cell .step__portrait img {
+    width: 100%;
+    height: 36dvh;
+    max-height: 36dvh;
+    object-fit: cover;
+  }
+  .step__triptych-cell figcaption {
+    padding: 0 6px;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    gap: 4px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* --- Pair (step 05): two side-by-side -----------------------------
+     Same logic as triptych, two columns, slightly taller portrait
+     since each cell has more room. */
+  .step__pair {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .step__pair-cell {
+    flex: none;
+    min-width: 0;
+    width: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--m-gap-tight);
+  }
+  .step__pair-cell .step__portrait {
+    width: 100%;
+    margin: 0;
+  }
   .step__pair-cell .step__portrait video,
   .step__pair-cell .step__portrait img {
     width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 5;
-    max-height: none;
+    height: 42dvh;
+    max-height: 42dvh;
     object-fit: cover;
   }
-  .step__triptych-cell figcaption,
   .step__pair-cell figcaption {
-    padding: 0 var(--m-gutter);
-    font-size: var(--m-meta);
-    letter-spacing: var(--m-meta-tracking);
-    gap: var(--m-gutter);
-    flex-direction: row;
-    align-items: baseline;
+    padding: 0 8px;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    gap: 6px;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  /* Wide image (step 01) — full-bleed, native aspect. */
+  /* --- Wide image (step 01): full-bleed, capped by dvh -------------- */
   .step__media-wide {
     width: 100vw;
     margin-left: calc(50% - 50vw);
@@ -1377,8 +1369,8 @@ body.crosshair-cursor .hero {
   }
   .step__media-wide img {
     width: 100%;
-    height: auto;
-    max-height: none;
+    height: 42dvh;
+    max-height: 42dvh;
     object-fit: cover;
   }
 
@@ -1387,13 +1379,15 @@ body.crosshair-cursor .hero {
     grid-template-columns: auto 1fr;
     grid-template-rows: auto auto;
     column-gap: var(--m-gap-tight);
-    row-gap: var(--m-gap-tight);
+    row-gap: 4px;
     font-size: var(--m-meta);
     letter-spacing: var(--m-meta-tracking);
+    flex: 0 0 auto;
   }
   .step__meta {
     grid-column: 1 / -1;
     gap: var(--m-gap-tight);
+    font-size: 9px;
   }
 
   /* --- Type scale -------------------------------------------------- */
@@ -1401,7 +1395,7 @@ body.crosshair-cursor .hero {
   .step__display--centered {
     font-size: var(--m-display);
     line-height: var(--m-display-leading);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
     max-width: none;
   }
   .step__display--centered {
@@ -1418,15 +1412,15 @@ body.crosshair-cursor .hero {
     text-align: center;
   }
 
-  /* --- Status/specs dl: flow inline below blurb ------------------- */
+  /* --- Status/specs dl: tight inline below blurb ------------------- */
   .step__status,
   .step__specs {
     margin-top: 0;
-    padding-top: var(--m-gap-text);
-    row-gap: var(--m-gap-tight);
-    column-gap: var(--m-gutter);
-    font-size: var(--m-meta);
-    letter-spacing: var(--m-meta-tracking);
+    padding-top: var(--m-gap-tight);
+    row-gap: 4px;
+    column-gap: 16px;
+    font-size: 9px;
+    letter-spacing: 0.14em;
   }
 }
 
@@ -1835,15 +1829,6 @@ a.footer__line:hover {
 
 /* ----- Mobile: phone / small tablet (<= 720px) ----------------------- */
 @media (max-width: 720px) {
-  /* Mobile portrait: drop mandatory snap to proximity. Mandatory was
-     fighting iOS touch swipes — small swipes felt sticky and the page
-     could feel "caught between" sections. Proximity still pulls the
-     scroll to a section boundary when the user lets go near one, but
-     doesn't yank back during the gesture itself. Desktop and landscape
-     keep mandatory for the clean lock-to-step experience. */
-  .page {
-    scroll-snap-type: y proximity;
-  }
   /* Topbar — keep logo + nav at sizes that respect mobile tap-target
      guidance (44–48px hit area). Padding on the interactive elements is
      bumped explicitly so buttons remain easy to tap. */
@@ -2088,3 +2073,23 @@ a.footer__line:hover {
   }
 }
 
+/* ----- Ultra-short viewports (landscape phone) -----------------------
+   When the viewport is very short (e.g. landscape phone, ~half-screen
+   browser), the 100dvh lock would clip content. Drop the lock and
+   downgrade snap to proximity so the user can scroll naturally inside
+   a tall step. Mandatory snap on a short viewport is hostile.
+   Placed last so it overrides all width-based media-query rules. */
+@media (max-height: 600px) {
+  html {
+    scroll-snap-type: y proximity;
+  }
+  .page__section,
+  .step,
+  .step:first-child,
+  .prefinal {
+    height: auto;
+    min-height: 100dvh;
+    max-height: none;
+    overflow: visible;
+  }
+}

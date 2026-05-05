@@ -10,8 +10,7 @@ export default function Footer() {
   useEffect(() => {
     if (!ref.current) return;
     const node = ref.current;
-    // `.page` is the actual scroll container (see App.css).
-    const root = document.querySelector(".page");
+    // Document is the scroll container — null root = viewport.
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -19,7 +18,7 @@ export default function Footer() {
           observer.disconnect();
         }
       },
-      { threshold: 0.35, root },
+      { threshold: 0.35 },
     );
     observer.observe(node);
     return () => observer.disconnect();
