@@ -1084,6 +1084,12 @@ body.crosshair-cursor .hero {
   .step--right-media .step__body,
   .step--left-media .step__body {
     grid-template-columns: 1fr;
+    /* Figure auto-sized; copy column grows to fill the rest of the
+       locked step body. Lets the dl status pin to the bottom of the
+       copy column (margin-top: auto) so the composition reads as
+       figure → title+blurb → footer status, instead of packing all
+       three to the top with empty viewport beneath. */
+    grid-template-rows: auto 1fr;
     /* Body-level gap = breath between media block and copy block. */
     gap: 28px;
   }
@@ -1126,15 +1132,15 @@ body.crosshair-cursor .hero {
     object-position: center;
   }
   /* Stacked text+media steps (02 mold, 04 controller) carry a dl
-     status/specs table beneath the blurb, so the portrait shrinks to
-     leave room for all the copy with breathing gaps and not clip the
-     bottom row. */
+     status/specs table beneath the blurb. Figure claims ~46dvh — big
+     enough to feel dominant, tight enough that the copy column below
+     has room for title + blurb + bottom-pinned dl without clipping. */
   .step--right-media .step__portrait video,
   .step--right-media .step__portrait img,
   .step--left-media .step__portrait video,
   .step--left-media .step__portrait img {
-    height: 38dvh;
-    max-height: 38dvh;
+    height: 46dvh;
+    max-height: 46dvh;
   }
   /* Triptych & pair: container breaks out edge-to-edge, individual
      cells split the width via flex. Caption stays inside the original
@@ -1188,14 +1194,15 @@ body.crosshair-cursor .hero {
     padding: 48px 22px 8px;
     gap: 24px;
   }
-  /* Pack body to the top so the head + media + copy stack as one
-     composition with the empty bottom reading as intentional margin. */
+  /* Pack body to the top for stacked text+media steps where the dl
+     anchors the bottom (02 mold, 04 controller). For full-width media
+     steps without a footer element (01 wide, 03 diptych, 05 pair) the
+     body stays centered so the figure+title+blurb composition floats
+     in the middle of the viewport — feels intentional rather than
+     top-packed-with-empty-black-below. */
   .step__body,
-  .step--wide .step__body,
   .step--right-media .step__body,
-  .step--left-media .step__body,
-  .step--diptych .step__body,
-  .step--pair .step__body {
+  .step--left-media .step__body {
     justify-content: flex-start;
     align-content: start;
   }
@@ -1229,26 +1236,30 @@ body.crosshair-cursor .hero {
   .step--pair .step__body {
     gap: 28px;
   }
-  /* Copy column rhythm: title → body → footnote table all inside one
-     stack. 18px reads as a clear paragraph break without competing
-     with the wider 28px section break the body gap creates. */
+  /* Copy column rhythm: title → body → bottom-pinned footnote table.
+     Copy fills the body's 1fr row (set above) so flex-column with a
+     trailing margin-top: auto on .step__status / .step__specs anchors
+     the footer to the bottom of the available space. Title and blurb
+     hug the top; status sits at the bottom; the empty middle reads
+     as an intentional breath. */
   .step--right-media .step__copy,
   .step--left-media .step__copy {
-    gap: 18px;
+    gap: 22px;
+    height: 100%;
   }
   .step__display {
-    font-size: clamp(28px, 8vw, 36px);
-    line-height: 1.05;
-    letter-spacing: -0.018em;
+    font-size: clamp(30px, 8.6vw, 40px);
+    line-height: 1.06;
+    letter-spacing: -0.02em;
     max-width: none;
   }
   .step__display--centered {
     max-width: none;
   }
   .step__blurb {
-    font-size: 13px;
-    line-height: 1.7;
-    letter-spacing: 0.015em;
+    font-size: 13.5px;
+    line-height: 1.78;
+    letter-spacing: 0.02em;
   }
   .step__blurb--centered {
     max-width: 38ch;
@@ -1279,15 +1290,19 @@ body.crosshair-cursor .hero {
     gap: 8px;
   }
 
-  /* Tighten the dl rows so they don't push the portrait off the bottom
-     of the locked viewport. */
+  /* Pin the status/specs dl to the bottom of the copy column. Combined
+     with the body's `auto 1fr` rows + copy column `height: 100%`, the
+     dl sits flush against the bottom padding line — reads as a footer
+     credit row, anchors the composition, and lets the title+blurb
+     breathe in the upper half of the copy column. */
   .step__status,
   .step__specs {
-    padding-top: 16px;
-    row-gap: 6px;
-    column-gap: 18px;
-    font-size: 10px;
-    letter-spacing: 0.16em;
+    margin-top: auto;
+    padding-top: 18px;
+    row-gap: 8px;
+    column-gap: 22px;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
   }
 }
 
