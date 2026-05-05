@@ -32,3 +32,4 @@ dist-ssr
 /*.png
 /*.jpg
 /*.jpeg
+.claude/
