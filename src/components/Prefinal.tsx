@@ -30,7 +30,11 @@ export default function Prefinal() {
 
   return (
     <div ref={ref} className={`prefinal${revealed ? " prefinal--in" : ""}`}>
-      <CrossfadeVideo src={PREFINAL_VIDEO} className="prefinal__video" />
+      <CrossfadeVideo
+        src={PREFINAL_VIDEO}
+        className="prefinal__video"
+        play={revealed}
+      />
 
       <div className="prefinal__copy">
         <p className="prefinal__meta" style={D(0)}>

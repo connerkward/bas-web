@@ -1,5 +1,21 @@
 import { useTopBarColor } from "../lib/useTopBarColor";
 
+// The actual scroll container is `.page` (fixed inset:0; html/body scroll
+// is locked — see App.css). `window.scrollTo` is a no-op here, so we have
+// to address `.page` directly.
+function scrollToHero() {
+  const page = document.querySelector(".page");
+  if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+  // Also clear the section hash so the URL reflects "at top / hero".
+  if (window.location.hash) {
+    history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search,
+    );
+  }
+}
+
 export default function Logo() {
   const ref = useTopBarColor<HTMLButtonElement>();
   return (
@@ -8,7 +24,7 @@ export default function Logo() {
       type="button"
       className="logo"
       aria-label="BAS Studio — back to top"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onClick={scrollToHero}
     >
       <span className="logo__bas">BAS</span>
       <span className="logo__studio">STUDIO</span>

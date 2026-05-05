@@ -5,14 +5,21 @@ import { useEffect, useRef } from "react";
 // dissolves into a fresh playback so the seam never reads. Only one video
 // is decoding at a time except during the fade window. Used by both the
 // prefinal hero and the installation finale.
+//
+// `play` gates the playback start so a section's video doesn't burn frames
+// (or autoplay quota on mobile) before the user has scrolled into the
+// section. Defaults to true for legacy callers; pass `false` then flip
+// to `true` once the section reveals.
 export default function CrossfadeVideo({
   src,
   fadeSec = 0.6,
   className,
+  play = true,
 }: {
   src: string;
   fadeSec?: number;
   className?: string;
+  play?: boolean;
 }) {
   const aRef = useRef<HTMLVideoElement>(null);
   const bRef = useRef<HTMLVideoElement>(null);
@@ -26,6 +33,7 @@ export default function CrossfadeVideo({
     const trans = `opacity ${fadeSec}s linear`;
     a.style.transition = trans;
     b.style.transition = trans;
+    if (!play) return;
     a.play().catch(() => {});
 
     let active: "a" | "b" = "a";
@@ -49,8 +57,12 @@ export default function CrossfadeVideo({
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [src, fadeSec]);
+    return () => {
+      cancelAnimationFrame(raf);
+      a.pause();
+      b.pause();
+    };
+  }, [src, fadeSec, play]);
 
   return (
     <div className={className} aria-hidden="true">
@@ -60,7 +72,7 @@ export default function CrossfadeVideo({
         src={src}
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         disablePictureInPicture
       />
       <video
@@ -69,7 +81,7 @@ export default function CrossfadeVideo({
         src={src}
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         disablePictureInPicture
       />
     </div>
