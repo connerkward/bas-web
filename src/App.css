@@ -396,46 +396,41 @@ body.crosshair-cursor .hero {
 }
 
 @media (max-width: 600px) {
-  /* Video-dominant mobile composition: runner takes most of the screen,
-     copy column is dense and intentional below. Edge-to-edge horizontal
-     padding stays minimal so the figure feels present, not framed. */
+  /* Video dominates the screen; copy block below has real breathing
+     room — generous gaps, looser line-height, deliberate paragraph
+     rhythm so nothing feels crammed. */
   .prefinal {
-    padding: 56px 16px 16px;
-    gap: 12px;
+    padding: 56px 22px 20px;
+    gap: 22px;
   }
-  /* 60vh = ~538px on a 414×896 phone — dominant, fills the upper half
-     plus more. Leaves ~300px below for meta/title/body/def packed
-     together as a single composition block. */
+  /* 50vh = ~448px on a 414×896 phone. Dominant figure with room below
+     for the full meta/title/body/def stack to breathe and not clip. */
   .prefinal__video {
-    height: 60vh;
-    /* Override desktop's 88vh + max-height: 920 chain so the 60vh
-       actually wins on mobile. */
-    max-height: 60vh;
+    height: 50vh;
+    /* Override desktop's 88vh + max-height: 920 chain so 50vh wins. */
+    max-height: 50vh;
   }
   .prefinal__meta {
-    margin: 0 0 8px;
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    gap: 2px;
+    margin: 0 0 18px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    gap: 4px;
   }
   .prefinal__title {
-    /* Tighter ceiling so the title doesn't dominate vertical space the
-       video should own. Two stacked lines at ~32px sit comfortably
-       under the runner without crowding the body or def. */
-    font-size: clamp(26px, 8vw, 36px);
-    margin: 0 0 10px;
-    line-height: 1.02;
+    font-size: clamp(28px, 8.4vw, 38px);
+    margin: 0 0 22px;
+    line-height: 1.05;
   }
   .prefinal__body {
-    font-size: 11px;
-    line-height: 1.5;
-    margin: 0 0 10px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    margin: 0 0 22px;
   }
   .prefinal__def {
-    font-size: 9.5px;
-    line-height: 1.45;
-    padding-top: 8px;
-    gap: 4px;
+    font-size: 10.5px;
+    line-height: 1.6;
+    padding-top: 16px;
+    gap: 8px;
   }
 }
 
@@ -978,39 +973,46 @@ body.crosshair-cursor .hero {
   }
 }
 
-/* Phone-tight finale — mirrors the prefinal mobile composition: video
-   dominates the upper portion of the screen, copy block is dense
-   intentional support below. Numbers match the prefinal one-for-one so
-   the bookend sections read as a matched pair. */
+/* Finale phone — mirrors the prefinal one-for-one so the bookend
+   sections read as a matched pair with identical breathing room. The
+   step locks to 100dvh + overflow:hidden whereas the prefinal section
+   doesn't, so the finale video sits a notch shorter than prefinal's
+   to leave headroom inside the lock. */
 @media (max-width: 600px) {
+  .step--finale {
+    /* Tighten outer padding so the bookend feels visually equivalent
+       to the prefinal section (no step__head row, no big top margin). */
+    padding: 32px 22px 20px;
+    gap: 0;
+  }
   .step--finale .step__body {
     padding: 0;
-    gap: 12px;
+    gap: 22px;
   }
   .step__feature-video {
-    height: 60vh;
-    max-height: 60vh;
+    height: 50vh;
+    max-height: 50vh;
   }
   .step__feature-meta {
-    margin: 0 0 8px;
-    font-size: 9px;
-    letter-spacing: 0.18em;
-    gap: 2px;
+    margin: 0 0 18px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    gap: 4px;
   }
   .step__feature-title {
-    margin: 0 0 10px;
-    font-size: clamp(26px, 8vw, 36px);
-    line-height: 1.02;
+    margin: 0 0 22px;
+    font-size: clamp(28px, 8.4vw, 38px);
+    line-height: 1.05;
   }
   .step__feature-blurb {
-    margin: 0 0 10px;
-    font-size: 11px;
-    line-height: 1.5;
+    margin: 0 0 22px;
+    font-size: 12.5px;
+    line-height: 1.7;
   }
   .step__feature-caption {
-    padding-top: 8px;
-    font-size: 9.5px;
-    line-height: 1.45;
+    padding-top: 16px;
+    font-size: 10.5px;
+    line-height: 1.6;
     letter-spacing: 0.04em;
   }
 }
@@ -1069,13 +1071,15 @@ body.crosshair-cursor .hero {
 
 @media (max-width: 880px) {
   .step {
-    padding: 56px 24px 12px;
-    gap: 18px;
+    padding: 56px 24px 24px;
+    /* Step-level gap = the breath between head row and body. */
+    gap: 24px;
   }
   .step--right-media .step__body,
   .step--left-media .step__body {
     grid-template-columns: 1fr;
-    gap: 14px;
+    /* Body-level gap = breath between media block and copy block. */
+    gap: 28px;
   }
   /* Always lead with the figure on stacked layouts — visual hero up
      top, copy below. Source order has copy first / portrait second
@@ -1114,6 +1118,16 @@ body.crosshair-cursor .hero {
     max-width: none;
     object-fit: cover;
     object-position: center;
+  }
+  /* Stacked text+media steps (02 mold, 04 controller) carry a dl
+     status/specs table beneath the blurb, so the portrait shrinks to
+     leave room for all the copy without cutting the bottom row. */
+  .step--right-media .step__portrait video,
+  .step--right-media .step__portrait img,
+  .step--left-media .step__portrait video,
+  .step--left-media .step__portrait img {
+    height: 40dvh;
+    max-height: 40dvh;
   }
   /* Triptych & pair: container breaks out edge-to-edge, individual
      cells split the width via flex. Caption stays inside the original
@@ -1158,15 +1172,15 @@ body.crosshair-cursor .hero {
 }
 
 @media (max-width: 720px) {
-  /* Phone-tight rhythm: dense composition, no awkward empty bands.
-     Header-row, title, hero media, blurb stack as one visual unit. */
+  /* Phone rhythm with real breathing room: generous padding, big gaps
+     between sections, looser line-height so the text never feels
+     packed against itself. */
   .step {
-    padding: 52px 16px 20px;
-    gap: 12px;
+    padding: 60px 22px 32px;
+    gap: 24px;
   }
-  /* Pack body content to the top of the step so the head + media + copy
-     read as one continuous composition. Steps shorter than 100dvh leave
-     room at the bottom which reads as intentional bottom padding. */
+  /* Pack body to the top so the head + media + copy stack as one
+     composition with the empty bottom reading as intentional margin. */
   .step__body,
   .step--wide .step__body,
   .step--right-media .step__body,
@@ -1176,10 +1190,7 @@ body.crosshair-cursor .hero {
     justify-content: flex-start;
     align-content: start;
   }
-  /* In stacked single-column layouts, lead with the figure: media at
-     top, copy below. step--right-media follows source order (copy first,
-     portrait second) on desktop, so we flip it on mobile to match
-     step--left-media's behavior. */
+  /* Stacked layouts: lead with the figure (media at top, copy below). */
   .step--right-media .step__portrait,
   .step--left-media .step__portrait {
     order: 1;
@@ -1192,26 +1203,33 @@ body.crosshair-cursor .hero {
     grid-template-columns: auto 1fr;
     grid-template-rows: auto auto;
     column-gap: 14px;
-    row-gap: 4px;
-    font-size: 9.5px;
-    letter-spacing: 0.18em;
+    row-gap: 6px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
   }
   .step__meta {
     grid-column: 1 / -1;
-    gap: 8px;
+    gap: 10px;
   }
-  /* Per-layout body gaps. Per-layout selectors carry 020 specificity, so
-     we match that to override their desktop gaps. */
+  /* Body gaps — generous breath between media block and copy block,
+     since that's the major composition seam. */
   .step--wide .step__body,
   .step--right-media .step__body,
   .step--left-media .step__body,
   .step--diptych .step__body,
   .step--pair .step__body {
+    gap: 24px;
+  }
+  /* Copy column rhythm: title → body → footnote table all inside one
+     stack, so a moderate 14px gap reads as paragraph break (not the
+     wider section break that the body gap above does). */
+  .step--right-media .step__copy,
+  .step--left-media .step__copy {
     gap: 14px;
   }
   .step__display {
     font-size: clamp(28px, 8vw, 36px);
-    line-height: 1.02;
+    line-height: 1.05;
     letter-spacing: -0.018em;
     max-width: none;
   }
@@ -1220,7 +1238,7 @@ body.crosshair-cursor .hero {
   }
   .step__blurb {
     font-size: 13px;
-    line-height: 1.55;
+    line-height: 1.7;
     letter-spacing: 0.015em;
   }
   .step__blurb--centered {
@@ -1256,15 +1274,11 @@ body.crosshair-cursor .hero {
      of the locked viewport. */
   .step__status,
   .step__specs {
-    padding-top: 8px;
-    row-gap: 3px;
-    column-gap: 14px;
-    font-size: 9.5px;
+    padding-top: 16px;
+    row-gap: 6px;
+    column-gap: 18px;
+    font-size: 10px;
     letter-spacing: 0.16em;
-  }
-  .step--right-media .step__copy,
-  .step--left-media .step__copy {
-    gap: 10px;
   }
 }
 
