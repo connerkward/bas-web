@@ -1694,6 +1694,15 @@ body.crosshair-cursor .hero {
   line-height: 1;
   position: relative;
   padding: 6px 10px;
+  /* iOS: opt out of double-tap-zoom and the 300ms click delay. Without
+     this, taps on the link fire after a delay and can be eaten by gesture
+     detection on the topbar's compositor layer. */
+  touch-action: manipulation;
+  /* Force the link onto its own paint layer above the topbar's
+     mix-blend-mode layer. Without this, iOS Safari's hit-test sometimes
+     routes taps to the blend layer (which has pointer-events: none)
+     instead of the link. translateZ(0) is the cheapest GPU promotion. */
+  transform: translateZ(0);
   text-shadow:
     0.4px 0 0 transparent,
     -0.4px 0 0 transparent,
