@@ -413,12 +413,11 @@ body.crosshair-cursor .hero {
     line-height: var(--m-body-leading);
     max-width: none;
   }
+  /* Hide the chronophotography definition on mobile — frees ~65px so the
+     runner video grows further inside the locked 100dvh frame. Desktop
+     keeps the footnote (it's the kicker that ties the section to Marey). */
   .prefinal__def {
-    padding-top: var(--m-gap-tight);
-    font-size: 10px;
-    line-height: 1.45;
-    gap: 4px;
-    max-width: none;
+    display: none;
   }
 }
 
@@ -1307,11 +1306,17 @@ body.crosshair-cursor .hero {
     min-height: 0;
   }
 
-  /* Stacked text+media layouts: figure first, copy second. */
+  /* Stacked text+media layouts: figure first, copy second.
+     Flex-flip pattern (mirrors prefinal/finale): the portrait grows to
+     consume leftover vertical space inside the locked 100dvh, the copy
+     column sizes to its own content. min-height floor guards short
+     viewports so the figure doesn't collapse below a presentational
+     minimum. */
   .step--right-media .step__portrait,
   .step--left-media .step__portrait {
     order: 1;
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-height: 200px;
   }
   .step--right-media .step__copy,
   .step--left-media .step__copy {
@@ -1320,9 +1325,8 @@ body.crosshair-cursor .hero {
     flex-direction: column;
     gap: var(--m-gap-text);
     max-width: none;
-    flex: 1;
+    flex: 0 0 auto;
     min-height: 0;
-    overflow: hidden;
   }
 
   /* Two-col copy block (step 01) collapses to one column. */
@@ -1332,31 +1336,34 @@ body.crosshair-cursor .hero {
   }
 
   /* --- Single edge-to-edge portrait (steps 02 mold, 04 controller) ---
-     Pinned to a dvh-fraction so the figure + copy together fit inside
-     100dvh. 42dvh leaves room for topbar, head row, title, blurb, and
-     the small dl status/specs block. */
+     Container is a flex-grow child of the step body (see flex-flip rule
+     above). The inner video fills the container 100% — height is driven
+     by the parent's flex slack, not a dvh fraction, so the figure
+     consumes whatever space the copy doesn't. */
   .step__portrait {
     width: 100vw;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
     align-items: stretch;
+    overflow: hidden;
   }
   .step__portrait video,
   .step__portrait img {
     width: 100%;
-    height: 42dvh;
-    max-height: 42dvh;
+    height: 100%;
+    max-height: none;
     max-width: none;
     object-fit: cover;
     object-position: center;
   }
 
   /* --- Triptych (step 03): three SIDE-BY-SIDE on mobile -------------
-     User intent: each project sub-step is a snap target, the triptych
-     reads as a single composition (three frames, one beat). Container
-     breaks edge-to-edge, three equal columns split the width. Each
-     cell's portrait is sized by dvh so they all fit + leave headroom
-     for the title above and blurb below inside the locked 100dvh. */
+     Flex-flip: the triptych itself is a grow child of the step body,
+     so the three videos consume leftover space; the title above and
+     the blurb below stay sized to content. Each cell is a column-flex
+     stack — its portrait grows, its figcaption sizes to content. The
+     videos thus all share the same height = (cell flex slack), so the
+     row reads as one composition. */
   .step__triptych {
     width: 100vw;
     margin-left: calc(50% - 50vw);
@@ -1364,6 +1371,8 @@ body.crosshair-cursor .hero {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 4px;
+    flex: 1 1 auto;
+    min-height: 200px;
   }
   .step__triptych-cell {
     flex: none;
@@ -1373,16 +1382,22 @@ body.crosshair-cursor .hero {
     display: flex;
     flex-direction: column;
     gap: var(--m-gap-tight);
+    /* min-height: 0 lets the cell shrink correctly inside the grid row;
+       without it the cell can clip the figcaption when the video grows. */
+    min-height: 0;
   }
   .step__triptych-cell .step__portrait {
     width: 100%;
     margin: 0;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
   }
   .step__triptych-cell .step__portrait video,
   .step__triptych-cell .step__portrait img {
     width: 100%;
-    height: 36dvh;
-    max-height: 36dvh;
+    height: 100%;
+    max-height: none;
     object-fit: cover;
   }
   .step__triptych-cell figcaption {
@@ -1395,8 +1410,8 @@ body.crosshair-cursor .hero {
   }
 
   /* --- Pair (step 05): two side-by-side -----------------------------
-     Same logic as triptych, two columns, slightly taller portrait
-     since each cell has more room. */
+     Same flex-flip as the triptych: the pair grid grows, each cell's
+     portrait fills the cell, figcaption sizes to content. */
   .step__pair {
     width: 100vw;
     margin-left: calc(50% - 50vw);
@@ -1404,6 +1419,8 @@ body.crosshair-cursor .hero {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
+    flex: 1 1 auto;
+    min-height: 200px;
   }
   .step__pair-cell {
     flex: none;
@@ -1413,16 +1430,20 @@ body.crosshair-cursor .hero {
     display: flex;
     flex-direction: column;
     gap: var(--m-gap-tight);
+    min-height: 0;
   }
   .step__pair-cell .step__portrait {
     width: 100%;
     margin: 0;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
   }
   .step__pair-cell .step__portrait video,
   .step__pair-cell .step__portrait img {
     width: 100%;
-    height: 42dvh;
-    max-height: 42dvh;
+    height: 100%;
+    max-height: none;
     object-fit: cover;
   }
   .step__pair-cell figcaption {
@@ -1434,21 +1455,31 @@ body.crosshair-cursor .hero {
     align-items: flex-start;
   }
 
-  /* --- Wide image (step 01): full-bleed, capped by dvh -------------- */
+  /* --- Wide image (step 01): full-bleed, flex-grow ------------------
+     Flex-flip: the wide media is a grow child of the step body, the
+     copy below sizes to content, so the image consumes leftover space.
+     Inner img fills the container; height is driven by the parent's
+     flex slack. */
   .step__media-wide {
     width: 100vw;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
+    flex: 1 1 auto;
+    min-height: 200px;
+    overflow: hidden;
   }
   .step__media-wide img {
     width: 100%;
-    height: 42dvh;
-    max-height: 42dvh;
+    height: 100%;
+    max-height: none;
     object-fit: cover;
     /* Bias the crop toward the left side of the source — the runner sits
        slightly left-of-center in the frame and the left edge has more
        interesting silhouette content; centered crop loses it. */
     object-position: left center;
+  }
+  .step__copy--two-col {
+    flex: 0 0 auto;
   }
 
   /* --- Head row (step number + title + meta band) ------------------ */
