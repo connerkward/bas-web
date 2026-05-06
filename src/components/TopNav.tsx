@@ -37,12 +37,15 @@ export default function TopNav() {
   const handleClick = (target: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     const el = document.getElementById(target);
-    // `behavior: "smooth"` here gets canceled by `scroll-snap-type:
-    // mandatory` on html — the snap engine treats the smooth animation
-    // as a user gesture that ended at the start position, so it pulls
-    // back to the prior snap point. `instant` jumps in one frame which
-    // mandatory snap accepts cleanly.
-    if (el) el.scrollIntoView({ behavior: "instant", block: "start" });
+    if (!el) return;
+    // Direct scrollTop assignment — the most primitive scroll possible.
+    // `scrollIntoView` (even with `behavior: "instant"`) was glitching
+    // on iOS Safari with mandatory scroll-snap on html — the snap
+    // engine appeared to interpret the API call as an in-progress
+    // gesture and produced a visible re-snap on tap. Setting scrollTop
+    // directly is treated as a programmatic position set; mandatory
+    // snap accepts the new offset cleanly without re-engagement.
+    document.documentElement.scrollTop = el.offsetTop;
     history.replaceState(null, "", `#${target}`);
   };
 
