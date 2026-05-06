@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useTopBarColor } from "../lib/useTopBarColor";
 import { useActiveSection } from "../lib/useActiveSection";
 
@@ -17,14 +16,11 @@ export default function TopNav() {
   const ref = useTopBarColor<HTMLElement>();
   const active = useActiveSection(TRACKED_IDS);
 
-  // Mirror the active section into the URL hash so the URL is shareable.
-  // replaceState keeps history clean (no entry per scroll).
-  useEffect(() => {
-    const want = active ? `#${active}` : "";
-    if (window.location.hash === want) return;
-    const url = window.location.pathname + window.location.search + want;
-    history.replaceState(null, "", url);
-  }, [active]);
+  // No URL hash mirroring on scroll. The URL only changes when the USER
+  // changes it (nav-link click → browser sets hash, URL-bar edit). Auto-
+  // mirroring fought URL-bar edits: clearing `/#about` to `/` would be
+  // immediately overwritten back to `/#about` because the IO still saw
+  // the footer in view and rewrote the hash. The user's URL intent wins.
 
   // Plain anchor links. Browser handles the scroll natively — sections are
   // exactly viewport-height apart so each hash target is a valid snap
