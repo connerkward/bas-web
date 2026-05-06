@@ -1859,44 +1859,37 @@ a.footer__line:hover {
   overflow: visible;
 }
 
+/* Per-letter spans no longer animate. Animating opacity / color on each
+   inline span promotes that span to its own compositor layer, sized to
+   the letter's TIGHT line-box — which clips IntraNet's ascender (the
+   font's actual top extends past the typographic ascender). The clip
+   is a layer-bounds artifact, not a font bug, but per-letter scope
+   makes it unfixable from CSS without resizing every letter's box.
+
+   Fix: animate at the .footer__bas (parent) level instead. The parent
+   has `overflow: visible` AND `padding-top: 0.6em` headroom, so its
+   compositor layer's bounding box covers the wordmark + headroom and
+   IntraNet's ascender stays inside the layer. Trade-off: loses the
+   per-letter stagger; the whole wordmark fades together. */
 .footer__bas-letter {
-  /* Tone-fade intro (BG → display), NOT opacity, NOT transparent. iOS
-     Safari hardware-accelerates opacity animations onto a compositor
-     layer sized to the line-box, clipping IntraNet's ascender overflow
-     for the duration of the animation — that was the original 1.1s
-     visible clip. Switching to `color` interpolation killed the layer
-     promotion, but a subsequent fade `transparent → display` left a
-     shorter residual artifact: at low alpha, the glyph's anti-aliased
-     edges (the thin top strokes of IntraNet B/A/S) carry sub-pixel
-     coverage that reads as zero contrast against `--footer-bg`, while
-     the bulk of each glyph already reads. The result for the first
-     ~80–150ms after snap-rest: glyph "tops" appear missing because
-     their paint pixels are at near-zero alpha. Once the alpha rises
-     enough for the AA edges to clear AA contrast, the tops "appear"
-     — exactly the brief top-clip the user reported.
-
-     Fix: fade between two FULLY OPAQUE colors that just happen to
-     start matching the background tone. Glyph paint coverage is 100%
-     from frame 0 — every pixel including the AA edges is rendered;
-     they're simply painted in `--footer-bg` so they're invisible by
-     tone match, not by alpha. As the color interpolates toward
-     `--footer-display`, the entire glyph (edges and body) brightens
-     uniformly. No coverage front, no perceived top-clip. */
-  color: var(--footer-bg);
+  /* Letters are static; the parent owns the reveal. */
 }
 
-.footer__bas--in .footer__bas-letter {
-  animation: bas-letter-rise 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+.footer__bas {
+  opacity: 0;
+}
+.footer__bas--in {
+  animation: bas-fade-in 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-@keyframes bas-letter-rise {
-  from { color: var(--footer-bg); }
-  to   { color: var(--footer-display); }
+@keyframes bas-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .footer__bas-letter {
-    color: var(--footer-display);
+  .footer__bas {
+    opacity: 1;
     animation: none !important;
   }
 }
