@@ -17,21 +17,27 @@ function scrollToTarget(target: string) {
   const el = document.getElementById(target);
   if (!el) return;
   const html = document.documentElement;
-  // Mandatory scroll-snap on `html` (index.css) was eating programmatic
-  // scrolls on iOS Safari: clicking a nav button updated the URL hash
-  // and `aria-current` styling, but the page never moved — the snap
-  // engine immediately re-anchored to the prior snap point because the
-  // programmatic `scrollTop = ...` wasn't preceded by a user gesture
-  // it could attribute. Temporarily neutralize snap, jump, then
-  // restore snap on the next frame so the new position becomes the
-  // anchor instead of getting overridden.
-  const prevSnap = html.style.scrollSnapType;
+  // Mandatory scroll-snap on `html` (index.css) eats programmatic
+  // scrolls on iOS Safari unless we (a) actually defuse the snap
+  // before the write — a forced reflow ensures the style change is
+  // committed, not just queued — and (b) wait LONG ENOUGH after the
+  // write for the snap engine to observe the new position and adopt
+  // it as the new anchor before we re-enable mandatory mode. rAF was
+  // too short: iOS would re-anchor to the OLD snap point if we
+  // restored snap on the next frame, so taps from prefinal/step01
+  // (anywhere except scrollY=0) silently snapped back. setTimeout
+  // 80ms is empirically enough for the new position to be the
+  // accepted anchor.
   html.style.scrollSnapType = "none";
+  // Force layout — ensures `scroll-snap-type: none` is committed
+  // before the scrollTop write, not still queued in the style update
+  // batch.
+  void html.offsetHeight;
   html.scrollTop = el.offsetTop;
   history.replaceState(null, "", `#${target}`);
-  requestAnimationFrame(() => {
-    html.style.scrollSnapType = prevSnap;
-  });
+  setTimeout(() => {
+    html.style.scrollSnapType = "";
+  }, 80);
 }
 
 export default function TopNav() {
