@@ -30,10 +30,19 @@ body.crosshair-cursor .hero {
    Standard full-page snap landing-page pattern — the document is the
    scroller (Option A: Apple, Stripe, every modern landing page).
    `html` carries `scroll-snap-type: y mandatory` (in index.css) and
-   each `.page__section` / `.step` is `100dvh` with `scroll-snap-align:
-   start`. iOS Safari's address-bar collapse is handled by `dvh`
-   (dynamic viewport units) — the section always matches the live
-   visible viewport, so snap never lands mid-section.
+   each `.page__section` / `.step` is `100lvh` with `scroll-snap-align:
+   start`. We deliberately use `lvh` (NOT `dvh`) for snap-target height:
+   `dvh` recomputes during iOS Safari's URL-bar transition, which
+   reshuffles every section's offset under the user's finger. With
+   mandatory snap that produces a visible "jump" at boundaries — most
+   notably at the footer, where the user is at rest. `lvh` is fixed at
+   the URL-bar-collapsed viewport, so snap targets sit at predictable
+   absolute offsets that don't move when chrome appears/disappears.
+   Cost: when the URL bar is shown, the bottom ~80px of each snapped
+   section sits below the visible viewport — this is fine because
+   `scroll-snap-align: start` anchors the section TOP, content is sized
+   to fit a smaller budget than `lvh`, and the hidden region at the
+   bottom is the start of the next section anyway.
 
    `.page` here is just a flow container — no scrolling, no fixed
    inset. Scripts/observers use `null` root (the viewport). */
@@ -44,7 +53,7 @@ body.crosshair-cursor .hero {
 
 .page__section {
   width: 100%;
-  height: 100dvh;
+  height: 100lvh;
   scroll-snap-align: start;
   /* `normal` (not `always`) lets a fast wheel/touch swipe pass several
      sections in one continuous motion — the snap engine still pulls to
@@ -56,7 +65,7 @@ body.crosshair-cursor .hero {
      `contain-intrinsic-size` the browser keeps a placeholder box of the
      section's known size so scroll-snap targets remain correct. */
   content-visibility: auto;
-  contain-intrinsic-size: 100vw 100dvh;
+  contain-intrinsic-size: 100vw 100lvh;
 }
 
 .page__section--hero {
@@ -69,7 +78,7 @@ body.crosshair-cursor .hero {
 .page__section--projects {
   background: var(--footer-bg);
   /* Projects holds multiple `.step` snap targets, so the section itself
-     is NOT a single 100dvh slot — it grows to contain all steps, each
+     is NOT a single 100lvh slot — it grows to contain all steps, each
      of which is its own snap target. Removing snap-align on the section
      so we don't have two coincident snap points at the projects-start
      boundary (section + step 01). */
@@ -88,7 +97,7 @@ body.crosshair-cursor .hero {
 .prefinal {
   position: relative;
   width: 100%;
-  height: 100dvh;
+  height: 100lvh;
   display: flex;
   align-items: center;
   /* Center the video+copy pair as a single block so left/right gutters
@@ -365,10 +374,11 @@ body.crosshair-cursor .hero {
 }
 
 /* Prefinal phone — locked one-viewport snap target. Video gets a fixed
-   dvh slice so video + copy together fit inside 100dvh. */
+   lvh slice so video + copy together fit inside 100lvh. (See the page-
+   section comment for why we use `lvh`, not `dvh`, for snap targets.) */
 @media (max-width: 720px) {
   .prefinal {
-    height: 100dvh;
+    height: 100lvh;
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
@@ -454,10 +464,12 @@ body.crosshair-cursor .hero {
 
 .step {
   position: relative;
-  /* Every step is exactly one dynamic viewport — mandatory snap on
-     `html` needs every snap target at predictable offsets. Content is
-     sized to fit in 100dvh; nothing scrolls inside a step. */
-  height: 100dvh;
+  /* Every step is exactly one large viewport — mandatory snap on
+     `html` needs every snap target at predictable offsets that don't
+     shift when iOS Safari's URL bar collapses (see `.page__section`
+     above). Content is sized to fit in 100lvh; nothing scrolls inside
+     a step. */
+  height: 100lvh;
   overflow: hidden;
   border-top: 1px solid var(--footer-rule);
   padding: 64px 64px 48px;
@@ -1274,11 +1286,17 @@ body.crosshair-cursor .hero {
 
   /* --- Snap & section heights --------------------------------------
      Each step is locked to ONE viewport — same contract as desktop.
-     `100dvh` adjusts to iOS Safari's live visible height (with or
-     without the address bar) so the section always matches the
-     viewport. Mandatory snap on `html` (index.css) lands cleanly. */
+     We use `100lvh` (NOT `dvh`) so snap targets sit at predictable
+     absolute offsets that don't shift when iOS Safari's URL bar
+     transitions. With `dvh`, every section's offset reshuffles under
+     the user's finger during URL-bar collapse — the mandatory snap
+     engine then yanks them to the new nearest target, producing a
+     visible jump (most noticeable at the footer, where the user is
+     resting and there's no buffer below). `lvh` is fixed at the
+     URL-bar-collapsed viewport. Mandatory snap on `html` (index.css)
+     lands cleanly. */
   .step {
-    height: 100dvh;
+    height: 100lvh;
     overflow: hidden;
     padding: var(--m-section-top) var(--m-gutter) var(--m-section-bottom);
     gap: var(--m-gap-block);
