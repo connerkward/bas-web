@@ -75,6 +75,7 @@ function StepEarly() {
   return (
     <section
       ref={ref}
+      id="step-01"
       className={`step step--wide${revealed ? " step--in" : ""}`}
       data-step="01"
     >
@@ -112,6 +113,7 @@ function StepMold() {
   return (
     <section
       ref={ref}
+      id="step-02"
       className={`step step--right-media${revealed ? " step--in" : ""}`}
       data-step="02"
     >
@@ -153,6 +155,7 @@ function StepFabrication() {
   return (
     <section
       ref={ref}
+      id="step-03"
       className={`step step--diptych${revealed ? " step--in" : ""}`}
       data-step="03"
     >
@@ -210,6 +213,7 @@ function StepController() {
   return (
     <section
       ref={ref}
+      id="step-04"
       className={`step step--left-media${revealed ? " step--in" : ""}`}
       data-step="04"
     >
@@ -254,6 +258,7 @@ function StepLook() {
   return (
     <section
       ref={ref}
+      id="step-05"
       className={`step step--pair${revealed ? " step--in" : ""}`}
       data-step="05"
     >
@@ -312,6 +317,7 @@ function StepInstallation() {
   return (
     <section
       ref={ref}
+      id="step-06"
       className={`step step--finale${revealed ? " step--finale-in" : ""}`}
       data-step="06"
     >

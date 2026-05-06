@@ -1,9 +1,11 @@
 import { useTopBarColor } from "../lib/useTopBarColor";
+import { scrollToSection } from "../lib/scrollToSection";
 
-// Document is the scroll container — standard full-page snap pattern.
 function scrollToHero() {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  // Also clear the section hash so the URL reflects "at top / hero".
+  // Clear the hash FIRST, then scroll. scrollToSection handles the
+  // snap-disable + reflow + 200ms restore — without it, smooth scroll
+  // races with mandatory scroll-snap on iOS Safari and lands wherever
+  // the snap pulls (typically: back to the section the user was on).
   if (window.location.hash) {
     history.replaceState(
       null,
@@ -11,6 +13,7 @@ function scrollToHero() {
       window.location.pathname + window.location.search,
     );
   }
+  scrollToSection(null);
 }
 
 export default function Logo() {
