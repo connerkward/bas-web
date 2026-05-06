@@ -54,12 +54,6 @@ body.crosshair-cursor .hero {
 .page__section {
   width: 100%;
   height: 100lvh;
-  scroll-snap-align: start;
-  /* `normal` (not `always`) lets a fast wheel/touch swipe pass several
-     sections in one continuous motion — the snap engine still pulls to
-     the nearest target on rest. `always` makes every section a hard
-     magnet, which feels broken. */
-  scroll-snap-stop: always;
   position: relative;
   /* Skip layout/paint for sections that aren't in the viewport. With
      `contain-intrinsic-size` the browser keeps a placeholder box of the
@@ -78,12 +72,8 @@ body.crosshair-cursor .hero {
 .page__section--projects {
   background: var(--footer-bg);
   /* Projects holds multiple `.step` snap targets, so the section itself
-     is NOT a single 100lvh slot — it grows to contain all steps, each
-     of which is its own snap target. Removing snap-align on the section
-     so we don't have two coincident snap points at the projects-start
-     boundary (section + step 01). */
+     is NOT a single 100lvh slot — it grows to contain all steps. */
   height: auto;
-  scroll-snap-align: none;
   content-visibility: visible;
   contain-intrinsic-size: none;
 }
@@ -476,8 +466,6 @@ body.crosshair-cursor .hero {
   flex-direction: column;
   gap: 24px;
   box-sizing: border-box;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
 .step:first-child {
@@ -2233,9 +2221,6 @@ a.footer__line:hover {
    a tall step. Mandatory snap on a short viewport is hostile.
    Placed last so it overrides all width-based media-query rules. */
 @media (max-height: 600px) {
-  html {
-    scroll-snap-type: y proximity;
-  }
   .page__section,
   .step,
   .step:first-child,
