@@ -51,20 +51,19 @@ body,
    match the live viewport. No fixed inner scroller, no double-scroll
    weirdness, native momentum/snap behavior end to end. */
 html {
-  /* No CSS scroll-snap. Every iteration with `mandatory` or `proximity`
-     fought either programmatic navigation (mandatory rejects scrollTop
-     writes from non-zero positions on iOS Safari) or user expectations
-     (proximity doesn't snap firmly enough). JS-driven snap (in main.tsx)
-     instead: after the scroll comes to rest, snap to the nearest
-     viewport multiple. Nothing fights `<a href>`-triggered scrolls
-     because there's no CSS snap engine present. */
-  scroll-behavior: smooth;
+  /* Mandatory CSS snap — gives the native card-swipe feel on touch.
+     JS-driven snap was rejected as feeling like a spinner with
+     momentum then a sudden pop into place. Mandatory snaps as you
+     swipe, not after.
+     Programmatic navigation (anchor clicks, Logo, hashchange) is
+     handled by a JS click handler in TopNav/Logo that briefly
+     disables snap before scrolling and restores it after — that's
+     the documented workaround for iOS Safari's mandatory-snap bug
+     where scrollTop writes from non-zero positions get pulled back
+     to the prior anchor. */
+  scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
 }
 
 body {

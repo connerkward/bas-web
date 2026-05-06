@@ -1,4 +1,5 @@
 import { useTopBarColor } from "../lib/useTopBarColor";
+import { scrollToSection } from "../lib/scrollToSection";
 
 export default function Logo() {
   const ref = useTopBarColor<HTMLButtonElement>();
@@ -9,11 +10,9 @@ export default function Logo() {
       className="logo"
       aria-label="BAS Studio — back to top"
       onClick={() => {
-        // Scroll to top WITHOUT a full reload. `<a href="/">` would cause
-        // a navigation; browser scroll-restoration then puts the user back
-        // where they were on the reloaded page (= "click home → stays on
-        // the same project step", which the user reported).
-        window.scrollTo(0, 0);
+        // Same snap-disable handler as nav buttons. Mandatory snap on
+        // html otherwise pulls programmatic scrollTop = 0 back to the
+        // current section's snap point on iOS Safari.
         if (window.location.hash) {
           history.replaceState(
             null,
@@ -21,6 +20,7 @@ export default function Logo() {
             window.location.pathname + window.location.search,
           );
         }
+        scrollToSection(null);
       }}
     >
       <span className="logo__bas">BAS</span>

@@ -54,6 +54,7 @@ body.crosshair-cursor .hero {
 .page__section {
   width: 100%;
   height: 100lvh;
+  scroll-snap-align: start;
   position: relative;
   /* Skip layout/paint for sections that aren't in the viewport. With
      `contain-intrinsic-size` the browser keeps a placeholder box of the
@@ -74,6 +75,7 @@ body.crosshair-cursor .hero {
   /* Projects holds multiple `.step` snap targets, so the section itself
      is NOT a single 100lvh slot — it grows to contain all steps. */
   height: auto;
+  scroll-snap-align: none;
   content-visibility: visible;
   contain-intrinsic-size: none;
 }
@@ -466,6 +468,7 @@ body.crosshair-cursor .hero {
   flex-direction: column;
   gap: 24px;
   box-sizing: border-box;
+  scroll-snap-align: start;
 }
 
 .step:first-child {

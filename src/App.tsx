@@ -9,6 +9,7 @@ import Grain from "./components/Grain";
 import { attachScrollProgress } from "./lib/scrollProgress";
 import { attachLightProbe } from "./lib/lightProbe";
 import { detectInitialDpr } from "./lib/renderQuality";
+import { scrollToSection } from "./lib/scrollToSection";
 import "./App.css";
 
 function App() {
@@ -29,8 +30,7 @@ function App() {
   useEffect(() => {
     const onHashChange = () => {
       const id = window.location.hash.slice(1);
-      const el = id ? document.getElementById(id) : null;
-      window.scrollTo(0, el ? el.offsetTop : 0);
+      scrollToSection(id || null);
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
