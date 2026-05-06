@@ -1858,37 +1858,40 @@ a.footer__line:hover {
   overflow: visible;
 }
 
-/* Per-letter spans no longer animate. Animating opacity / color on each
-   inline span promotes that span to its own compositor layer, sized to
-   the letter's TIGHT line-box — which clips IntraNet's ascender (the
-   font's actual top extends past the typographic ascender). The clip
-   is a layer-bounds artifact, not a font bug, but per-letter scope
-   makes it unfixable from CSS without resizing every letter's box.
+/* Per-letter color cascade. Each letter starts at the page background
+   color (invisible by tone match) and animates to the display color.
+   `animation-delay` is stamped per-letter inline in Footer.tsx (i*90ms)
+   so the letters reveal in sequence.
 
-   Fix: animate at the .footer__bas (parent) level instead. The parent
-   has `overflow: visible` AND `padding-top: 0.6em` headroom, so its
-   compositor layer's bounding box covers the wordmark + headroom and
-   IntraNet's ascender stays inside the layer. Trade-off: loses the
-   per-letter stagger; the whole wordmark fades together. */
+   Why color and not opacity: animating opacity on each inline span
+   promotes that span to its own compositor layer, sized to the
+   letter's tight line-box, which clips IntraNet's ascender at the
+   line-box top (the font extends past the typographic ascender).
+   Color interpolation is computed on the paint pipeline — no layer
+   promotion, glyph paints normally throughout — and starting from
+   `--footer-bg` (a fully opaque color, not transparent) avoids the
+   AA-edge thinning artifact that an alpha animation would produce.
+
+   Trade-off: the start state of `--footer-bg` means the letters are
+   invisible until their stagger delay elapses. Reduced-motion users
+   skip straight to the display color, no fade. */
 .footer__bas-letter {
-  /* Letters are static; the parent owns the reveal. */
+  display: inline-block;
+  color: var(--footer-bg);
 }
 
-.footer__bas {
-  opacity: 0;
-}
-.footer__bas--in {
-  animation: bas-fade-in 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+.footer__bas--in .footer__bas-letter {
+  animation: bas-letter-rise 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-@keyframes bas-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+@keyframes bas-letter-rise {
+  from { color: var(--footer-bg); }
+  to   { color: var(--footer-display); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .footer__bas {
-    opacity: 1;
+  .footer__bas-letter {
+    color: var(--footer-display);
     animation: none !important;
   }
 }
