@@ -9,7 +9,6 @@ import Grain from "./components/Grain";
 import { attachScrollProgress } from "./lib/scrollProgress";
 import { attachLightProbe } from "./lib/lightProbe";
 import { detectInitialDpr } from "./lib/renderQuality";
-import { scrollToSection } from "./lib/scrollToSection";
 import "./App.css";
 
 function App() {
@@ -22,16 +21,16 @@ function App() {
     attachLightProbe();
   }, []);
 
-  // URL-bar edits (e.g. user manually deletes the `#about` from the URL)
-  // fire `hashchange` but the browser doesn't auto-scroll for in-page
-  // hash changes — only on initial load. Listen and scroll the document
-  // to match: empty hash → top, `#id` → element. Pure hash navigation
-  // via <a href="#id"> is handled natively by the browser; this only
-  // catches the URL-bar case.
+  // URL-bar edits fire `hashchange` but the browser doesn't auto-scroll
+  // for in-page hash changes (only on initial load). Mirror the new hash
+  // to a scroll position. Proximity snap (set in index.css) doesn't
+  // fight this. Pure `<a href>` clicks scroll natively; this catches
+  // URL-bar edits + back/forward.
   useEffect(() => {
     const onHashChange = () => {
       const id = window.location.hash.slice(1);
-      scrollToSection(id || null);
+      const el = id ? document.getElementById(id) : null;
+      window.scrollTo(0, el ? el.offsetTop : 0);
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);

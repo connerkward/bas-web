@@ -1,6 +1,5 @@
 import { useTopBarColor } from "../lib/useTopBarColor";
 import { useActiveSection } from "../lib/useActiveSection";
-import { scrollToSection } from "../lib/scrollToSection";
 
 const SECTIONS = [
   { target: "prefinal", activeIds: ["prefinal", "projects"], label: "PROJECT" },
@@ -13,6 +12,11 @@ export default function TopNav() {
   const ref = useTopBarColor<HTMLElement>();
   const active = useActiveSection(TRACKED_IDS);
 
+  // Plain anchor links. Browser handles hash navigation natively. Proximity
+  // snap (set on html in index.css) doesn't fight programmatic scrolls.
+  // No onClick, no scrollToSection lib, no snap-disable, no hashchange
+  // listener — the standard setup, finally. Active highlighting still
+  // tracks via IO so the current section's button gets aria-current.
   return (
     <nav ref={ref} className="topnav">
       {SECTIONS.map(({ target, activeIds, label }) => {
@@ -24,11 +28,6 @@ export default function TopNav() {
             className="topnav__link"
             href={`#${target}`}
             aria-current={isActive ? "page" : undefined}
-            onClick={(e) => {
-              e.preventDefault();
-              scrollToSection(target);
-              history.pushState(null, "", `#${target}`);
-            }}
           >
             {label}
           </a>

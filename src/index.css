@@ -51,7 +51,15 @@ body,
    match the live viewport. No fixed inner scroller, no double-scroll
    weirdness, native momentum/snap behavior end to end. */
 html {
-  scroll-snap-type: y mandatory;
+  /* Proximity (not mandatory) so programmatic scrolls — `<a href="#id">`,
+     `window.scrollTo`, hashchange — aren't fought by the snap engine.
+     Mandatory has a long-standing iOS Safari bug where the snap engine
+     pulls programmatic position changes back to the prior anchor.
+     Combined with `scroll-snap-stop: always` on each section (set in
+     App.css), proximity still feels like firm snap on touch swipes —
+     each section is a hard stop the scroll has to commit to — but
+     navigations land cleanly. */
+  scroll-snap-type: y proximity;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: none;
 }
