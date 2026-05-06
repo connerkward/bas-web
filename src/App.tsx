@@ -21,30 +21,6 @@ function App() {
     attachLightProbe();
   }, []);
 
-  // Browser-level hash navigation: respond to URL-bar edits or back/forward
-  // that change the hash without a full reload. Native browser hash-jump
-  // only fires on initial load; in-page hash changes leave the scroll
-  // wherever it was. Listen for `hashchange` and scroll to the matching
-  // element (or to top, if the hash was cleared). Same snap-disable
-  // pattern as the nav buttons so mandatory snap doesn't yank the
-  // programmatic scroll back.
-  useEffect(() => {
-    const onHashChange = () => {
-      const id = window.location.hash.slice(1);
-      const el = id ? document.getElementById(id) : null;
-      const top = el ? el.offsetTop : 0;
-      const html = document.documentElement;
-      html.style.scrollSnapType = "none";
-      void html.offsetHeight;
-      html.scrollTop = top;
-      setTimeout(() => {
-        html.style.scrollSnapType = "";
-      }, 80);
-    };
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
-
   return (
     <>
       {/* Two independent fixed elements (left = logo, right = nav).
