@@ -54,9 +54,6 @@ export default function Footer() {
           >
             GITHUB ↗
           </a>
-          <a className="footer__line" href="#">
-            ARE.NA ↗
-          </a>
         </div>
         <div className="footer__col">
           <div className="footer__label">TECHNOLOGIES</div>

@@ -1858,40 +1858,53 @@ a.footer__line:hover {
   overflow: visible;
 }
 
-/* Per-letter color cascade. Each letter starts at the page background
-   color (invisible by tone match) and animates to the display color.
-   `animation-delay` is stamped per-letter inline in Footer.tsx (i*90ms)
-   so the letters reveal in sequence.
-
-   Why color and not opacity: animating opacity on each inline span
-   promotes that span to its own compositor layer, sized to the
-   letter's tight line-box, which clips IntraNet's ascender at the
-   line-box top (the font extends past the typographic ascender).
-   Color interpolation is computed on the paint pipeline — no layer
-   promotion, glyph paints normally throughout — and starting from
-   `--footer-bg` (a fully opaque color, not transparent) avoids the
-   AA-edge thinning artifact that an alpha animation would produce.
-
-   Trade-off: the start state of `--footer-bg` means the letters are
-   invisible until their stagger delay elapses. Reduced-motion users
-   skip straight to the display color, no fade. */
+/* DESKTOP: per-letter color cascade. Each letter animates from the page
+   background color to the display color with a staggered delay (the
+   delay is stamped per-letter inline in Footer.tsx, i*90ms).
+   MOBILE (≤720px): falls back to a parent-element opacity fade with no
+   per-letter scope. iOS Safari promotes each per-letter animation to
+   its own compositor layer sized to the inline line-box, which clips
+   IntraNet's ascender (the font's actual top extends past the typo
+   ascender). Animating the parent instead covers the entire wordmark
+   in ONE layer that includes the .footer__bas's padding-top headroom,
+   so no glyph clip. We trade the per-letter stagger for clean
+   rendering on phone — the user explicitly OK'd this fallback after
+   confirming the cascade re-introduced the iOS top-clip. */
 .footer__bas-letter {
-  display: inline-block;
-  color: var(--footer-bg);
+  color: var(--footer-display);
 }
 
-.footer__bas--in .footer__bas-letter {
-  animation: bas-letter-rise 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+@media (min-width: 721px) {
+  .footer__bas-letter {
+    color: var(--footer-bg);
+  }
+  .footer__bas--in .footer__bas-letter {
+    animation: bas-letter-rise 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes bas-letter-rise {
+    from { color: var(--footer-bg); }
+    to   { color: var(--footer-display); }
+  }
 }
 
-@keyframes bas-letter-rise {
-  from { color: var(--footer-bg); }
-  to   { color: var(--footer-display); }
+@media (max-width: 720px) {
+  .footer__bas {
+    opacity: 0;
+  }
+  .footer__bas--in {
+    animation: bas-fade-in 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes bas-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .footer__bas,
   .footer__bas-letter {
-    color: var(--footer-display);
+    opacity: 1 !important;
+    color: var(--footer-display) !important;
     animation: none !important;
   }
 }
