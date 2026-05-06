@@ -1559,41 +1559,37 @@ body.crosshair-cursor .hero {
   height: 100%;
 }
 
-/* ----- Top bar (logo + nav share a centerline) ------------------------- */
+/* ----- Top bar (logo + nav as two separate fixed elements) ------------ */
 
-/* Single fixed flex strip that owns both Logo and TopNav. align-items:center
-   guarantees the two sides share an exact vertical centerline regardless of
-   their differing content heights. pointer-events disabled on the strip
-   itself; re-enabled on the children so clicks fall through the empty
-   middle into the canvas / scroll. */
-.topbar {
+/* Architecturally split into .topbar-left (logo) and .topbar-right (nav)
+   as TWO independent fixed elements rather than one full-width flex strip.
+   Why: the previous .topbar was full-width with `pointer-events: none` so
+   clicks could fall through the empty middle, and `mix-blend-mode:
+   difference` was on that wrapper so the wordmarks inverted against the
+   backdrop. On real iOS Safari, taps on `.topnav__link` descendants of
+   that mix-blend wrapper got dropped entirely (reproduced via iPhone
+   Mirroring on bas.run; PROJECT/ABOUT non-functional). Splitting into
+   two independently-positioned fixed elements means:
+   - No empty middle to block scroll-through (no element is there at all).
+   - No `pointer-events: none` parent for the nav's clickables.
+   - mix-blend-mode is preserved on each side independently.
+   The "entire header has difference blend" semantic is kept — both the
+   logo and nav individually have the blend. */
+
+.topbar-left {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
   z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 22px 28px;
-  pointer-events: none;
-  /* No backdrop — the topbar text sits on whatever is behind it. The
-     hero canvas drives a difference-blend (see body.topbar-classic.in-hero
-     below) so text inverts against the torchlit relief; on every other
-     section (prefinal/projects/footer) the bg is dark and plain white
-     wordmarks read cleanly without any blend.
-
-     Earlier we kept a `transform: translateZ(0)` + `will-change:
-     mix-blend-mode` here to stabilize the GPU layer across blend-state
-     toggles. Removed: it was triggering iOS Safari hit-testing /
-     event-routing glitches on the topnav links (clicks registered but
-     visually glitched on tap), and the BAS clip it was meant to hide
-     was addressed at the source by moving the .footer__bas animation
-     from per-letter spans up to the parent. */
 }
 
-.topbar > * {
-  pointer-events: auto;
+.topbar-right {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 20;
+  padding: 22px 28px;
 }
 
 /* ----- Logo (left side of topbar) -------------------------------------- */
@@ -1684,6 +1680,10 @@ body.crosshair-cursor .hero {
 }
 
 .topnav__link {
+  /* Button reset (was an <a>; now a <button>). */
+  background: transparent;
+  border: 0;
+  cursor: pointer;
   font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
   font-size: 11px;
   font-weight: 400;
@@ -1694,15 +1694,6 @@ body.crosshair-cursor .hero {
   line-height: 1;
   position: relative;
   padding: 6px 10px;
-  /* iOS: opt out of double-tap-zoom and the 300ms click delay. Without
-     this, taps on the link fire after a delay and can be eaten by gesture
-     detection on the topbar's compositor layer. */
-  touch-action: manipulation;
-  /* Force the link onto its own paint layer above the topbar's
-     mix-blend-mode layer. Without this, iOS Safari's hit-test sometimes
-     routes taps to the blend layer (which has pointer-events: none)
-     instead of the link. translateZ(0) is the cheapest GPU promotion. */
-  transform: translateZ(0);
   text-shadow:
     0.4px 0 0 transparent,
     -0.4px 0 0 transparent,
@@ -1730,7 +1721,8 @@ body.crosshair-cursor .hero {
    gain on approach.
    Scoped to body.in-hero so the blend only fires while the hero section
    is visible. Post-hero sections get their own difference rule below. */
-body.topbar-classic.in-hero .topbar {
+body.topbar-classic.in-hero .topbar-left,
+body.topbar-classic.in-hero .topbar-right {
   mix-blend-mode: difference;
 }
 body.topbar-classic.in-hero .logo__bas,
@@ -1743,7 +1735,8 @@ body.topbar-classic.in-hero .topnav__link {
    color token with the user-picked tint. Scoped to :not(.in-hero) so the
    hero's own colorway (white wordmark, optional difference blend, classic
    approach-to-black) is left untouched. */
-body.topbar-tinted:not(.in-hero) .topbar {
+body.topbar-tinted:not(.in-hero) .topbar-left,
+body.topbar-tinted:not(.in-hero) .topbar-right {
   --topbar-color: var(--topbar-tint-color, #b5462a);
 }
 
@@ -1751,7 +1744,8 @@ body.topbar-tinted:not(.in-hero) .topbar {
    text color (white default or tint override above) stays as-is; the blend
    inverts it against whatever's behind, so the bar reads as the negative of
    the section beneath while preserving the chosen coloration. */
-body:not(.in-hero) .topbar {
+body:not(.in-hero) .topbar-left,
+body:not(.in-hero) .topbar-right {
   mix-blend-mode: difference;
 }
 
@@ -1973,7 +1967,8 @@ a.footer__line:hover {
   /* Topbar — keep logo + nav at sizes that respect mobile tap-target
      guidance (44–48px hit area). Padding on the interactive elements is
      bumped explicitly so buttons remain easy to tap. */
-  .topbar {
+  .topbar-left,
+  .topbar-right {
     padding: 14px 18px;
   }
   .logo {
@@ -2058,7 +2053,8 @@ a.footer__line:hover {
   .footer__bas {
     font-size: calc((100vw - 32px) / 2.85);
   }
-  .topbar {
+  .topbar-left,
+  .topbar-right {
     padding: 12px;
   }
   .topnav {

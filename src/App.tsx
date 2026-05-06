@@ -23,10 +23,15 @@ function App() {
 
   return (
     <>
-      <header className="topbar">
+      {/* Two independent fixed elements (left = logo, right = nav).
+          See `.topbar-left` / `.topbar-right` in App.css for why this
+          replaced the single full-width .topbar wrapper. */}
+      <div className="topbar-left">
         <Logo />
+      </div>
+      <nav className="topbar-right">
         <TopNav />
-      </header>
+      </nav>
       <main className="page">
         <section className="page__section page__section--hero">
           <Hero dpr={dpr} />
