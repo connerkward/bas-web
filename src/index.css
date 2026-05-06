@@ -52,31 +52,8 @@ body,
    weirdness, native momentum/snap behavior end to end. */
 html {
   scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: none;
-}
-
-/* Touch devices (mobile / tablet) use `proximity` instead of `mandatory`.
-   Long-standing iOS Safari bug: `mandatory` + hash navigation from a
-   non-zero scroll position causes the snap engine to pull the page back
-   to the previous anchor instead of accepting the new hash target — the
-   user taps a nav link, the page tries to go, then snaps back to the
-   section they were on. `proximity` still rests at section boundaries
-   when the user releases near one (because each section IS a snap
-   target via `scroll-snap-align: start`) but doesn't fight programmatic
-   scrolls. Desktop (mouse wheel) stays on `mandatory` because the bug
-   doesn't manifest there and the harder snap feels more deliberate. */
-@media (hover: none) and (pointer: coarse) {
-  html {
-    scroll-snap-type: y proximity;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
 }
 
 body {
