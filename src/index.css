@@ -1,10 +1,13 @@
 @font-face {
   font-family: "IntraNet";
-  /* Loading the full unsubsetted OTF — earlier woff2 subsets caused
-     some letters (R in particular) to render visibly smaller than the
-     others. Bypassing the subset rules out subset corruption. ~68KB
-     vs ~2KB but worth it for correct rendering across the full alphabet. */
-  src: url("/fonts/IntraNet.otf") format("opentype");
+  /* WOFF2 first (full 134-glyph repack of the OTF, no subsetting — earlier
+     subset broke the R glyph). iOS Safari's CFF/OTF rasterizer at very
+     large sizes (~135px wordmark) produces visible tonal banding at
+     glyph tops; WOFF2's wrapped TTF/OTF tables go through Safari's
+     standard renderer path which doesn't exhibit that artifact. OTF
+     kept as fallback for any UA that fails WOFF2. */
+  src: url("/fonts/IntraNet.woff2") format("woff2"),
+       url("/fonts/IntraNet.otf") format("opentype");
   font-display: swap;
   unicode-range: U+0020, U+0041-005A;
 }
