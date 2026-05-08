@@ -137,6 +137,22 @@ Step 06 (finale) has its own `step--finale-in` cascade — the per-step reveal s
 3. **Don't switch the footer BAS animation to per-letter on mobile.** It will reintroduce the ascender clip.
 4. **Don't add `behavior: "smooth"`** to anything that needs to land at an exact position on iOS — smooth scrolls race with mandatory snap. Use the `scrollToSection` helper which uses direct `scrollTop`.
 5. **Don't run Playwright Chromium and assume iOS Safari behaves the same.** It doesn't. Use real iPhone (via iPhone Mirroring + computer-use, or via `ios-webkit-debug-proxy` + USB) for any nav/snap/touch behavior verification.
+6. **Don't move the analytics snippets out of `<head>`** without understanding the tradeoff. Inline `<head>` fires before React, captures full session including bounces. Moving to a React `useEffect` misses any visit that bounces before mount.
+
+---
+
+## Analytics
+
+Two pixels in `index.html` `<head>`:
+
+- **Cloudflare Web Analytics** — `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"ca0f896276394ca8ab2ce856375a7381"}'>`. Pageviews, referrers, browsers, OS, devices, visit duration. Privacy-first, no cookies. The RUM site was provisioned via the CF REST API (`POST /accounts/{id}/rum/site_info`), not the dashboard. Dashboard: dash.cloudflare.com → Analytics & Logs → Web Analytics → bas.run.
+- **Microsoft Clarity** — project ID `wno07modu3`. Session replays, heatmaps, scroll depth, rage-click detection. Free, unlimited traffic, no consent banner needed (auto-masks PII). Dashboard: clarity.microsoft.com → bas.run.
+
+Both are inline `<head>` scripts (NOT npm packages) — fires before React mounts, no bundle impact, no `useEffect` lifecycle. If you ever need programmatic Clarity API (consent gating, custom events, `clarity.identify()`), switch to `@microsoft/clarity` then; otherwise stay with the snippet.
+
+Cloudflare credentials live in `~/dev/central/.env` (gitignored, mode 600): `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`. The `cloudflare` skill at `~/dev/central/skills/cloudflare/SKILL.md` documents the API patterns for managing/listing/deleting RUM sites.
+
+**Note:** Cloudflare DNS analytics (the dashboard you already had — DNS query counts by country) is a *different* product from Cloudflare Web Analytics (the JS pixel). DNS-tier sees no HTTP — no referrers, no page paths. The pixel is the one giving referrers.
 
 ---
 
