@@ -529,7 +529,7 @@ body.crosshair-cursor .hero {
    nested inside .step__triptych-cell / .step__pair-cell animate with
    their parent grid container, not individually. */
 .step:not(.step--finale) .step__head,
-.step:not(.step--finale) .step__display,
+.step:not(.step--finale) .step__display-line,
 .step:not(.step--finale) .step__blurb,
 .step:not(.step--finale) .step__media-wide,
 .step:not(.step--finale) > .step__body > .step__portrait,
@@ -549,7 +549,7 @@ body.crosshair-cursor .hero {
    the .step:not(.step--finale) selector). Without this, the hidden rule
    wins on tie and the cascade never fires. */
 .step--in:not(.step--finale) .step__head,
-.step--in:not(.step--finale) .step__display,
+.step--in:not(.step--finale) .step__display-line,
 .step--in:not(.step--finale) .step__blurb,
 .step--in:not(.step--finale) .step__media-wide,
 .step--in:not(.step--finale) > .step__body > .step__portrait,
@@ -565,7 +565,7 @@ body.crosshair-cursor .hero {
    until they enter view — but they snap on rather than animate. */
 @media (prefers-reduced-motion: reduce) {
   .step:not(.step--finale) .step__head,
-  .step:not(.step--finale) .step__display,
+  .step:not(.step--finale) .step__display-line,
   .step:not(.step--finale) .step__blurb,
   .step:not(.step--finale) .step__media-wide,
   .step:not(.step--finale) > .step__body > .step__portrait,
@@ -614,6 +614,15 @@ body.crosshair-cursor .hero {
   margin-right: auto;
   text-align: center;
   max-width: none;
+}
+
+/* Per-line stagger inside .step__display — mirrors the prefinal
+   STUDY / IN MOTION cascade and the finale A RUNNER / HELD IN RELIEF
+   cascade. Each line block-displays so source `<br/>` becomes implicit,
+   and each line carries its own `--d` delay stamped inline so the
+   two lines fade up in sequence after the head row. */
+.step__display-line {
+  display: block;
 }
 
 .step__blurb {
@@ -806,6 +815,56 @@ body.crosshair-cursor .hero {
 .step__pair-cell .step__portrait img {
   height: 56dvh;
   max-height: 580px;
+}
+
+/* Stacked-pair variant (04C — controller + touchdesigner stacked, not
+   side-by-side). Collapse the pair grid to a single column, crop each
+   video wide via object-fit cover so two videos fit inside one locked
+   100lvh snap target alongside head row, display, and blurb. The
+   vertical gap (24px) mirrors the .step__triptych horizontal gap so
+   the rhythm reads as the same spacing system, just rotated. */
+.step--pair-stack .step__pair {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.step--pair-stack .step__pair-cell {
+  /* Tighter video↔caption gap so the caption reads as belonging to
+     its video and the next video is the next "row" in the stack. */
+  gap: 10px;
+}
+
+.step--pair-stack .step__pair-cell .step__portrait {
+  width: 100%;
+}
+
+.step--pair-stack .step__pair-cell .step__portrait video,
+.step--pair-stack .step__pair-cell .step__portrait img {
+  width: 100%;
+  height: 26dvh;
+  max-height: 260px;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Inline caption variant — label, separator, value all sit in one row.
+   The .step__pair-cell figcaption is already display:flex on desktop
+   but stacks at ≤720px (parent rule sets flex-direction:column). The
+   compound `.step__pair-cell.step__pair-cell--inline` selector raises
+   specificity above the @media (max-width: 720px) base rule so this
+   inline layout wins at every breakpoint. */
+.step__pair-cell.step__pair-cell--inline figcaption {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.step__cap-sep {
+  color: var(--footer-label);
 }
 
 .step__pair-cell figcaption {
@@ -1142,28 +1201,46 @@ body.crosshair-cursor .hero {
   }
   .step--right-media .step__body,
   .step--left-media .step__body {
-    grid-template-columns: 1fr;
-    /* Figure auto-sized; copy column grows to fill the rest of the
-       locked step body. Lets the dl status pin to the bottom of the
-       copy column (margin-top: auto) so the composition reads as
-       figure → title+blurb → footer status, instead of packing all
-       three to the top with empty viewport beneath. */
-    grid-template-rows: auto 1fr;
+    /* Flex-column flip pattern (matches the ≤720px treatment): figure
+       on top grows to consume leftover vertical space inside the locked
+       step height; copy below sizes to its own content. This kills the
+       large black gap that the previous grid layout produced — grid's
+       `auto 1fr` rows + `align-items: center` was centering the copy
+       inside the 1fr leftover, leaving black headroom above and below
+       the text block. Flex grow + content-sized copy lets the video
+       fill every spare pixel instead. `min-height: 0` is required so
+       the body can shrink below its content's intrinsic size — without
+       it, flex items default to `min-height: auto` and the body grows
+       to fit the video's natural 9:16 height, busting the 100lvh step. */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    grid-template-columns: none;
+    grid-template-rows: none;
     /* Body-level gap = breath between media block and copy block. */
     gap: 28px;
+    min-height: 0;
   }
   /* Always lead with the figure on stacked layouts — visual hero up
      top, copy below. Source order has copy first / portrait second
      (right-media) or portrait first / copy second (left-media). Flip
-     both to a unified portrait-then-copy order. */
+     both to a unified portrait-then-copy order. `flex: 1 1 0` + `min-
+     height: 0` lets the portrait consume only the remaining flex slack
+     after the copy column claims its content height — without basis 0
+     and min-height 0, the video's intrinsic 1920px height anchors the
+     portrait and the body overflows the step. */
   .step--right-media .step__portrait,
   .step--left-media .step__portrait {
     order: 1;
+    flex: 1 1 0;
+    min-height: 0;
   }
   .step--right-media .step__copy,
   .step--left-media .step__copy {
     order: 2;
     max-width: none;
+    flex: 0 0 auto;
   }
   .step__copy--two-col {
     grid-template-columns: 1fr;
@@ -1190,18 +1267,26 @@ body.crosshair-cursor .hero {
     object-fit: cover;
     object-position: center;
   }
-  /* Stacked text+media steps (02 mold, 04 controller) carry a dl
-     status/specs table beneath the blurb. Figure claims ~42dvh —
-     dominant enough to feel like the hero element, tight enough that
-     the copy column below has room for title + blurb + bottom-pinned
-     dl without clipping inside the locked 100dvh step (now with 80px
-     top padding to clear the topbar). */
+  /* Stacked text+media steps (02 mold, 04 controller): the .step__portrait
+     container is `flex: 1 1 auto` (rule above) so it consumes leftover
+     vertical space inside the locked step body. The inner video then
+     fills the container 100%, with object-fit: cover handling aspect
+     mismatch. No fixed dvh height — the figure grows to swallow the
+     gap that used to read as a black band beneath the video. */
+  .step--right-media .step__portrait,
+  .step--left-media .step__portrait {
+    overflow: hidden;
+  }
   .step--right-media .step__portrait video,
   .step--right-media .step__portrait img,
   .step--left-media .step__portrait video,
   .step--left-media .step__portrait img {
-    height: 42dvh;
-    max-height: 42dvh;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    max-width: none;
+    object-fit: cover;
+    object-position: center;
   }
   /* Triptych & pair: container breaks out edge-to-edge, individual
      cells split the width via flex. Caption stays inside the original
@@ -1430,6 +1515,13 @@ body.crosshair-cursor .hero {
     gap: 4px;
     flex: 1 1 auto;
     min-height: 200px;
+  }
+
+  /* Stacked-pair (04C) on phone: collapse to one column so the two videos
+     stack vertically, each consuming half the grid's flex slack. */
+  .step--pair-stack .step__pair {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr 1fr;
   }
   .step__pair-cell {
     flex: none;
@@ -1866,15 +1958,33 @@ a.footer__line:hover {
 }
 
 @media (min-width: 721px) {
+  /* Per-letter entrance: each glyph translates up from below and fades
+     in alongside the bg→display color sweep. The transform/opacity pair
+     is desktop-only — on mobile this would promote each <span> to its
+     own compositor layer sized to the inline line-box and clip
+     IntraNet's ascender, which is exactly why ≤720px stays on
+     parent-element opacity (see CLAUDE.md). The inline animationDelay
+     stamp from Footer.tsx (i * 90ms) cascades B → A → S. */
   .footer__bas-letter {
     color: var(--footer-bg);
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(0.18em);
   }
   .footer__bas--in .footer__bas-letter {
     animation: bas-letter-rise 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
   @keyframes bas-letter-rise {
-    from { color: var(--footer-bg); }
-    to   { color: var(--footer-display); }
+    from {
+      color: var(--footer-bg);
+      opacity: 0;
+      transform: translateY(0.18em);
+    }
+    to {
+      color: var(--footer-display);
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 

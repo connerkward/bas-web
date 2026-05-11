@@ -91,9 +91,9 @@ function StepEarly() {
           />
         </div>
         <div className="step__copy step__copy--two-col">
-          <h3 className="step__display" style={D(150)}>
-            One source.<br />
-            Many signals.
+          <h3 className="step__display">
+            <span className="step__display-line" style={D(120)}>One source.</span>
+            <span className="step__display-line" style={D(260)}>Many signals.</span>
           </h3>
           <p className="step__blurb" style={D(300)}>
             Process studies on a single subject — a runner photographed in
@@ -125,9 +125,9 @@ function StepMold() {
       />
       <div className="step__body">
         <div className="step__copy">
-          <h3 className="step__display" style={D(150)}>
-            Cast first.<br />
-            Then we hit the limit.
+          <h3 className="step__display">
+            <span className="step__display-line" style={D(120)}>Cast first.</span>
+            <span className="step__display-line" style={D(260)}>Then we hit the limit.</span>
           </h3>
           <p className="step__blurb" style={D(300)}>
             First fabrication path: 3D-print the relief, ABS-vapor smooth, pour
@@ -166,9 +166,9 @@ function StepFabrication() {
         date="2025–2026"
       />
       <div className="step__body">
-        <h3 className="step__display step__display--centered" style={D(150)}>
-          Plan in software.<br />
-          Cut in wood.
+        <h3 className="step__display step__display--centered">
+          <span className="step__display-line" style={D(120)}>Plan in software.</span>
+          <span className="step__display-line" style={D(260)}>Cut in foam.</span>
         </h3>
         <div className="step__triptych" style={D(450)}>
           <figure className="step__triptych-cell">
@@ -228,16 +228,17 @@ function StepController() {
           <Clip src="/videos/controller.mp4" />
         </div>
         <div className="step__copy">
-          <h3 className="step__display" style={D(150)}>
-            A tactile authoring surface.
+          <h3 className="step__display">
+            <span className="step__display-line" style={D(120)}>A tactile</span>
+            <span className="step__display-line" style={D(260)}>authoring surface.</span>
           </h3>
-          <p className="step__blurb" style={D(300)}>
+          <p className="step__blurb" style={D(380)}>
             Hardware MIDI controller patched into TouchDesigner — a tactile
             authoring tool for the depth-map layering. The same unit sat in
             the gallery as a public input, letting visitors recompose the
             projection live.
           </p>
-          <dl className="step__specs" style={D(450)}>
+          <dl className="step__specs" style={D(520)}>
             <dt>Signal</dt>
             <dd>MIDI out</dd>
             <dt>Host</dt>
@@ -248,6 +249,112 @@ function StepController() {
             <dd>Gallery · public</dd>
           </dl>
         </div>
+      </div>
+    </section>
+  );
+}
+
+// 04B — TouchDesigner workflow (standalone variant). Mirror layout to the
+// controller (right-media: text left, video right) so the two read as a
+// matched pair when the user scrolls 04 → 04B in sequence.
+function StepTouchDesigner() {
+  const { ref, revealed } = useReveal<HTMLElement>();
+  return (
+    <section
+      ref={ref}
+      id="step-04b"
+      className={`step step--right-media${revealed ? " step--in" : ""}`}
+      data-step="04B"
+    >
+      <StepHead
+        no="04B"
+        title="TOUCHDESIGNER"
+        tech="OP NETWORK · GLSL"
+        date="2026"
+      />
+      <div className="step__body">
+        <div className="step__copy">
+          <h3 className="step__display">
+            <span className="step__display-line" style={D(120)}>Layers,</span>
+            <span className="step__display-line" style={D(260)}>composed live.</span>
+          </h3>
+          <p className="step__blurb" style={D(380)}>
+            TouchDesigner sits at the center of the runtime — an operator
+            network that stacks dithered passes, depth-derived isophotes, and
+            pixelation thresholds into a single composite. MIDI input from
+            the controller crossfades the layers; the result is keystoned
+            onto the milled relief in real time.
+          </p>
+          <dl className="step__specs" style={D(520)}>
+            <dt>Runtime</dt>
+            <dd>TouchDesigner</dd>
+            <dt>Compositor</dt>
+            <dd>OP network · GLSL</dd>
+            <dt>Input</dt>
+            <dd>MIDI · 9 ch</dd>
+            <dt>Output</dt>
+            <dd>Keystoned projection</dd>
+          </dl>
+        </div>
+        <div className="step__portrait" style={D(450)}>
+          <Clip src="/videos/touchdesigner.mp4" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// 04C — Combined variant (controller + touchdesigner side-by-side). Lets
+// the user compare 04 + 04B visually against a single-section pairing.
+// Uses the .step--pair pattern (two captioned portraits, blurb beneath) so
+// the two videos sit at equal weight inside one snap target.
+function StepControllerCombined() {
+  const { ref, revealed } = useReveal<HTMLElement>();
+  return (
+    <section
+      ref={ref}
+      id="step-04c"
+      className={`step step--pair step--pair-stack${revealed ? " step--in" : ""}`}
+      data-step="04C"
+    >
+      <StepHead
+        no="04C"
+        title="AUTHORING STACK"
+        tech="MIDI → TOUCHDESIGNER"
+        date="2026"
+      />
+      <div className="step__body">
+        <h3 className="step__display step__display--centered">
+          <span className="step__display-line" style={D(120)}>Surface,</span>
+          <span className="step__display-line" style={D(260)}>then signal.</span>
+        </h3>
+        <div className="step__pair" style={D(450)}>
+          <figure className="step__pair-cell step__pair-cell--inline">
+            <div className="step__portrait">
+              <Clip src="/videos/controller.mp4" />
+            </div>
+            <figcaption>
+              <span className="step__cap-label">SURFACE</span>
+              <span className="step__cap-sep">·</span>
+              <span className="step__cap-value">Hardware · MIDI out</span>
+            </figcaption>
+          </figure>
+          <figure className="step__pair-cell step__pair-cell--inline">
+            <div className="step__portrait">
+              <Clip src="/videos/touchdesigner.mp4" />
+            </div>
+            <figcaption>
+              <span className="step__cap-label">SIGNAL</span>
+              <span className="step__cap-sep">·</span>
+              <span className="step__cap-value">TouchDesigner · compositor</span>
+            </figcaption>
+          </figure>
+        </div>
+        <p className="step__blurb step__blurb--centered" style={D(620)}>
+          The MIDI controller authors the depth-map layers; TouchDesigner
+          composites them into the projection. One hand on the surface, one
+          eye on the signal — the gallery becomes a live patch.
+        </p>
       </div>
     </section>
   );
@@ -269,8 +376,9 @@ function StepLook() {
         date="2025–2026"
       />
       <div className="step__body">
-        <h3 className="step__display step__display--centered" style={D(150)}>
-          Grade for the dark.
+        <h3 className="step__display step__display--centered">
+          <span className="step__display-line" style={D(120)}>Grade for</span>
+          <span className="step__display-line" style={D(260)}>the dark.</span>
         </h3>
         <div className="step__pair" style={D(450)}>
           <figure className="step__pair-cell">
@@ -396,6 +504,8 @@ export default function Projects() {
       <StepMold />
       <StepFabrication />
       <StepController />
+      <StepTouchDesigner />
+      <StepControllerCombined />
       <StepLook />
       <StepInstallation />
     </div>
