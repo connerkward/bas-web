@@ -83,7 +83,7 @@ export default function Footer() {
             <span
               key={i}
               className="footer__bas-letter"
-              style={{ animationDelay: `${i * 90}ms` }}
+              style={{ animationDelay: `${i * 320}ms` }}
               aria-hidden="true"
             >
               {letter}
