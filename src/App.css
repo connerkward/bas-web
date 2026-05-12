@@ -729,6 +729,25 @@ body.crosshair-cursor .hero {
   align-items: center;
 }
 
+/* 04B (TouchDesigner) — source clip is landscape (1280×764), not the
+   9:16 portrait that the .step--right-media column was tuned for. The
+   default 1.2/0.8 split squeezes the landscape video into a 480px-wide
+   column; the figure ends up as a small inset against a roomy text
+   block. Flip the ratio so the media gets the larger track, and let
+   the video size by width instead of height so the landscape aspect
+   reaches the column edges. */
+#step-04b.step--right-media .step__body {
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+}
+
+#step-04b .step__portrait video {
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: 72dvh;
+  object-fit: contain;
+}
+
 .step--right-media .step__copy,
 .step--left-media .step__copy {
   display: flex;
@@ -1238,6 +1257,19 @@ body.crosshair-cursor .hero {
     object-fit: cover;
     object-position: center;
   }
+
+  /* 04B (TouchDesigner) at narrow widths: source is a screen capture
+     where the OP network and toolbar are content — `cover` cropped them.
+     Cap the figure height to give breathing room and use `contain` so
+     the full frame reads. The cap also keeps the figure from dominating
+     the step the way the cinematic Controller clip is meant to. */
+  #step-04b .step__portrait {
+    flex: 0 0 auto;
+    height: 48dvh;
+  }
+  #step-04b .step__portrait video {
+    object-fit: contain;
+  }
   /* Triptych & pair: container breaks out edge-to-edge, individual
      cells split the width via flex. Caption stays inside the original
      padding box so it doesn't kiss the screen edge. */
@@ -1399,6 +1431,18 @@ body.crosshair-cursor .hero {
     max-width: none;
     object-fit: cover;
     object-position: center;
+  }
+
+  /* 04B (TouchDesigner) on phone — same reasoning as the 720-880 rule:
+     screen-capture content can't survive a `cover` crop, and the figure
+     should leave more room for the copy block. Opt out of flex-grow,
+     fix the height, switch to `contain`. */
+  #step-04b .step__portrait {
+    flex: 0 0 auto;
+    height: 42dvh;
+  }
+  #step-04b .step__portrait video {
+    object-fit: contain;
   }
 
   /* --- Triptych (step 03): three SIDE-BY-SIDE on mobile -------------
