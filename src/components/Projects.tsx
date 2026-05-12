@@ -304,62 +304,6 @@ function StepTouchDesigner() {
   );
 }
 
-// 04C — Combined variant (controller + touchdesigner side-by-side). Lets
-// the user compare 04 + 04B visually against a single-section pairing.
-// Uses the .step--pair pattern (two captioned portraits, blurb beneath) so
-// the two videos sit at equal weight inside one snap target.
-function StepControllerCombined() {
-  const { ref, revealed } = useReveal<HTMLElement>();
-  return (
-    <section
-      ref={ref}
-      id="step-04c"
-      className={`step step--pair step--pair-stack${revealed ? " step--in" : ""}`}
-      data-step="04C"
-    >
-      <StepHead
-        no="04C"
-        title="AUTHORING STACK"
-        tech="MIDI → TOUCHDESIGNER"
-        date="2026"
-      />
-      <div className="step__body">
-        <h3 className="step__display step__display--centered">
-          <span className="step__display-line" style={D(120)}>Surface,</span>
-          <span className="step__display-line" style={D(260)}>then signal.</span>
-        </h3>
-        <div className="step__pair" style={D(450)}>
-          <figure className="step__pair-cell step__pair-cell--inline">
-            <div className="step__portrait">
-              <Clip src="/videos/controller.mp4" />
-            </div>
-            <figcaption>
-              <span className="step__cap-label">SURFACE</span>
-              <span className="step__cap-sep">·</span>
-              <span className="step__cap-value">Hardware · MIDI out</span>
-            </figcaption>
-          </figure>
-          <figure className="step__pair-cell step__pair-cell--inline">
-            <div className="step__portrait">
-              <Clip src="/videos/touchdesigner.mp4" />
-            </div>
-            <figcaption>
-              <span className="step__cap-label">SIGNAL</span>
-              <span className="step__cap-sep">·</span>
-              <span className="step__cap-value">TouchDesigner · compositor</span>
-            </figcaption>
-          </figure>
-        </div>
-        <p className="step__blurb step__blurb--centered" style={D(620)}>
-          The MIDI controller authors the depth-map layers; TouchDesigner
-          composites them into the projection. One hand on the surface, one
-          eye on the signal — the gallery becomes a live patch.
-        </p>
-      </div>
-    </section>
-  );
-}
-
 function StepLook() {
   const { ref, revealed } = useReveal<HTMLElement>();
   return (
@@ -505,7 +449,6 @@ export default function Projects() {
       <StepFabrication />
       <StepController />
       <StepTouchDesigner />
-      <StepControllerCombined />
       <StepLook />
       <StepInstallation />
     </div>
