@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import CrossfadeVideo from "./CrossfadeVideo";
 
-const KEY_GRAPHIC = "/experiments/key.jpg";
-
 // Inline transition-delay stamp for staggered reveal cascades — same idiom
 // as the prefinal section.
 const D = (ms: number): CSSProperties => ({ ["--d" as never]: `${ms}ms` });
@@ -67,44 +65,6 @@ function Clip({ src }: { src: string }) {
       disablePictureInPicture
       aria-hidden="true"
     />
-  );
-}
-
-function StepEarly() {
-  const { ref, revealed } = useReveal<HTMLElement>();
-  return (
-    <section
-      ref={ref}
-      id="step-01"
-      className={`step step--wide${revealed ? " step--in" : ""}`}
-      data-step="01"
-    >
-      <StepHead no="01" title="EARLY EXPERIMENTS" tech="R&D" date="2024–2025" />
-      <div className="step__body">
-        <div className="step__media-wide" style={D(450)}>
-          <img
-            src={KEY_GRAPHIC}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            draggable={false}
-          />
-        </div>
-        <div className="step__copy step__copy--two-col">
-          <h3 className="step__display">
-            <span className="step__display-line" style={D(120)}>One source.</span>
-            <span className="step__display-line" style={D(260)}>Many signals.</span>
-          </h3>
-          <p className="step__blurb" style={D(300)}>
-            Process studies on a single subject — a runner photographed in
-            profile. Each pass strips the frame to one channel: dithered
-            halftones, pixelation thresholds, contour lines, depth-derived
-            isophotes. The vocabulary that the relief geometry was eventually
-            cut from.
-          </p>
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -444,7 +404,6 @@ export default function Projects() {
 
   return (
     <div ref={ref} className={`projects${revealed ? " projects--in" : ""}`}>
-      <StepEarly />
       <StepMold />
       <StepFabrication />
       <StepController />
