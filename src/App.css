@@ -1637,27 +1637,6 @@ body.crosshair-cursor .hero {
   inset: 0;
   width: 100%;
   height: 100%;
-  /* Quick ease-up of the rendered canvas on first load so the WebGL first
-     frame doesn't snap in against the dark background ("pop"). This is a fast
-     opacity dissolve of the already-lit relief — NOT a light fade — so the
-     scene still reads as fully lit, it just doesn't appear abruptly. Runs once
-     on mount (the hero stays in the DOM, so it won't re-trigger on scroll). */
-  animation: hero-in 0.45s ease-out both;
-}
-
-@keyframes hero-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero {
-    animation: none;
-  }
 }
 
 /* ----- Top bar (logo + nav as two separate fixed elements) ------------ */
