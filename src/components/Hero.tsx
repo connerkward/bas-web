@@ -176,9 +176,33 @@ function useFalloffLUT(shape: LightShape) {
   return tex;
 }
 
+// Inject the bezier-LUT distance attenuation into a compiled
+// meshStandardMaterial shader: replaces three's default 1/d^decay ×
+// cutoff-envelope with a LUT lookup. The LUT covers the full envelope, so we
+// drop the original cutoff multiplier. Factored out so materials that need
+// EXTRA shader injection (the relief's scan reveal) can call it alongside
+// their own patch in a single onBeforeCompile.
+function patchFalloffShader(
+  shader: THREE.WebGLProgramParametersWithUniforms,
+  lut: THREE.DataTexture,
+) {
+  shader.uniforms.uFalloffLUT = { value: lut };
+  shader.fragmentShader =
+    "uniform sampler2D uFalloffLUT;\n" + shader.fragmentShader;
+  shader.fragmentShader = shader.fragmentShader.replace(
+    "float distanceFalloff = 1.0 / max( pow( lightDistance, decayExponent ), 0.01 );",
+    "float __t = clamp(lightDistance / max(cutoffDistance, 0.0001), 0.0, 1.0);\nfloat distanceFalloff = texture2D(uFalloffLUT, vec2(__t, 0.5)).r;",
+  );
+  shader.fragmentShader = shader.fragmentShader.replace(
+    "distanceFalloff *= pow2( saturate( 1.0 - pow4( lightDistance / cutoffDistance ) ) );",
+    "// LUT already encodes cutoff envelope",
+  );
+}
+
 // Patch a meshStandardMaterial so its point-light distance attenuation comes
-// from our LUT instead of three's default 1/d^decay × cutoff-envelope. The
-// LUT covers the full envelope, so we drop the original cutoff multiplier.
+// from our LUT (see patchFalloffShader). Used by the flat materials (backdrop,
+// procedural relief). The relief-draft mesh patches falloff itself so it can
+// add the scan-reveal injection in the same onBeforeCompile.
 function useFalloffPatch(
   matRef: React.RefObject<THREE.MeshStandardMaterial | null>,
   lut: THREE.DataTexture,
@@ -186,19 +210,7 @@ function useFalloffPatch(
   useEffect(() => {
     const mat = matRef.current;
     if (!mat) return;
-    mat.onBeforeCompile = (shader) => {
-      shader.uniforms.uFalloffLUT = { value: lut };
-      shader.fragmentShader =
-        "uniform sampler2D uFalloffLUT;\n" + shader.fragmentShader;
-      shader.fragmentShader = shader.fragmentShader.replace(
-        "float distanceFalloff = 1.0 / max( pow( lightDistance, decayExponent ), 0.01 );",
-        "float __t = clamp(lightDistance / max(cutoffDistance, 0.0001), 0.0, 1.0);\nfloat distanceFalloff = texture2D(uFalloffLUT, vec2(__t, 0.5)).r;",
-      );
-      shader.fragmentShader = shader.fragmentShader.replace(
-        "distanceFalloff *= pow2( saturate( 1.0 - pow4( lightDistance / cutoffDistance ) ) );",
-        "// LUT already encodes cutoff envelope",
-      );
-    };
+    mat.onBeforeCompile = (shader) => patchFalloffShader(shader, lut);
     mat.needsUpdate = true;
   }, [matRef, lut]);
 }
@@ -312,10 +324,76 @@ const RELIEF_DRAFT_URL = "/meshes/relief-draft.glb";
 // built-in DRACOLoader (CDN-hosted decoder) so the Draco-compressed GLB
 // (position 12-bit / normal 8-bit quantization, ~25% smaller) decodes.
 
+// --- Load intro: extrude + dither reveal --------------------------------
+//
+// The relief is rotated +90° about X, so its LOCAL Y axis (the thin ~0.72u
+// bbox dimension = the carved depth) maps to WORLD Z (toward camera). Scaling
+// local Y from ~0 → 1 makes the panel start as a dead-flat slab and grow into
+// full relief — "stone extruded from rock." three.js transforms normals by
+// the inverse-transpose (normalMatrix), so at scale→0 every normal points
+// flat at the camera (correct flat-slab shading); no normal recompute needed.
+//
+// Layered with an ordered Bayer-matrix dither reveal in the fragment shader:
+// a screen-space dither threshold gated by uReveal (0→1). As uReveal grows,
+// more pixels cross their dither cell's threshold and show the lit stone, the
+// rest stay black — a crunchy "digital materialize" that resolves to solid.
+const INTRO_EXTRUDE_DUR = 2.6; // seconds, flat slab → full relief depth
+const INTRO_REVEAL_DUR = 1.1; // seconds, dither reveal 0 → 1 (leads the extrude)
+const EXTRUDE_FLAT = 0.02; // starting depth scale (near-flat, not exactly 0)
+const DITHER_PX = 3; // dither cell size in CSS px (× dpr for device pixels)
+
+// easeInOutCubic — slow start so the relief stays flat THROUGH the (quicker,
+// easeOutQuad) dither reveal, then visibly extrudes after the stone has
+// materialized. This is the offset that lets the extrude read on its own.
+function easeInOutCubic(x: number) {
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+
+type ReliefUniforms = {
+  uReveal: { value: number };
+  uDitherPx: { value: number };
+};
+
 function ReliefDraft({ color, roughness, lut }: StoneProps) {
   const { scene } = useGLTF(RELIEF_DRAFT_URL, true);
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
-  useFalloffPatch(matRef, lut);
+  const meshRef = useRef<THREE.Mesh>(null);
+  const uniformsRef = useRef<ReliefUniforms | null>(null);
+  const introStart = useRef<number | null>(null);
+
+  // Combined onBeforeCompile: the LUT falloff patch PLUS the dither-reveal
+  // injection. Must live in one callback — onBeforeCompile is last-write-wins.
+  useEffect(() => {
+    const mat = matRef.current;
+    if (!mat) return;
+    mat.onBeforeCompile = (shader) => {
+      patchFalloffShader(shader, lut);
+      shader.uniforms.uReveal = { value: 0 };
+      shader.uniforms.uDitherPx = { value: DITHER_PX * window.devicePixelRatio };
+      uniformsRef.current = shader.uniforms as unknown as ReliefUniforms;
+      // Ordered Bayer dither (arithmetic, no arrays — GLSL1-safe). bayer8
+      // returns a stable per-cell threshold in [0,1); a fragment shows once
+      // uReveal exceeds it. Sampled on a gl_FragCoord grid divided by
+      // uDitherPx so each dither cell spans several device pixels — without
+      // that scale the pattern sits at 1px and just averages into a smooth
+      // fade instead of reading as a chunky digital dissolve.
+      shader.fragmentShader =
+        `uniform float uReveal;
+         uniform float uDitherPx;
+         float bayer2(vec2 a){ a = floor(a); return fract(a.x * 0.5 + a.y * a.y * 0.75); }
+         float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
+         float bayer8(vec2 a){ return bayer4(0.5 * a) * 0.25 + bayer2(a); }
+        ` + shader.fragmentShader;
+      // Mask the lit color through the dither, before tonemapping (a stable,
+      // long-lived include). Unrevealed cells go black → blend into the dark
+      // scene, so the stone resolves out of a dither field.
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <tonemapping_fragment>",
+        "gl_FragColor.rgb *= step( bayer8( gl_FragCoord.xy / uDitherPx ), uReveal );\n#include <tonemapping_fragment>",
+      );
+    };
+    mat.needsUpdate = true;
+  }, [lut]);
 
   const geometry = useMemo<THREE.BufferGeometry>(() => {
     let found: THREE.BufferGeometry | null = null;
@@ -333,13 +411,34 @@ function ReliefDraft({ color, roughness, lut }: StoneProps) {
     const center = new THREE.Vector3();
     bb.getCenter(center);
     geometry.translate(-center.x, -center.y, -center.z);
-    const size = new THREE.Vector3();
-    bb.getSize(size);
-    console.log("[ReliefDraft] bbox size", size, "vertexCount", geometry.attributes.position?.count);
   }, [geometry]);
 
+  useFrame((state) => {
+    if (introStart.current === null) introStart.current = state.clock.elapsedTime;
+    const t = state.clock.elapsedTime - introStart.current;
+
+    // Extrude: easeInOutCubic on the local-Y (depth) scale — slow start keeps
+    // it flat during the dither reveal, then it grows out into full relief.
+    const e = Math.min(1, t / INTRO_EXTRUDE_DUR);
+    const ext = EXTRUDE_FLAT + (1 - EXTRUDE_FLAT) * easeInOutCubic(e);
+    if (meshRef.current) meshRef.current.scale.y = ext;
+
+    // Dither reveal: easeOutQuad on uReveal. Drive slightly past 1 so the
+    // final frame clears every dither cell to fully solid.
+    const r = Math.min(1, t / INTRO_REVEAL_DUR);
+    if (uniformsRef.current)
+      uniformsRef.current.uReveal.value = (1 - Math.pow(1 - r, 2)) * 1.05;
+  });
+
   return (
-    <mesh geometry={geometry} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+    <mesh
+      ref={meshRef}
+      geometry={geometry}
+      rotation={[Math.PI / 2, 0, 0]}
+      scale={[1, EXTRUDE_FLAT, 1]}
+      castShadow
+      receiveShadow
+    >
       <meshStandardMaterial
         ref={matRef}
         color={color}
