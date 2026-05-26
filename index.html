@@ -2,6 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Paint the page dark on the very first frame, before any stylesheet
+         loads — in dev Vite injects CSS via JS, so without this the browser
+         shows a white flash (FOUC) before the dark background applies.
+         #0a0a0a matches the hero canvas clear color for a seamless start. -->
+    <style>
+      html,
+      body {
+        background: #0a0a0a;
+      }
+    </style>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
