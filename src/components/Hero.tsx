@@ -342,9 +342,9 @@ const RELIEF_DRAFT_URL = "/meshes/relief-draft.glb";
 // the moving brightness front carries a difference-vs-white contrast band
 // (1.0 - color — the same operation the menu bar's mix-blend-mode: difference
 // performs), gated to lit stone so it reads coherently with the topbar.
-const INTRO_REVEAL_DUR = 1.0; // seconds, dissolve 0 → 1 (the fade, leads)
-const INTRO_EXTRUDE_DELAY = 0.6; // seconds the extrude waits — fade goes first
-const INTRO_EXTRUDE_DUR = 1.8; // seconds, flat slab → full relief depth
+const INTRO_REVEAL_DUR = 0.6; // seconds, dissolve 0 → 1 (the fade, leads — quick)
+const INTRO_EXTRUDE_DELAY = 0.35; // seconds the extrude waits — fade goes first
+const INTRO_EXTRUDE_DUR = 2.8; // seconds, flat slab → full relief depth (slow)
 const EXTRUDE_FLAT = 0.02; // starting depth scale (near-flat, not exactly 0)
 
 // easeInOutCubic — slow start so the relief stays flat THROUGH the (quicker,
