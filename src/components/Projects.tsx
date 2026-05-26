@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import CrossfadeVideo from "./CrossfadeVideo";
+import { usePlayInView } from "../lib/usePlayInView";
+import { posterFor } from "../lib/posterFor";
 
 // Inline transition-delay stamp for staggered reveal cascades — same idiom
 // as the prefinal section.
@@ -54,14 +56,20 @@ function StepHead({ no, title, tech, date }: HeadProps) {
 }
 
 function Clip({ src }: { src: string }) {
+  // Play only while on screen (see usePlayInView) so iOS / in-app webviews
+  // don't choke trying to decode every clip at once. `preload="none"` keeps
+  // the file from downloading until it scrolls into view; the poster shows a
+  // first-frame thumbnail until then. No `autoPlay` — the hook calls play().
+  const ref = usePlayInView();
   return (
     <video
+      ref={ref}
       src={src}
-      autoPlay
+      poster={posterFor(src)}
       muted
       loop
       playsInline
-      preload="metadata"
+      preload="none"
       disablePictureInPicture
       aria-hidden="true"
     />

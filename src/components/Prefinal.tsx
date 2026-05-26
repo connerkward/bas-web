@@ -34,6 +34,7 @@ export default function Prefinal() {
         src={PREFINAL_VIDEO}
         className="prefinal__video"
         play={revealed}
+        preload="auto"
       />
 
       <div className="prefinal__copy">
