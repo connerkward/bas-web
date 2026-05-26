@@ -324,88 +324,15 @@ const RELIEF_DRAFT_URL = "/meshes/relief-draft.glb";
 // built-in DRACOLoader (CDN-hosted decoder) so the Draco-compressed GLB
 // (position 12-bit / normal 8-bit quantization, ~25% smaller) decodes.
 
-// --- Load intro: extrude + dither reveal --------------------------------
-//
-// The relief is rotated +90° about X, so its LOCAL Y axis (the thin ~0.72u
-// bbox dimension = the carved depth) maps to WORLD Z (toward camera). Scaling
-// local Y from ~0 → 1 makes the panel start as a dead-flat slab and grow into
-// full relief — "stone extruded from rock." three.js transforms normals by
-// the inverse-transpose (normalMatrix), so at scale→0 every normal points
-// flat at the camera (correct flat-slab shading); no normal recompute needed.
-//
-// Layered with a fine dither dissolve in the fragment shader that is driven by
-// the torch's ILLUMINATION, not a geometric circle: each fragment's lit
-// luminance (which already encodes torch falloff + the relief's raking-light
-// self-shadow) biases its reveal threshold, so brightly-lit ridges resolve
-// first and shadowed crevices last — the stone "develops" out of the light.
-// Per-pixel interleaved-gradient noise keeps the grain fine/shader-like, and
-// the moving brightness front carries a difference-vs-white contrast band
-// (1.0 - color — the same operation the menu bar's mix-blend-mode: difference
-// performs), gated to lit stone so it reads coherently with the topbar.
-const INTRO_REVEAL_DUR = 0.6; // seconds, dissolve 0 → 1 (the fade, leads — quick)
-const INTRO_EXTRUDE_DELAY = 0.35; // seconds the extrude waits — fade goes first
-const INTRO_EXTRUDE_DUR = 2.8; // seconds, flat slab → full relief depth (slow)
-const EXTRUDE_FLAT = 0.02; // starting depth scale (near-flat, not exactly 0)
-
-// easeInOutCubic — slow start so the relief stays flat THROUGH the (quicker,
-// easeOutQuad) dither reveal, then visibly extrudes after the stone has
-// materialized. This is the offset that lets the extrude read on its own.
-function easeInOutCubic(x: number) {
-  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-}
-
-type ReliefUniforms = {
-  uReveal: { value: number };
-};
-
+// The relief is rotated +90° about X so the carved depth (its thin ~0.72u
+// local-Y bbox dimension) faces the camera. There is no per-mesh load
+// transition — the page intro is the scene-wide light fade-in (torch +
+// footlight bar ramp from 0 over INTRO_DURATION via useIntroProgress), so the
+// relief simply rises out of black as the lights come up.
 function ReliefDraft({ color, roughness, lut }: StoneProps) {
   const { scene } = useGLTF(RELIEF_DRAFT_URL, true);
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
-  const meshRef = useRef<THREE.Mesh>(null);
-  const uniformsRef = useRef<ReliefUniforms | null>(null);
-  const introStart = useRef<number | null>(null);
-
-  // Combined onBeforeCompile: the LUT falloff patch PLUS the torch-radiating
-  // dissolve. Must live in one callback — onBeforeCompile is last-write-wins.
-  useEffect(() => {
-    const mat = matRef.current;
-    if (!mat) return;
-    mat.onBeforeCompile = (shader) => {
-      patchFalloffShader(shader, lut);
-      shader.uniforms.uReveal = { value: 0 };
-      uniformsRef.current = shader.uniforms as unknown as ReliefUniforms;
-
-      // Fragment: interleaved-gradient noise (Jimenez) gives a fine per-pixel
-      // dither. The reveal threshold is biased by each fragment's own lit
-      // luminance — bright (torch-facing, near, unshadowed) stone resolves
-      // earlier, shadowed stone later. BIAS_AMT is folded in so uReveal=1
-      // clears every fragment regardless of how dark it is.
-      shader.fragmentShader =
-        `uniform float uReveal;
-         const float BIAS_AMT = 0.6;   // how much earlier lit stone resolves
-         const float LUM_SCALE = 1.7;  // maps lit luminance → [0,1] bias
-         const float CONTRAST = 0.55;  // strength of the difference edge
-         float ign(vec2 p){ return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
-        ` + shader.fragmentShader;
-      // Apply just before tonemapping (a stable, long-lived include), so
-      // gl_FragColor already carries the full torch lighting + self-shadow.
-      shader.fragmentShader = shader.fragmentShader.replace(
-        "#include <tonemapping_fragment>",
-        `
-        float _lit = clamp( dot( gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722) ) * LUM_SCALE, 0.0, 1.0 );
-        float _rv = clamp( uReveal * ( 1.0 + BIAS_AMT ) - BIAS_AMT + _lit * BIAS_AMT, 0.0, 1.0 );
-        // Difference-vs-white contrast band along the moving brightness front
-        // (_rv ≈ 0.5), gated to lit stone so unlit areas never flash white —
-        // same 1.0 - color as the menu bar's blend.
-        float _edge = smoothstep( 0.0, 0.5, _rv ) * smoothstep( 1.0, 0.5, _rv );
-        gl_FragColor.rgb = mix( gl_FragColor.rgb, vec3(1.0) - gl_FragColor.rgb, _edge * CONTRAST * _lit );
-        // Fine per-pixel dither dissolve.
-        gl_FragColor.rgb *= step( ign( gl_FragCoord.xy ), _rv );
-        #include <tonemapping_fragment>`,
-      );
-    };
-    mat.needsUpdate = true;
-  }, [lut]);
+  useFalloffPatch(matRef, lut);
 
   const geometry = useMemo<THREE.BufferGeometry>(() => {
     let found: THREE.BufferGeometry | null = null;
@@ -425,31 +352,10 @@ function ReliefDraft({ color, roughness, lut }: StoneProps) {
     geometry.translate(-center.x, -center.y, -center.z);
   }, [geometry]);
 
-  useFrame((state) => {
-    if (introStart.current === null) introStart.current = state.clock.elapsedTime;
-    const t = state.clock.elapsedTime - introStart.current;
-
-    // Extrude: held flat for INTRO_EXTRUDE_DELAY so the dissolve (fade) plays
-    // first, then easeInOutCubic grows the local-Y (depth) scale out to full
-    // relief — a slight overlap (the fade is ~90% done when this kicks in).
-    const e = Math.min(1, Math.max(0, t - INTRO_EXTRUDE_DELAY) / INTRO_EXTRUDE_DUR);
-    const ext = EXTRUDE_FLAT + (1 - EXTRUDE_FLAT) * easeInOutCubic(e);
-    if (meshRef.current) meshRef.current.scale.y = ext;
-
-    // Dissolve: easeOutQuad on uReveal (slightly past 1 so the last frame is
-    // fully solid). The shader biases each fragment by its lit luminance, so
-    // the reveal follows the torch's light/shadow rather than a circle.
-    const r = Math.min(1, t / INTRO_REVEAL_DUR);
-    const u = uniformsRef.current;
-    if (u && u.uReveal) u.uReveal.value = (1 - Math.pow(1 - r, 2)) * 1.05;
-  });
-
   return (
     <mesh
-      ref={meshRef}
       geometry={geometry}
       rotation={[Math.PI / 2, 0, 0]}
-      scale={[1, EXTRUDE_FLAT, 1]}
       castShadow
       receiveShadow
     >
