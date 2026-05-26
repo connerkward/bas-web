@@ -333,14 +333,19 @@ const RELIEF_DRAFT_URL = "/meshes/relief-draft.glb";
 // the inverse-transpose (normalMatrix), so at scale→0 every normal points
 // flat at the camera (correct flat-slab shading); no normal recompute needed.
 //
-// Layered with an ordered Bayer-matrix dither reveal in the fragment shader:
-// a screen-space dither threshold gated by uReveal (0→1). As uReveal grows,
-// more pixels cross their dither cell's threshold and show the lit stone, the
-// rest stay black — a crunchy "digital materialize" that resolves to solid.
-const INTRO_EXTRUDE_DUR = 2.6; // seconds, flat slab → full relief depth
-const INTRO_REVEAL_DUR = 1.1; // seconds, dither reveal 0 → 1 (leads the extrude)
+// Layered with a fine dither dissolve in the fragment shader that is driven by
+// the torch's ILLUMINATION, not a geometric circle: each fragment's lit
+// luminance (which already encodes torch falloff + the relief's raking-light
+// self-shadow) biases its reveal threshold, so brightly-lit ridges resolve
+// first and shadowed crevices last — the stone "develops" out of the light.
+// Per-pixel interleaved-gradient noise keeps the grain fine/shader-like, and
+// the moving brightness front carries a difference-vs-white contrast band
+// (1.0 - color — the same operation the menu bar's mix-blend-mode: difference
+// performs), gated to lit stone so it reads coherently with the topbar.
+const INTRO_REVEAL_DUR = 1.0; // seconds, dissolve 0 → 1 (the fade, leads)
+const INTRO_EXTRUDE_DELAY = 0.6; // seconds the extrude waits — fade goes first
+const INTRO_EXTRUDE_DUR = 1.8; // seconds, flat slab → full relief depth
 const EXTRUDE_FLAT = 0.02; // starting depth scale (near-flat, not exactly 0)
-const DITHER_PX = 3; // dither cell size in CSS px (× dpr for device pixels)
 
 // easeInOutCubic — slow start so the relief stays flat THROUGH the (quicker,
 // easeOutQuad) dither reveal, then visibly extrudes after the stone has
@@ -351,7 +356,6 @@ function easeInOutCubic(x: number) {
 
 type ReliefUniforms = {
   uReveal: { value: number };
-  uDitherPx: { value: number };
 };
 
 function ReliefDraft({ color, roughness, lut }: StoneProps) {
@@ -361,35 +365,43 @@ function ReliefDraft({ color, roughness, lut }: StoneProps) {
   const uniformsRef = useRef<ReliefUniforms | null>(null);
   const introStart = useRef<number | null>(null);
 
-  // Combined onBeforeCompile: the LUT falloff patch PLUS the dither-reveal
-  // injection. Must live in one callback — onBeforeCompile is last-write-wins.
+  // Combined onBeforeCompile: the LUT falloff patch PLUS the torch-radiating
+  // dissolve. Must live in one callback — onBeforeCompile is last-write-wins.
   useEffect(() => {
     const mat = matRef.current;
     if (!mat) return;
     mat.onBeforeCompile = (shader) => {
       patchFalloffShader(shader, lut);
       shader.uniforms.uReveal = { value: 0 };
-      shader.uniforms.uDitherPx = { value: DITHER_PX * window.devicePixelRatio };
       uniformsRef.current = shader.uniforms as unknown as ReliefUniforms;
-      // Ordered Bayer dither (arithmetic, no arrays — GLSL1-safe). bayer8
-      // returns a stable per-cell threshold in [0,1); a fragment shows once
-      // uReveal exceeds it. Sampled on a gl_FragCoord grid divided by
-      // uDitherPx so each dither cell spans several device pixels — without
-      // that scale the pattern sits at 1px and just averages into a smooth
-      // fade instead of reading as a chunky digital dissolve.
+
+      // Fragment: interleaved-gradient noise (Jimenez) gives a fine per-pixel
+      // dither. The reveal threshold is biased by each fragment's own lit
+      // luminance — bright (torch-facing, near, unshadowed) stone resolves
+      // earlier, shadowed stone later. BIAS_AMT is folded in so uReveal=1
+      // clears every fragment regardless of how dark it is.
       shader.fragmentShader =
         `uniform float uReveal;
-         uniform float uDitherPx;
-         float bayer2(vec2 a){ a = floor(a); return fract(a.x * 0.5 + a.y * a.y * 0.75); }
-         float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
-         float bayer8(vec2 a){ return bayer4(0.5 * a) * 0.25 + bayer2(a); }
+         const float BIAS_AMT = 0.6;   // how much earlier lit stone resolves
+         const float LUM_SCALE = 1.7;  // maps lit luminance → [0,1] bias
+         const float CONTRAST = 0.55;  // strength of the difference edge
+         float ign(vec2 p){ return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
         ` + shader.fragmentShader;
-      // Mask the lit color through the dither, before tonemapping (a stable,
-      // long-lived include). Unrevealed cells go black → blend into the dark
-      // scene, so the stone resolves out of a dither field.
+      // Apply just before tonemapping (a stable, long-lived include), so
+      // gl_FragColor already carries the full torch lighting + self-shadow.
       shader.fragmentShader = shader.fragmentShader.replace(
         "#include <tonemapping_fragment>",
-        "gl_FragColor.rgb *= step( bayer8( gl_FragCoord.xy / uDitherPx ), uReveal );\n#include <tonemapping_fragment>",
+        `
+        float _lit = clamp( dot( gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722) ) * LUM_SCALE, 0.0, 1.0 );
+        float _rv = clamp( uReveal * ( 1.0 + BIAS_AMT ) - BIAS_AMT + _lit * BIAS_AMT, 0.0, 1.0 );
+        // Difference-vs-white contrast band along the moving brightness front
+        // (_rv ≈ 0.5), gated to lit stone so unlit areas never flash white —
+        // same 1.0 - color as the menu bar's blend.
+        float _edge = smoothstep( 0.0, 0.5, _rv ) * smoothstep( 1.0, 0.5, _rv );
+        gl_FragColor.rgb = mix( gl_FragColor.rgb, vec3(1.0) - gl_FragColor.rgb, _edge * CONTRAST * _lit );
+        // Fine per-pixel dither dissolve.
+        gl_FragColor.rgb *= step( ign( gl_FragCoord.xy ), _rv );
+        #include <tonemapping_fragment>`,
       );
     };
     mat.needsUpdate = true;
@@ -417,17 +429,19 @@ function ReliefDraft({ color, roughness, lut }: StoneProps) {
     if (introStart.current === null) introStart.current = state.clock.elapsedTime;
     const t = state.clock.elapsedTime - introStart.current;
 
-    // Extrude: easeInOutCubic on the local-Y (depth) scale — slow start keeps
-    // it flat during the dither reveal, then it grows out into full relief.
-    const e = Math.min(1, t / INTRO_EXTRUDE_DUR);
+    // Extrude: held flat for INTRO_EXTRUDE_DELAY so the dissolve (fade) plays
+    // first, then easeInOutCubic grows the local-Y (depth) scale out to full
+    // relief — a slight overlap (the fade is ~90% done when this kicks in).
+    const e = Math.min(1, Math.max(0, t - INTRO_EXTRUDE_DELAY) / INTRO_EXTRUDE_DUR);
     const ext = EXTRUDE_FLAT + (1 - EXTRUDE_FLAT) * easeInOutCubic(e);
     if (meshRef.current) meshRef.current.scale.y = ext;
 
-    // Dither reveal: easeOutQuad on uReveal. Drive slightly past 1 so the
-    // final frame clears every dither cell to fully solid.
+    // Dissolve: easeOutQuad on uReveal (slightly past 1 so the last frame is
+    // fully solid). The shader biases each fragment by its lit luminance, so
+    // the reveal follows the torch's light/shadow rather than a circle.
     const r = Math.min(1, t / INTRO_REVEAL_DUR);
-    if (uniformsRef.current)
-      uniformsRef.current.uReveal.value = (1 - Math.pow(1 - r, 2)) * 1.05;
+    const u = uniformsRef.current;
+    if (u && u.uReveal) u.uReveal.value = (1 - Math.pow(1 - r, 2)) * 1.05;
   });
 
   return (
