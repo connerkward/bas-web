@@ -324,14 +324,26 @@ const RELIEF_DRAFT_URL = "/meshes/relief-draft.glb";
 // built-in DRACOLoader (CDN-hosted decoder) so the Draco-compressed GLB
 // (position 12-bit / normal 8-bit quantization, ~25% smaller) decodes.
 
-// The relief is rotated +90° about X so the carved depth (its thin ~0.72u
-// local-Y bbox dimension) faces the camera. There is no per-mesh load
-// transition — the page intro is the scene-wide light fade-in (torch +
-// footlight bar ramp from 0 over INTRO_DURATION via useIntroProgress), so the
-// relief simply rises out of black as the lights come up.
+// Subtle load extrude: the relief is rotated +90° about X, so its LOCAL Y
+// (the thin ~0.72u bbox dimension = carved depth) maps to WORLD Z, toward the
+// camera. We ease that depth scale from EXTRUDE_START → 1 on load, so the
+// carving settles to full relief. Starting at ~0.7 (not flat) keeps it subtle
+// — a gentle deepening rather than a slab growing from nothing. Lights are
+// full the whole time (no fade), so this is the only load motion. three.js
+// transforms normals by the inverse-transpose, so shading stays correct as
+// the depth scales.
+const INTRO_EXTRUDE_DUR = 1.4; // seconds, depth settle
+const EXTRUDE_START = 0.7; // starting depth scale (subtle — 70% of full)
+
+function easeOutCubic(x: number) {
+  return 1 - Math.pow(1 - x, 3);
+}
+
 function ReliefDraft({ color, roughness, lut }: StoneProps) {
   const { scene } = useGLTF(RELIEF_DRAFT_URL, true);
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
+  const introStart = useRef<number | null>(null);
   useFalloffPatch(matRef, lut);
 
   const geometry = useMemo<THREE.BufferGeometry>(() => {
@@ -352,10 +364,19 @@ function ReliefDraft({ color, roughness, lut }: StoneProps) {
     geometry.translate(-center.x, -center.y, -center.z);
   }, [geometry]);
 
+  useFrame((state) => {
+    if (introStart.current === null) introStart.current = state.clock.elapsedTime;
+    const e = Math.min(1, (state.clock.elapsedTime - introStart.current) / INTRO_EXTRUDE_DUR);
+    if (meshRef.current)
+      meshRef.current.scale.y = EXTRUDE_START + (1 - EXTRUDE_START) * easeOutCubic(e);
+  });
+
   return (
     <mesh
+      ref={meshRef}
       geometry={geometry}
       rotation={[Math.PI / 2, 0, 0]}
+      scale={[1, EXTRUDE_START, 1]}
       castShadow
       receiveShadow
     >
@@ -425,17 +446,6 @@ const LIGHT_LOCK_Y = -1.5;
 // puts the light just above the deepest peaks for raking light.
 const DEFAULT_LIGHT_HEIGHT = 0.34;
 
-const INTRO_DURATION = 1.8; // seconds
-
-// EaseOutCubic intro curve, started on first frame.
-function useIntroProgress() {
-  const start = useRef<number | null>(null);
-  return (clockTime: number) => {
-    if (start.current === null) start.current = clockTime;
-    const t = Math.min(1, (clockTime - start.current) / INTRO_DURATION);
-    return 1 - Math.pow(1 - t, 3);
-  };
-}
 
 type LightControls = {
   intensity: number;
@@ -494,13 +504,12 @@ function BottomBarLight({
   inIntensity: number;
 }) {
   const lightRef = useRef<THREE.RectAreaLight>(null);
-  const intro = useIntroProgress();
   const present = useMousePresence();
   const presence = useRef(INITIAL_PRESENT ? 1 : 0);
 
-  // Same intro / flicker envelope as the torch. Inverse-presence: the bar
-  // brightens when the torch fades out, so the relief never goes fully
-  // dark when the cursor leaves.
+  // Flicker + inverse-presence envelope (lights are full from frame 0, no
+  // intro fade). Inverse-presence: the bar brightens when the torch fades
+  // out, so the relief never goes fully dark when the cursor leaves.
   //
   // mouse out (presence=0) → bar = outIntensity (baseline, brighter)
   // mouse in  (presence=1) → bar = inIntensity (dimmer; torch carries the scene)
@@ -519,9 +528,8 @@ function BottomBarLight({
     presence.current = rampTo(presence.current, presenceTarget, delta, dur);
     const base =
       outIntensity + (inIntensity - outIntensity) * presence.current;
-    const introT = intro(t);
     const flicker = 1 + flameFlicker(t);
-    lightRef.current.intensity = base * introT * flicker;
+    lightRef.current.intensity = base * flicker;
   });
 
   // Rotate +90° around X so the rect's emission axis (local -Z) points to
@@ -549,7 +557,6 @@ function MouseLight({ controls }: { controls: LightControls }) {
     [],
   );
   const hit = useMemo(() => new THREE.Vector3(), []);
-  const intro = useIntroProgress();
   const present = useMousePresence();
   const presence = useRef(INITIAL_PRESENT ? 1 : 0);
 
@@ -610,9 +617,8 @@ function MouseLight({ controls }: { controls: LightControls }) {
       // Publish for BottomBarLight — it stages its rise on this reaching 0.
       lightProbe.torchPresence = presence.current;
 
-      const introT = intro(state.clock.elapsedTime);
       const flicker = 1 + flameFlicker(state.clock.elapsedTime);
-      const visibility = introT * flicker * presence.current;
+      const visibility = flicker * presence.current;
       lightRef.current.intensity = intensity * visibility;
       // Top-bar coloration uses the same visibility BUT also fades out as
       // the user scrolls past the hero — otherwise cursor proximity in the
