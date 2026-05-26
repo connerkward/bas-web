@@ -330,11 +330,13 @@ const RELIEF_DRAFT_URL = "/meshes/relief-draft.glb";
 // out to full relief while the lights fade up. EXTRUDE_START ~0.4 makes the
 // growth clearly visible (lower = more pronounced). three.js transforms
 // normals by the inverse-transpose, so shading stays correct as depth scales.
-const INTRO_EXTRUDE_DUR = 1.8; // seconds, depth grow (matches the light fade)
+const INTRO_EXTRUDE_DUR = 3.0; // seconds, depth grow (matches the light fade)
 const EXTRUDE_START = 0.4; // starting depth scale (40% of full — pronounced)
 
-function easeOutCubic(x: number) {
-  return 1 - Math.pow(1 - x, 3);
+// Gentle S-curve (slow in/out) so the depth grows gradually, in step with the
+// light fade — not the front-loaded snap of easeOut.
+function easeInOutSine(x: number) {
+  return 0.5 - 0.5 * Math.cos(Math.PI * x);
 }
 
 function ReliefDraft({ color, roughness, lut }: StoneProps) {
@@ -366,7 +368,7 @@ function ReliefDraft({ color, roughness, lut }: StoneProps) {
     if (introStart.current === null) introStart.current = state.clock.elapsedTime;
     const e = Math.min(1, (state.clock.elapsedTime - introStart.current) / INTRO_EXTRUDE_DUR);
     if (meshRef.current)
-      meshRef.current.scale.y = EXTRUDE_START + (1 - EXTRUDE_START) * easeOutCubic(e);
+      meshRef.current.scale.y = EXTRUDE_START + (1 - EXTRUDE_START) * easeInOutSine(e);
   });
 
   return (
@@ -444,16 +446,18 @@ const LIGHT_LOCK_Y = -1.5;
 // puts the light just above the deepest peaks for raking light.
 const DEFAULT_LIGHT_HEIGHT = 0.34;
 
-const INTRO_DURATION = 1.8; // seconds — scene-wide light fade-in on load
+const INTRO_DURATION = 3.0; // seconds — scene-wide light fade-in on load
 
-// EaseOutCubic intro curve, started on first frame. Both lights multiply
+// easeInOutSine intro curve, started on first frame. Both lights multiply
 // their intensity by this so the whole scene fades up from black on load.
+// A gentle S-curve (slow in AND out) reads as a genuinely gradual fade —
+// easeOut front-loads the brightening (snaps bright, then crawls to full).
 function useIntroProgress() {
   const start = useRef<number | null>(null);
   return (clockTime: number) => {
     if (start.current === null) start.current = clockTime;
     const t = Math.min(1, (clockTime - start.current) / INTRO_DURATION);
-    return 1 - Math.pow(1 - t, 3);
+    return 0.5 - 0.5 * Math.cos(Math.PI * t);
   };
 }
 
