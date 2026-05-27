@@ -36,16 +36,19 @@ export default function Footer() {
             02 — MOLD STUDIES
           </a>
           <a className="footer__line" href="#step-03">
-            03 — FABRICATION
+            03 — CNC FAB
           </a>
           <a className="footer__line" href="#step-04">
             04 — CONTROLLER
           </a>
           <a className="footer__line" href="#step-04b">
-            04B — TOUCHDESIGNER
+            04A — TOUCHDESIGNER
+          </a>
+          <a className="footer__line" href="#step-04b">
+            04B — DIFFUSION
           </a>
           <a className="footer__line" href="#step-05">
-            05 — LOOK
+            05 — LOOKDEV
           </a>
           <a className="footer__line" href="#step-06">
             06 — INSTALLATION
