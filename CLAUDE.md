@@ -105,6 +105,17 @@ iOS Safari's URL bar collapses on scroll. With `100dvh`, every section's height 
 
 Trade-off: when the URL bar IS visible, the bottom ~80px of each snapped section sits below the visible viewport. Acceptable because `scroll-snap-align: start` anchors the section TOP, and the hidden 80px is the start of the next section anyway.
 
+### Exception: the hero compensates with a camera zoom-to-fit
+
+The "hidden bottom 80px is fine" logic holds for the text sections (the top is what matters). It does **not** hold for the hero: the WebGL relief is framed to fill the full `100lvh` canvas and is vertically centered, so the URL-bar occlusion hides the relief base + the `y=-2.4` footlight — it reads as "cut off at the bottom." And because the hero is a one-section snap, the bar never collapses while it's on screen, so this is its *permanent* mobile framing (not a transient first-paint thing).
+
+Fix lives in `CameraRig` (`src/components/Hero.tsx`): each frame it reads `window.visualViewport.height` (the actually-visible height) against the canvas height (`state.size.height`, = `100lvh`). When the bar occludes part of the canvas it dollies the camera back by `canvasH / visibleH` and pans the frame up by half the occluded height, so the whole composition fits centered in the visible band — matching desktop. Measured on iPhone 16: `lvh 741` vs visible `659` → ~12% zoom-out.
+
+- It's a **uniform dolly** (camera Z), not a mesh scale — no squish/aspect change.
+- Both the dolly and pan **ease** (0.08 lerp) so the bar collapsing on the first swipe is a gentle settle, not a pop.
+- **No-op on desktop**: `visualViewport.height ≈ canvasH` → ratio 1, pan 0. An 8px deadzone absorbs sub-pixel chrome jitter so desktop never drifts.
+- Don't gate this on a `dvh`/`svh` CSS change instead — that's exactly the snap-target shift the `100lvh` decision above avoids. The compensation must stay in the camera, never in layout.
+
 ---
 
 ## Font: WOFF2 first, OTF fallback
