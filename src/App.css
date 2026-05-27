@@ -120,9 +120,9 @@ body.crosshair-cursor .hero {
   /* Container is a div holding two stacked <video> clips for crossfade, so we
      can't rely on the intrinsic <video> aspect. Pin it to the runner clip's
      ratio. The source was trimmed at the top (it had a tall black headroom
-     band above the figure) to 720×1080 = 2:3, so the runner sits with only a
-     small headroom instead of floating in dead space. */
-  aspect-ratio: 2 / 3;
+     band above the figure) to 720×1140 = 12:19, so the runner sits with a
+     modest headroom instead of floating in dead space. */
+  aspect-ratio: 12 / 19;
   width: auto;
   max-width: 100%;
   flex: 0 0 auto;
