@@ -127,6 +127,8 @@ body.crosshair-cursor .hero {
   /* Soft radial vignette around the runner — pulls the eye into the figure
      and ties the video frame to the matte-black section bg. */
   box-shadow: 0 0 120px 12px rgba(0, 0, 0, 0.85) inset;
+  /* Clip the blurred backdrop's overscan (see ::before) and ken-burns. */
+  overflow: hidden;
   -webkit-user-drag: none;
   user-select: none;
   pointer-events: none;
@@ -142,6 +144,24 @@ body.crosshair-cursor .hero {
 .prefinal--in .prefinal__video {
   opacity: 1;
   transform: scale(1);
+}
+
+/* Blurred backdrop fill. The runner clip is 9:16; when the frame isn't 9:16
+   (notably phone, where the box fills leftover column space) the contained
+   video leaves bars. Rather than crop the runner (cover) or show black bars,
+   fill them with a scaled, heavily-blurred still of the clip so the cut-off
+   regions read as soft out-of-focus video. A static poster — not a second
+   <video> — so it adds no decode on the mobile webviews that hit the crop;
+   at this blur the lack of motion in the periphery is imperceptible. */
+.prefinal__video::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: url("/videos/posters/prefinal.jpg") center / cover no-repeat;
+  filter: blur(26px);
+  /* Overscale so the blur's faded edges never reveal the container behind. */
+  transform: scale(1.2);
 }
 
 /* Inner clips inside the crossfade container — shared by prefinal and the
@@ -164,6 +184,14 @@ body.crosshair-cursor .hero {
 @keyframes feature-pan {
   from { transform: scale(1.02); }
   to { transform: scale(1.06); }
+}
+
+/* Prefinal runner: contain (show the whole figure, never hard-crop) and sit
+   above the blurred backdrop fill. Overrides the shared `cover` above — the
+   finale feature video keeps cover (intentional full-bleed). */
+.prefinal__video > video {
+  object-fit: contain;
+  z-index: 1;
 }
 
 .prefinal__copy {
@@ -397,7 +425,10 @@ body.crosshair-cursor .hero {
     flex: 1 1 auto;
   }
   .prefinal__video > video {
-    object-fit: cover;
+    /* Show the whole runner; the blurred ::before fills the rest (see the
+       desktop rule). Without this the 9:16 clip is cover-cropped ~120px
+       top/bottom in the phone's non-9:16 box. */
+    object-fit: contain;
   }
   .prefinal__copy {
     flex: 0 0 auto;
