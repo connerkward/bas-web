@@ -17,6 +17,14 @@ import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLigh
 RectAreaLightUniformsLib.init();
 import { lightProbe } from "../lib/lightProbe";
 import { scrollProgress } from "../lib/scrollProgress";
+import type { QualitySettings } from "../lib/renderQuality";
+
+// Honor the OS "reduce motion" setting: skip the rise-from-flat intro and
+// render the relief at full depth immediately. Evaluated once at module load
+// (the intro only matters on first mount).
+const PREFERS_REDUCED_MOTION =
+  typeof window !== "undefined" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // True while a pointer is engaged with the page:
 //   - Mouse: cursor inside the document and the window has focus.
@@ -287,11 +295,14 @@ function relief(x: number, y: number) {
   return disc + ring + medallion + boss + grain;
 }
 
-function ProceduralRelief({ color, roughness, lut }: StoneProps) {
+function ProceduralRelief({ color, roughness, lut, segments }: ReliefProps) {
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
   useFalloffPatch(matRef, lut);
   const geometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(8, 5, 320, 200);
+    // Quality-tier segment count: fewer subdivisions on low-end cuts the
+    // vertex-shader load and the displacement loop below proportionally.
+    const [sx, sy] = segments;
+    const geo = new THREE.PlaneGeometry(8, 5, sx, sy);
     const pos = geo.attributes.position;
     for (let i = 0; i < pos.count; i++) {
       pos.setZ(i, relief(pos.getX(i), pos.getY(i)));
@@ -299,7 +310,7 @@ function ProceduralRelief({ color, roughness, lut }: StoneProps) {
     pos.needsUpdate = true;
     geo.computeVertexNormals();
     return geo;
-  }, []);
+  }, [segments]);
 
   return (
     <mesh geometry={geometry}>
@@ -319,19 +330,29 @@ type StoneProps = {
   lut: THREE.DataTexture;
 };
 
+// Relief meshes additionally take the quality-derived geometry density and an
+// intro-simplification flag (low-end shortens the rise-from-flat animation).
+type ReliefProps = StoneProps & {
+  segments: [number, number];
+  simpleIntro: boolean;
+};
+
 const RELIEF_DRAFT_URL = "/meshes/relief-draft.glb";
 // drei's useGLTF accepts a `useDraco` argument: pass `true` to wire up its
 // built-in DRACOLoader (CDN-hosted decoder) so the Draco-compressed GLB
 // (position 12-bit / normal 8-bit quantization, ~25% smaller) decodes.
 
-// Load extrude: the relief is rotated +90° about X, so its LOCAL Y (the thin
-// ~0.72u bbox dimension = carved depth) maps to WORLD Z, toward the camera. We
-// ease that depth scale from EXTRUDE_START → 1 on load so the carving grows
-// out to full relief while the lights fade up. EXTRUDE_START ~0.4 makes the
-// growth clearly visible (lower = more pronounced). three.js transforms
-// normals by the inverse-transpose, so shading stays correct as depth scales.
-const INTRO_EXTRUDE_DUR = 3.0; // seconds, depth grow (matches the light fade)
-const EXTRUDE_START = 0.4; // starting depth scale (40% of full — pronounced)
+// Rise-from-flat intro: the relief is rotated +90° about X, so its LOCAL Y
+// (the thin ~0.72u bbox dimension = the carved depth) maps to WORLD Z, toward
+// the camera. We ease that depth scale from EXTRUDE_START → 1 on load, so the
+// wordmark starts as a dead-flat plane and *extrudes / scales up* into full
+// relief while the lights fade in. EXTRUDE_START is essentially flat (0.02,
+// not exactly 0 so degenerate normals never appear); the growth from flat is
+// the whole point of the entrance. three.js transforms normals by the inverse-
+// transpose (normalMatrix), so at near-zero depth the surface lights as a flat
+// slab and shading stays correct the whole way up — no normal recompute.
+const INTRO_EXTRUDE_DUR = 2.6; // seconds, flat plane → full relief depth
+const EXTRUDE_START = 0.02; // starting depth scale (≈flat slab)
 
 // Gentle S-curve (slow in/out) so the depth grows gradually, in step with the
 // light fade — not the front-loaded snap of easeOut.
@@ -339,12 +360,19 @@ function easeInOutSine(x: number) {
   return 0.5 - 0.5 * Math.cos(Math.PI * x);
 }
 
-function ReliefDraft({ color, roughness, lut }: StoneProps) {
+function ReliefDraft({ color, roughness, lut, simpleIntro }: ReliefProps) {
   const { scene } = useGLTF(RELIEF_DRAFT_URL, true);
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const introStart = useRef<number | null>(null);
   useFalloffPatch(matRef, lut);
+
+  // Reduced motion → no rise; render at full depth from frame 0. Low-end →
+  // a shorter intro (less time spent doing per-frame normalMatrix recompute
+  // implied by the scaling transform, and the user-perceived motion budget
+  // is smaller on a phone). The flat-plane start (EXTRUDE_START) is identical.
+  const introDur = simpleIntro ? INTRO_EXTRUDE_DUR * 0.6 : INTRO_EXTRUDE_DUR;
+  const startScale = PREFERS_REDUCED_MOTION ? 1 : EXTRUDE_START;
 
   const geometry = useMemo<THREE.BufferGeometry>(() => {
     let found: THREE.BufferGeometry | null = null;
@@ -365,10 +393,16 @@ function ReliefDraft({ color, roughness, lut }: StoneProps) {
   }, [geometry]);
 
   useFrame((state) => {
-    if (introStart.current === null) introStart.current = state.clock.elapsedTime;
-    const e = Math.min(1, (state.clock.elapsedTime - introStart.current) / INTRO_EXTRUDE_DUR);
+    if (PREFERS_REDUCED_MOTION) return; // mesh already at full depth
+    if (introStart.current === null)
+      introStart.current = state.clock.elapsedTime;
+    const e = Math.min(
+      1,
+      (state.clock.elapsedTime - introStart.current) / introDur,
+    );
     if (meshRef.current)
-      meshRef.current.scale.y = EXTRUDE_START + (1 - EXTRUDE_START) * easeInOutSine(e);
+      meshRef.current.scale.y =
+        EXTRUDE_START + (1 - EXTRUDE_START) * easeInOutSine(e);
   });
 
   return (
@@ -376,7 +410,7 @@ function ReliefDraft({ color, roughness, lut }: StoneProps) {
       ref={meshRef}
       geometry={geometry}
       rotation={[Math.PI / 2, 0, 0]}
-      scale={[1, EXTRUDE_START, 1]}
+      scale={[1, startScale, 1]}
       castShadow
       receiveShadow
     >
@@ -393,10 +427,26 @@ function ReliefDraft({ color, roughness, lut }: StoneProps) {
 
 useGLTF.preload(RELIEF_DRAFT_URL, true);
 
-function HeroMesh({ color, roughness, lut }: StoneProps) {
+function HeroMesh({ color, roughness, lut, segments, simpleIntro }: ReliefProps) {
   if (VARIANT === "relief-draft")
-    return <ReliefDraft color={color} roughness={roughness} lut={lut} />;
-  return <ProceduralRelief color={color} roughness={roughness} lut={lut} />;
+    return (
+      <ReliefDraft
+        color={color}
+        roughness={roughness}
+        lut={lut}
+        segments={segments}
+        simpleIntro={simpleIntro}
+      />
+    );
+  return (
+    <ProceduralRelief
+      color={color}
+      roughness={roughness}
+      lut={lut}
+      segments={segments}
+      simpleIntro={simpleIntro}
+    />
+  );
 }
 
 function Backdrop({ color, roughness, lut }: StoneProps) {
@@ -887,7 +937,7 @@ function DustMotes() {
 }
 
 interface HeroProps {
-  dpr: number;
+  quality: QualitySettings;
 }
 
 function Slider({
@@ -1379,7 +1429,7 @@ const DEFAULT_LIGHT_CONTROLS: LightControls = {
   topbarTintColor: "#b5462a",
 };
 
-export default function Hero({ dpr }: HeroProps) {
+export default function Hero({ quality }: HeroProps) {
   const [debugOpen] = useKeyToggle("d", false);
   const [lightShape, setLightShape] =
     useState<LightShape>(DEFAULT_LIGHT_SHAPE);
@@ -1563,19 +1613,27 @@ export default function Hero({ dpr }: HeroProps) {
     };
   }, [lightControls.topbarTint, lightControls.topbarTintColor]);
 
+  // The footlight bar shows only when BOTH the debug toggle wants it AND the
+  // quality tier allows it (low-end drops the LTC area-light to save fragment
+  // cost — the torch point light alone carries the scene).
+  const showBottomBar = lightControls.bottomBar && quality.bottomBar;
+
   return (
     <div ref={wrapperRef} className="hero">
       <Canvas
         camera={{ position: [0, 0, CAMERA_Z], fov: 35 }}
-        dpr={dpr}
-        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
+        dpr={quality.dpr}
+        gl={{
+          antialias: quality.antialias,
+          toneMapping: THREE.ACESFilmicToneMapping,
+        }}
         frameloop="demand"
       >
         <FrameDriver active={active} />
         <color attach="background" args={["#0a0a0a"]} />
         <ambientLight intensity={0} />
         <MouseLight controls={lightControls} />
-        {lightControls.bottomBar && (
+        {showBottomBar && (
           <BottomBarLight
             outIntensity={lightControls.bottomBarOut}
             inIntensity={lightControls.bottomBarIn}
@@ -1592,12 +1650,16 @@ export default function Hero({ dpr }: HeroProps) {
             color={stone.color}
             roughness={stone.roughness}
             lut={lut}
+            segments={quality.reliefSegments}
+            simpleIntro={quality.tier === "low"}
           />
         </Suspense>
-        <DustMotes />
-        <EffectComposer>
-          <Noise opacity={0.28} blendFunction={BlendFunction.OVERLAY} />
-        </EffectComposer>
+        {quality.dust && <DustMotes />}
+        {quality.postprocessing && (
+          <EffectComposer>
+            <Noise opacity={0.28} blendFunction={BlendFunction.OVERLAY} />
+          </EffectComposer>
+        )}
       </Canvas>
       {debugOpen && (
         <DebugMenu

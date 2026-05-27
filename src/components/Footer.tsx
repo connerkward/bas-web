@@ -75,22 +75,47 @@ export default function Footer() {
         </div>
         <div className="footer__col">
           <div className="footer__label">PEOPLE</div>
-          <a
-            className="footer__line"
-            href="https://connerkward.dev"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            CONNER WARD ↗
-          </a>
-          <a
-            className="footer__line"
-            href="https://www.instagram.com/nick_eschen/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            NICK ESCHEN ↗
-          </a>
+          <div className="footer__tree">
+            <div className="footer__person">
+              <div className="footer__person-name">CONNER WARD</div>
+              <div className="footer__subline">
+                <span className="footer__connector">├─</span>
+                <a
+                  className="footer__line"
+                  href="https://www.instagram.com/future_hindsight/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  IG ↗
+                </a>
+              </div>
+              <div className="footer__subline">
+                <span className="footer__connector">└─</span>
+                <a
+                  className="footer__line"
+                  href="https://connerkward.dev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  WEB ↗
+                </a>
+              </div>
+            </div>
+            <div className="footer__person">
+              <div className="footer__person-name">NICK ESCHEN</div>
+              <div className="footer__subline">
+                <span className="footer__connector">└─</span>
+                <a
+                  className="footer__line"
+                  href="https://www.instagram.com/nick_eschen/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  IG ↗
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="footer__col footer__col--right">
           <div className="footer__label">LOCATION</div>

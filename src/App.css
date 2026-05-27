@@ -1985,6 +1985,49 @@ a.footer__line:hover {
   color: var(--footer-hover);
 }
 
+/* People file-tree */
+.footer__tree {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer__person {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.footer__person-name {
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--footer-text-2);
+}
+
+.footer__subline {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.footer__connector {
+  font-family: "42dot Sans", "Source Code Pro", ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0;
+  color: var(--footer-label);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .footer__person-name,
+  .footer__connector,
+  .footer__tree .footer__line {
+    font-size: 11px;
+  }
+}
 
 .footer__brand {
   /* Mobile/narrow base: stacked. The wide-screen override below puts meta

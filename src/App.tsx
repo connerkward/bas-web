@@ -8,14 +8,15 @@ import Footer from "./components/Footer";
 import Grain from "./components/Grain";
 import { attachScrollProgress } from "./lib/scrollProgress";
 import { attachLightProbe } from "./lib/lightProbe";
-import { detectInitialDpr } from "./lib/renderQuality";
+import { detectQuality } from "./lib/renderQuality";
 import { scrollToSection } from "./lib/scrollToSection";
 import "./App.css";
 
 function App() {
-  // Quality detected once at boot from cores + devicePixelRatio. Slider
-  // removed — auto-tuned, no UI knob.
-  const [dpr] = useState<number>(() => detectInitialDpr());
+  // Quality detected once at boot from cores + memory + DPR + GPU string.
+  // Slider removed — auto-tuned, no UI knob. The full settings object drives
+  // every cost knob in the hero (DPR cap, geometry density, dust, post, etc).
+  const [quality] = useState(() => detectQuality());
 
   useEffect(() => {
     attachScrollProgress();
@@ -49,7 +50,7 @@ function App() {
       </nav>
       <main className="page">
         <section className="page__section page__section--hero">
-          <Hero dpr={dpr} />
+          <Hero quality={quality} />
           <Grain />
         </section>
         <section
