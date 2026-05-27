@@ -947,7 +947,11 @@ body.crosshair-cursor .hero {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 40px;
+  /* 60px here, vs the prefinal feature section's 40px: the finale video is
+     narrower (9:16) and the user wanted a touch more breath between it and
+     the copy than the prefinal pair. Desktop only — the mobile column
+     overrides below set their own vertical gap. */
+  gap: 60px;
   padding: 24px 32px 48px;
   box-sizing: border-box;
 }
