@@ -683,6 +683,24 @@ body.crosshair-cursor .hero {
   max-width: 60ch;
 }
 
+/* Inline link inside a blurb (e.g. the Humanmade makerspace credit on the
+   fabrication step). Brighter than the body copy, gold-tinted underline
+   that fills in on hover. */
+.step__link {
+  color: var(--footer-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  transition:
+    color 200ms ease,
+    text-decoration-color 200ms ease;
+}
+.step__link:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
 /* --- Portrait media frame (true 9:16, centered, not stretched) ------ */
 
 .step__portrait {
@@ -895,6 +913,25 @@ body.crosshair-cursor .hero {
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   gap: 80px;
   align-items: center;
+}
+
+/* --- 05: look (controller-style split, two-cell media group) --------
+   Borrows the 04 controller's side-by-side text/media split, but the
+   media side is a two-up figure group (a two-cell take on the 03
+   triptych) rather than a single portrait. Media left, copy right. The
+   inner .step__pair keeps its own grid + figcaptions; only the body
+   shell and copy column differ from the centered-stack pair layout. */
+.step--look .step__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr);
+  gap: 64px;
+  align-items: center;
+}
+.step--look .step__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 460px;
 }
 
 /* --- 06: installation finale (mirrors the prefinal feature pattern)
@@ -1233,6 +1270,20 @@ body.crosshair-cursor .hero {
     gap: 28px;
     min-height: 0;
   }
+  /* 05 look: same flex-column collapse — the two-cell .step__pair (full-
+     bleed via its own mobile rules) leads, copy block sits beneath. */
+  .step--look .step__body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 28px;
+    min-height: 0;
+  }
+  .step--look .step__copy {
+    max-width: none;
+    flex: 0 0 auto;
+  }
   /* Always lead with the figure on stacked layouts — visual hero up
      top, copy below. Source order has copy first / portrait second
      (right-media) or portrait first / copy second (left-media). Flip
@@ -1414,6 +1465,7 @@ body.crosshair-cursor .hero {
   .step--right-media .step__body,
   .step--left-media .step__body,
   .step--diptych .step__body,
+  .step--look .step__body,
   .step--pair .step__body {
     display: flex;
     flex-direction: column;
@@ -1437,7 +1489,8 @@ body.crosshair-cursor .hero {
     min-height: 200px;
   }
   .step--right-media .step__copy,
-  .step--left-media .step__copy {
+  .step--left-media .step__copy,
+  .step--look .step__copy {
     order: 2;
     display: flex;
     flex-direction: column;

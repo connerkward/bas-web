@@ -11,8 +11,17 @@
 // Pass an element id to scroll to its offsetTop, or null for the top.
 export function scrollToSection(id: string | null): void {
   const el = id ? document.getElementById(id) : null;
-  const top = el ? el.offsetTop : 0;
   const html = document.documentElement;
+  // Absolute document offset — NOT el.offsetTop. offsetTop is relative to the
+  // nearest positioned ancestor: the project steps live inside a
+  // position:relative `.projects` wrapper, so step-NN.offsetTop is ~1700px
+  // short of the real scroll target (top-level sections like #prefinal /
+  // #about happen to work only because their offsetParent is <body>).
+  // rect.top + current scrollTop is the true target for both cases, so
+  // footer/nav deep-links to #step-NN land correctly.
+  const top = el
+    ? Math.round(el.getBoundingClientRect().top + html.scrollTop)
+    : 0;
   const prev = html.style.scrollSnapType;
   html.style.scrollSnapType = "none";
   void html.offsetHeight; // force reflow

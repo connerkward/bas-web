@@ -27,13 +27,23 @@ iOS Safari has a long-standing bug: with `scroll-snap-type: y mandatory` on `htm
 The documented workaround (which is what `scrollToSection.ts` does):
 
 ```ts
+// Absolute document offset, NOT el.offsetTop — see note below.
+const top = Math.round(el.getBoundingClientRect().top + html.scrollTop);
 html.style.scrollSnapType = "none";
 void html.offsetHeight;            // force reflow — commit the style change
-html.scrollTop = el.offsetTop;     // direct scrollTop, not scrollIntoView/smooth
+html.scrollTop = top;              // direct scrollTop, not scrollIntoView/smooth
 setTimeout(() => {
   html.style.scrollSnapType = prev;  // restore mandatory
 }, 250);
 ```
+
+**Why `getBoundingClientRect().top + scrollTop` and not `el.offsetTop`:** the
+six project steps sit inside a `position: relative` `.projects` wrapper, so a
+step's `offsetTop` is measured from that wrapper (~1700px short of its true
+document position), not from the page top. `el.offsetTop` only happens to work
+for the top-level sections (`#prefinal`, `#about`) because their offsetParent
+is `<body>`. Deep-links to `#step-NN` (footer INDEX, URL-bar edits) need the
+absolute offset or they land ~1700px high.
 
 The `250ms` is the floor. Shorter delays (rAF, 80ms, 200ms — all tried) let iOS re-anchor to the prior snap point. 250ms is empirically enough for iOS to observe the new scroll position and adopt it as the new snap anchor.
 

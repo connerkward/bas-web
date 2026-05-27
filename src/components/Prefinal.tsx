@@ -49,7 +49,7 @@ export default function Prefinal() {
             className="prefinal__title-line prefinal__title-line--studies"
             style={D(120)}
           >
-            STUDY
+            STUDIES
           </span>
           <span
             className="prefinal__title-line prefinal__title-line--motion"

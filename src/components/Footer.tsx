@@ -30,10 +30,28 @@ export default function Footer() {
         <div className="footer__col">
           <div className="footer__label">INDEX</div>
           <a className="footer__line" href="#prefinal">
-            01 — STUDIES IN MOTION
+            01 — PROJECT
+          </a>
+          <a className="footer__line" href="#step-02">
+            02 — MOLD STUDIES
+          </a>
+          <a className="footer__line" href="#step-03">
+            03 — FABRICATION
+          </a>
+          <a className="footer__line" href="#step-04">
+            04 — CONTROLLER
+          </a>
+          <a className="footer__line" href="#step-04b">
+            04B — TOUCHDESIGNER
+          </a>
+          <a className="footer__line" href="#step-05">
+            05 — LOOK
+          </a>
+          <a className="footer__line" href="#step-06">
+            06 — INSTALLATION
           </a>
           <a className="footer__line" href="#about">
-            02 — ABOUT
+            07 — ABOUT
           </a>
         </div>
         <div className="footer__col">

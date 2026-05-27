@@ -168,8 +168,16 @@ function StepFabrication() {
           </figure>
         </div>
         <p className="step__blurb step__blurb--centered" style={D(300)}>
-          Toolpath generated in Fusion, run on the ShopBot at gallery scale.
-          One sheet, one pass — no tiling, no seams.
+          Toolpath generated in Fusion, run on the gallery-scale ShopBot at{" "}
+          <a
+            className="step__link"
+            href="https://www.humanmade.org/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Humanmade
+          </a>
+          . One sheet, one pass — no tiling, no seams.
         </p>
       </div>
     </section>
@@ -278,7 +286,7 @@ function StepLook() {
     <section
       ref={ref}
       id="step-05"
-      className={`step step--pair${revealed ? " step--in" : ""}`}
+      className={`step step--look${revealed ? " step--in" : ""}`}
       data-step="05"
     >
       <StepHead
@@ -288,10 +296,6 @@ function StepLook() {
         date="2025–2026"
       />
       <div className="step__body">
-        <h3 className="step__display step__display--centered">
-          <span className="step__display-line" style={D(120)}>Grade for</span>
-          <span className="step__display-line" style={D(260)}>the dark.</span>
-        </h3>
         <div className="step__pair" style={D(450)}>
           <figure className="step__pair-cell">
             <div className="step__portrait">
@@ -318,11 +322,25 @@ function StepLook() {
             </figcaption>
           </figure>
         </div>
-        <p className="step__blurb step__blurb--centered" style={D(300)}>
-          Iterating the look in DaVinci Resolve — pushing contrast, crushing
-          midtones, and tuning chroma until the depth-mapped figure read
-          cleanly off the milled relief at gallery throw distance.
-        </p>
+        <div className="step__copy">
+          <h3 className="step__display">
+            <span className="step__display-line" style={D(120)}>Grade for</span>
+            <span className="step__display-line" style={D(260)}>the dark.</span>
+          </h3>
+          <p className="step__blurb" style={D(380)}>
+            Iterating the look in DaVinci Resolve — pushing contrast, crushing
+            midtones, and tuning chroma until the depth-mapped figure read
+            cleanly off the milled relief at gallery throw distance.
+          </p>
+          <dl className="step__specs" style={D(520)}>
+            <dt>Tool</dt>
+            <dd>DaVinci Resolve</dd>
+            <dt>Grade</dt>
+            <dd>Crush · contrast · chroma</dd>
+            <dt>Target</dt>
+            <dd>Gallery throw</dd>
+          </dl>
+        </div>
       </div>
     </section>
   );
