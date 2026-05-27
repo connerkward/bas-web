@@ -29,8 +29,8 @@ export default function Footer() {
       <div className="footer__top">
         <div className="footer__col">
           <div className="footer__label">INDEX</div>
-          <a className="footer__line" href="#projects">
-            01 — PROJECTS
+          <a className="footer__line" href="#prefinal">
+            01 — STUDIES IN MOTION
           </a>
           <a className="footer__line" href="#about">
             02 — ABOUT
