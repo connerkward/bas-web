@@ -669,16 +669,47 @@ function MouseLight({ controls }: { controls: LightControls }) {
 
 const CAMERA_Z = 8;
 
-// Pure XY parallax — no Z dolly. Camera depth is constant.
+// XY parallax + a mobile-only "zoom-to-fit" dolly.
+//
+// The canvas is 100lvh tall (bar-collapsed height), but on mobile Safari the
+// bottom URL/tool bar occludes the lower part of it — visualViewport.height is
+// the *actually visible* area. Left alone, the composition (framed to fill lvh
+// and centered at the origin) has its lower half — the relief base and the
+// y=-2.4 footlight — hidden behind the bar, reading as "cut off at the bottom".
+//
+// Fix: dolly the camera back by canvasH / visibleH so the whole composition
+// shrinks to fit inside the visible band, then recenter it within that band.
+// Both ease toward target so the bar collapsing on the first swipe reads as a
+// gentle settle, not a pop. On desktop visualViewport.height ≈ canvas height,
+// so the ratio is 1 and the offset is 0 — this is a complete no-op there.
 function CameraRig() {
   const { camera } = useThree();
   const target = useRef(new THREE.Vector3(0, 0, CAMERA_Z));
+  const camZ = useRef(CAMERA_Z);
+  const pan = useRef(0);
 
   useFrame((state) => {
+    const cam = camera as THREE.PerspectiveCamera;
+    const vv = window.visualViewport;
+    const visible = vv ? vv.height : state.size.height;
+    const occluded = visible > 0 ? Math.max(0, state.size.height - visible) : 0;
+    // Deadzone: ignore sub-8px noise (desktop chrome jitter, rounding).
+    const ratio = occluded > 8 ? state.size.height / visible : 1;
+
+    const targetZ = CAMERA_Z * ratio;
+    // Half the occluded height, in world units at the dollied depth, shifts the
+    // frame up so the composition centers in the visible band rather than lvh.
+    const vWorld = 2 * targetZ * Math.tan((cam.fov * Math.PI) / 360);
+    const targetPan =
+      ratio > 1 ? -(vWorld / state.size.height) * (occluded / 2) : 0;
+
+    camZ.current += (targetZ - camZ.current) * 0.08;
+    pan.current += (targetPan - pan.current) * 0.08;
+
     const { x, y } = state.pointer;
-    target.current.set(x * 0.1, y * 0.07, CAMERA_Z);
+    target.current.set(x * 0.1, y * 0.07 + pan.current, camZ.current);
     camera.position.lerp(target.current, 0.06);
-    camera.lookAt(0, 0, 0);
+    camera.lookAt(0, pan.current, 0);
   });
 
   return null;
