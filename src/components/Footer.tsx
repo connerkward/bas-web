@@ -56,14 +56,23 @@ export default function Footer() {
           </a>
         </div>
         <div className="footer__col">
-          <div className="footer__label">TECHNOLOGIES</div>
-          <div className="footer__line">CNC</div>
-          <div className="footer__line">FUSION 360</div>
-          <div className="footer__line">SHOPBOT</div>
-          <div className="footer__line">TOUCH DESIGNER</div>
-          <div className="footer__line">BLENDER</div>
-          <div className="footer__line">PROJECTION MAPPING</div>
-          <div className="footer__line">STREAM DIFFUSION</div>
+          <div className="footer__label">PEOPLE</div>
+          <a
+            className="footer__line"
+            href="https://connerkward.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            CONNER WARD ↗
+          </a>
+          <a
+            className="footer__line"
+            href="https://www.instagram.com/nick_eschen/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            NICK ESCHEN ↗
+          </a>
         </div>
         <div className="footer__col footer__col--right">
           <div className="footer__label">LOCATION</div>
