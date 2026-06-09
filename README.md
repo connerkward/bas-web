@@ -4,9 +4,9 @@ A single-page site for **A STUDY IN MOTION** — a chronophotography relief inst
 
 **→ Live at [bas.run](https://bas.run/)**
 
-<video src="https://github.com/connerkward/bas-web/raw/main/media/hero.mp4" autoplay loop muted playsinline width="100%"></video>
+![The torchlit WebGL hero — move the cursor to drag the light across the relief](media/hero.gif)
 
-*The torchlit WebGL hero — move the cursor to drag the light across the relief. ([animated GIF](media/hero.gif) · [MP4](media/hero.mp4) if the video above doesn't play.)*
+*[▶ Watch the full-quality MP4 (25fps)](media/hero.mp4) — smoother than the GIF above.*
 
 ---
 
