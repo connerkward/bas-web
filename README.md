@@ -1,179 +1,83 @@
-# bas-web
+# A STUDY IN MOTION
 
-R3F (React Three Fiber) hero scene with a torchlight-lit stone relief, plus a debug panel for swapping stone materials.
+A single-page site for **A STUDY IN MOTION** — a chronophotography relief installation by [BAS STUDIO](https://bas.run/). One runner, photographed in profile and broken across depth, milled into a stone-like panel and read by light. The site opens on a torchlit WebGL relief you can move the light across with your cursor, then snaps through the project's build, from mold studies to the gallery floor.
 
-## Hero scene (`src/components/Hero.tsx`)
+**→ Live at [bas.run](https://bas.run/)**
 
-A single `<Canvas>` renders a stone-relief panel under a cursor-tracked point light. Designed to read as "ancient temple relief seen by torchlight."
+![The torchlit WebGL hero — move the cursor to drag the light across the relief](media/hero.gif)
 
-### Mesh variants
-
-`VARIANT` constant at the top of `Hero.tsx` selects the relief geometry:
-
-- `"relief-draft"` — `public/meshes/relief-draft.glb`, converted from an STL (see [Converting an STL relief](#converting-an-stl-relief))
-- `"procedural"` — runtime `PlaneGeometry` deformed by `relief()` (medallion + ring + boss + stone grain)
-
-Both variants share the same material (driven by the active `STONE_PRESETS` entry) and lighting rig.
-
-### Stone presets
-
-`STONE_PRESETS` is a curated list of `{ name, color, roughness }` aimed at temple-ruin material vibes (Sandstone Gold, Rust Ochre, Limestone Pale, Travertine, Red Sandstone, Ochre Adobe, Granite Dark, Slate Blue-Grey, Mossy Stone, Soot Charcoal, Basalt Black). The active preset is set by `ACTIVE_STONE = STONE_PRESETS[0]` near the bottom of the file — change the index to swap. Color + roughness propagate to the relief mesh **and** the backdrop plane.
-
-### Lighting
-
-- `<MouseLight>` — warm point light (`#fff1d4`) raycast onto the relief plane to track the cursor.
-  - **Flame flicker:** intensity modulated by two-octave smooth noise (`flameFlicker`), and the target position layers tiny XY/Z wander (`flameOffset`) so cast shadows on the relief shift like a candle.
-  - **Viewport-relative cutoff:** `light.distance` recomputes each frame as `LIGHT_RADIUS_FRAC * viewport_diagonal_at_z=0` so the lit screen-area stays roughly constant on resize / different aspect ratios.
-  - **Presence fade:** intensity scales with `presence` (cursor-on-page tracker) — fast ramp up when the cursor enters, slow fade out when it leaves so the room "settles into the dark" rather than blinking off.
-  - **Intro:** ease-out-cubic ramp from 0 → `BASE_LIGHT_INTENSITY` over `INTRO_DURATION` seconds on first frame.
-- `<ambientLight intensity={0}>` — full crushed blacks for max contrast against the torch pool.
-- ACES filmic tone mapping on the renderer for highlight rolloff (set on the WebGL context, not via postprocessing).
-
-### Postprocessing
-
-`<EffectComposer>` runs a single `<Noise>` pass (`opacity={0.2}`, `BlendFunction.OVERLAY`) for film grain.
-
-### Camera
-
-`CAMERA_Z = 7`, `fov = 35`. `<CameraRig>` adds gentle XY parallax tied to the cursor (no Z dolly). At 16:9 the relief (~8w × 5.2h after STL normalization) fully covers the viewport; the `<Backdrop>` 40×40 sandstone plane at `z=-0.5` catches gaps on ultrawide displays and during parallax sway.
-
-## Converting an STL relief
-
-Source STLs live in `~/ideas-syncthing/proj-bas/`. The conversion script `/tmp/stl-convert/convert.py` is a Blender Python script that:
-
-1. Imports the STL (Blender 4.1+ / 5.x: `bpy.ops.wm.stl_import`).
-2. Merges coincident verts (`remove_doubles`) — STL files duplicate verts per face.
-3. Decimates to **120k faces** (target tunable in the script).
-4. Detects the depth axis (smallest extent) and rotates so the relief side faces +Z (toward camera). Direction picked by analyzing centroid offset along the depth axis (relief side has less mass than the flat back).
-5. Centers, normalizes scale so the largest in-plane dim = 8 (matches the procedural plane).
-6. Smooth shading + consistent normals.
-7. Exports as Draco-compressed GLB (`level=6`, no materials).
-
-**Run:**
-```bash
-blender --background --python /tmp/stl-convert/convert.py -- "<input.stl>" "/Users/conner/dev/bas-web/public/meshes/<name>.glb"
-```
-
-A 155 MB / 3.1M-tri STL became a **296 KB GLB** at 120k tris.
-
-To add a new mesh option, place the GLB in `public/meshes/` and add a corresponding branch in `<HeroMesh>` keyed off `VARIANT`.
-
-In `<ReliefDraft>` the GLB is loaded via `useGLTF`, the first mesh's geometry is extracted, recentered against its bounding box at runtime, and rendered with `side={THREE.DoubleSide}` (safety against winding flips from the Blender rotation pipeline). The mesh node has `rotation={[Math.PI / 2, 0, 0]}` to bring the relief face toward camera — this depends on how the Blender script oriented the source; if a new STL comes out edge-on, adjust this rotation.
-
-## Tooling notes
-
-- Postprocessing deps: `@react-three/postprocessing` + `postprocessing` (already installed).
-- Type-check: `npx tsc -b --noEmit`.
-- Dev server: `npm run dev` (Vite). Add `-- --host` to expose on the LAN.
-
-## Deployment
-
-**Current stack:** GitHub Pages for hosting, Cloudflare for DNS.
-
-```
-Squarespace (registrar)
-  └─ NS → chin.ns.cloudflare.com, thaddeus.ns.cloudflare.com
-       └─ Cloudflare DNS zone "bas.run"
-            ├─ A bas.run → 185.199.108-111.153  (GitHub Pages anycast)
-            └─ CNAME www → connerkward.github.io
-                 └─ GitHub Pages serves the build from `main` via `.github/workflows/deploy.yml`
-```
-
-- **Workflow:** `.github/workflows/deploy.yml` builds with `npm run build` and uploads `dist/` to Pages on every push to `main`.
-- **Custom domain:** set on the GH Pages site (`gh api repos/connerkward/bas-web/pages` shows `cname: bas.run`). The `public/CNAME` file ships `bas.run` into the build so Pages keeps the binding.
-- **TLS:** GitHub provisions a Let's Encrypt cert for `bas.run` automatically — but only when the four CF `A` records are **gray-cloud (DNS only)**, so resolution goes user → GH directly. Orange-cloud (proxied) breaks the cert challenge and produces stacked-CDN cache artifacts (CF cached a stale GH "site not found" page during the migration churn).
-- **Enforce HTTPS** in repo Settings → Pages once the cert shows "Active".
-
-### Stale Cloudflare Pages bits
-
-A previous migration to Cloudflare Pages (commit `b396a67`, reverted in `5dddf2f`) left two things behind that are unused but harmless:
-
-- Cloudflare Pages project `bas-web` (account `809de311af5196443687f347cc8c65cb`) — no git binding, last deploy was via API. Safe to delete in CF dashboard → Workers & Pages.
-- Repo secret `CLOUDFLARE_API_TOKEN` — was used by the old `cloudflare/wrangler-action@v3` step. Safe to delete: `gh secret delete CLOUDFLARE_API_TOKEN -R connerkward/bas-web`.
-
-### Switching to all-Cloudflare later
-
-If GitHub Pages becomes a constraint (bandwidth, no edge functions, no per-branch previews), the migration path is:
-
-1. CF dashboard → Workers & Pages → delete the stale `bas-web` project, then **Create → Pages → Connect to Git**, authorize the CF GitHub app on this repo, set build command `npm run build`, output `dist`, env `NODE_VERSION=20`.
-2. Custom domains tab → add `bas.run` and `www.bas.run` (CF auto-creates orange-clouded CNAMEs and provisions certs).
-3. DNS tab → delete the four `A bas.run → 185.199.x.153` records and the `CNAME www → connerkward.github.io`.
-4. Repo: delete `.github/workflows/deploy.yml`, delete `public/CNAME`, run `gh api -X DELETE repos/connerkward/bas-web/pages`, delete `CLOUDFLARE_API_TOKEN` secret.
-
-The all-CF setup is strictly simpler given DNS already lives on Cloudflare — kept on GH Pages for now to minimize moving parts and avoid an API token in the repo.
+*[▶ Watch the hero clip (MP4)](media/hero.mp4) — higher quality than the GIF above.*
 
 ---
 
-# React + TypeScript + Vite
+## The piece
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> A single body, photographed in profile, broken across depth and projected back onto milled relief. The piece is a chronophotograph held in one frame — Marey's interval, Muybridge's stride — rendered as surface and light.
 
-Currently, two official plugins are available:
+Installed at **Gray Area Grand Theater**, San Francisco (BYOB, April 7). The gallery piece is a milled relief panel under raking light; a runner's stride is read across surface and shadow as visitors move past, while the source video plays in profile beside it.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+![A STUDY IN MOTION — the feature page](media/02-study-in-motion.png)
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## The build
 
-## Expanding the ESLint configuration
+The site walks through the pipeline that produced the installation.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 02 — Mold studies
+![Mold studies](media/03-mold-studies.png)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 03 — Fabrication
+Toolpath generated in Fusion 360, run on a gallery-scale ShopBot. One sheet, one pass — no tiling, no seams.
+![Fabrication: plan in software, cut in foam](media/04-fabrication.png)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 04 — Controller
+A hardware MIDI controller patched into TouchDesigner — a tactile authoring surface that also sat in the gallery as a public input, letting visitors recompose the projection live.
+![The MIDI controller](media/05-controller.png)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 04A — TouchDesigner
+An operator network stacks dithered passes, depth-derived isophotes, and pixelation thresholds into a single composite, keystoned onto the milled relief in real time.
+![TouchDesigner network: layers, composed live](media/06-touchdesigner.png)
+
+### 05 — Look
+Graded in DaVinci Resolve — pushing contrast, crushing midtones, and tuning chroma until the depth-mapped figure reads cleanly off the relief at gallery-throw distance.
+![Lookdev: grade for the dark](media/07-lookdev.png)
+
+### 06 — Installation
+![The installed piece at Gray Area](media/08-installation.png)
+
+---
+
+## The site itself
+
+A full-page snap site — hero, feature page, six project steps, footer — that aims for the native iOS card-swipe feel.
+
+- **Torchlit WebGL hero** built with [React Three Fiber](https://r3f.docs.pmnd.rs/). A milled-relief mesh (a Draco-compressed GLB, decimated from a 3.1M-tri STL down to ~120k tris / ~300 KB) sits under a single cursor-tracked point light. The light flickers like a candle, fades in as the cursor enters, and the whole scene rises from flat on first load. ACES filmic tone mapping and a film-grain pass finish it.
+- **Mandatory CSS scroll-snap** for the firm, native swipe between sections — with a small JS helper to work around an iOS Safari snap bug on programmatic navigation.
+- **Per-section reveal cascades** and a per-letter footer wordmark animation.
+
+Built with **React + TypeScript + Vite**, **Three.js / React Three Fiber**, and `@react-three/postprocessing`.
+
+> Implementation notes — the iOS-specific snap workarounds, viewport-height handling, and the camera zoom-to-fit — live in [`CLAUDE.md`](CLAUDE.md). Each note maps to a real debugging cycle; read it before "simplifying" anything in the nav/snap path.
+
+---
+
+## Develop
+
+```bash
+npm install
+npm run dev          # Vite dev server (add -- --host to expose on the LAN)
+npm run build        # production build to dist/
+npx tsc -b --noEmit  # type-check
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Deploy
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Hosted on **GitHub Pages**, DNS on **Cloudflare**.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `.github/workflows/deploy.yml` builds and publishes `dist/` to Pages on every push to `main`.
+- `public/CNAME` binds the custom domain `bas.run`; the four Cloudflare `A` records for the apex must stay **gray-cloud (DNS only)** so GitHub can provision the TLS cert.
+
+## Credits
+
+**Conner Ward** · **Nick Eschen** — San Francisco, 2026.
