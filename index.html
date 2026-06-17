@@ -61,19 +61,20 @@
       content="BAS STUDIO designs, builds, and deploys physical work: CNC sculpture, CAM fabrication, projection mapping, and realtime TouchDesigner media. A studio by Conner Ward."
     />
     <meta property="og:url" content="https://bas.run/" />
-    <meta property="og:image" content="https://bas.run/favicon.png" />
-    <meta property="og:image:width" content="256" />
-    <meta property="og:image:height" content="256" />
+    <meta property="og:image" content="https://bas.run/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="A STUDY IN MOTION — a runner's stride milled into relief, read by raking light." />
     <meta property="og:locale" content="en_US" />
 
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="BAS STUDIO — CNC Sculpture, Fabrication & Realtime Media" />
     <meta
       name="twitter:description"
       content="BAS STUDIO designs, builds, and deploys physical work: CNC sculpture, CAM fabrication, projection mapping, and realtime TouchDesigner media. A studio by Conner Ward."
     />
-    <meta name="twitter:image" content="https://bas.run/favicon.png" />
+    <meta name="twitter:image" content="https://bas.run/og.png" />
 
     <!-- Structured data: Organization (BAS STUDIO) + Person (Conner Ward) -->
     <script type="application/ld+json">
@@ -116,6 +117,67 @@
               "https://www.instagram.com/future_hindsight/"
             ],
             "worksFor": { "@id": "https://bas.run/#organization" }
+          },
+          {
+            "@type": "VisualArtwork",
+            "@id": "https://bas.run/#study-in-motion",
+            "name": "A STUDY IN MOTION",
+            "url": "https://bas.run/",
+            "image": "https://bas.run/og.png",
+            "artform": "Installation",
+            "artMedium": "CNC-milled relief, projection mapping, realtime media",
+            "description": "A chronophotography relief installation: a single runner, photographed in profile and broken across depth, milled into a stone-like panel and read by raking light. Toolpath cut on a gallery-scale ShopBot from a Fusion 360 CAM program; a depth-mapped figure composited live in TouchDesigner and keystoned onto the relief.",
+            "keywords": "chronophotography, CNC relief, projection mapping, TouchDesigner, fabrication, installation art",
+            "dateCreated": "2026-04-07",
+            "creator": [
+              { "@id": "https://bas.run/#organization" },
+              { "@id": "https://connerkward.dev/#person" },
+              { "@type": "Person", "name": "Nick Eschen", "sameAs": "https://www.instagram.com/nick_eschen/" }
+            ],
+            "locationCreated": {
+              "@type": "Place",
+              "name": "Gray Area Grand Theater",
+              "address": { "@type": "PostalAddress", "addressLocality": "San Francisco", "addressRegion": "CA", "addressCountry": "US" }
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://bas.run/#faq",
+            "url": "https://bas.run/",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is BAS STUDIO?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "BAS STUDIO is a studio that designs, builds, and deploys physical work — CNC sculpture, CAM fabrication, projection mapping, and realtime TouchDesigner media. It was founded by Conner Ward."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What is A STUDY IN MOTION?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "A STUDY IN MOTION is a chronophotography relief installation by BAS STUDIO: a single runner photographed in profile and broken across depth, milled into a stone-like panel and read by raking light, with a depth-mapped figure projected onto the relief in real time."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Where and when was A STUDY IN MOTION shown?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "It was installed at Gray Area Grand Theater in San Francisco for a BYOB event on April 7, 2026."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How was A STUDY IN MOTION fabricated?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "The relief toolpath was generated in Fusion 360 and cut on a gallery-scale ShopBot CNC in one pass with no tiling. A hardware MIDI controller drove a TouchDesigner network that stacked dithered passes, depth-derived isophotes, and pixelation thresholds, keystoned live onto the milled relief, and the look was graded in DaVinci Resolve."
+                }
+              }
+            ]
           }
         ]
       }
@@ -131,7 +193,36 @@
     </script>
   </head>
   <body class="in-hero">
-    <div id="root"></div>
+    <div id="root">
+      <!-- No-JS / pre-hydration content: React replaces this on mount. It is
+           genuinely rendered for any client (incl. AI/search crawlers that
+           don't run JS) so the entity name + definition are always in the DOM.
+           Not cloaking — the same facts are shown to every visitor; the JS app
+           presents them as the WebGL hero + sections. -->
+      <main style="max-width:46rem;margin:0 auto;padding:12vh 6vw;color:#e8e8e8;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5;">
+        <h1 style="font-size:clamp(1.8rem,5vw,3rem);letter-spacing:0.02em;margin:0 0 0.6em;">BAS STUDIO — A STUDY IN MOTION</h1>
+        <p style="font-size:clamp(1.05rem,2.4vw,1.3rem);color:#cfcfcf;margin:0 0 1.2em;">
+          <strong>A STUDY IN MOTION</strong> is a chronophotography relief installation by
+          <strong>BAS STUDIO</strong>: a single runner photographed in profile and broken
+          across depth, milled into a stone-like panel and read by raking light, with a
+          depth-mapped figure projected onto the relief in real time.
+        </p>
+        <p style="color:#a8a8a8;margin:0 0 1.2em;">
+          BAS STUDIO designs, builds, and deploys physical work — CNC sculpture, CAM
+          fabrication, projection mapping, and realtime TouchDesigner media. A studio by
+          <a href="https://connerkward.dev" style="color:#cfcfcf;">Conner Ward</a> and Nick Eschen.
+          Installed at Gray Area Grand Theater, San Francisco — April 7, 2026.
+        </p>
+        <p style="color:#888;font-size:0.95rem;">
+          The interactive site requires JavaScript. Project index:
+          <a href="#prefinal" style="color:#cfcfcf;">Project</a> ·
+          <a href="#projects" style="color:#cfcfcf;">Build</a> ·
+          <a href="#about" style="color:#cfcfcf;">About</a> ·
+          <a href="https://www.instagram.com/bas.runn/" style="color:#cfcfcf;">Instagram</a> ·
+          <a href="https://github.com/connerkward/bas" style="color:#cfcfcf;">GitHub</a>
+        </p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

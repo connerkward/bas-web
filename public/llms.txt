@@ -1,0 +1,27 @@
+# BAS STUDIO — A STUDY IN MOTION
+
+> BAS STUDIO is a studio that designs, builds, and deploys physical work — CNC sculpture, CAM fabrication, projection mapping, and realtime TouchDesigner media. A STUDY IN MOTION is its chronophotography relief installation: a single runner photographed in profile and broken across depth, milled into a stone-like panel and read by raking light, with a depth-mapped figure projected onto the relief in real time.
+
+bas.run is a single-page site for the installation A STUDY IN MOTION by BAS STUDIO
+(Conner Ward and Nick Eschen). It opens on an interactive torchlit WebGL relief and
+walks through the pipeline that produced the gallery piece. Installed at Gray Area
+Grand Theater, San Francisco — April 7, 2026.
+
+## The work
+- [A STUDY IN MOTION](https://bas.run/): a chronophotography relief installation — a runner's stride milled into relief and read by raking light, with realtime projection.
+
+## The build pipeline
+- Mold studies: depth/relief studies before milling.
+- CNC fabrication: toolpath generated in Fusion 360, cut on a gallery-scale ShopBot in one pass (no tiling, no seams).
+- Controller: a hardware MIDI controller patched into TouchDesigner as a tactile authoring surface and public gallery input.
+- TouchDesigner: an operator network stacking dithered passes, depth-derived isophotes, and pixelation thresholds, keystoned live onto the milled relief.
+- Lookdev: graded in DaVinci Resolve for gallery-throw contrast.
+- Installation: the milled relief under raking light at Gray Area, with the source video in profile beside it.
+
+## People & links
+- [Conner Ward](https://connerkward.dev): creative technologist, founder of BAS STUDIO.
+- [BAS STUDIO on Instagram](https://www.instagram.com/bas.runn/): studio account.
+- [BAS on GitHub](https://github.com/connerkward/bas): source / build notes.
+
+## Optional
+- [Sitemap](https://bas.run/sitemap.xml): canonical URL list.
