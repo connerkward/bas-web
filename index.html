@@ -13,14 +13,21 @@
       }
       /* The pre-hydration / no-JS SEO fallback inside #root must NOT paint for
          JS clients: React removes it on mount, and painting-then-removing caused
-         a visible blink. Hide it by default (this inline head style applies
-         before #root first paints, so it never flashes); the <noscript> below
-         re-shows it when JS is off. The text still ships in the raw HTML, so
-         non-JS crawlers/AI bots still read the entity name + definition. */
+         a visible blink. Two belts: display:none so it never lays out, AND the
+         text colored to the page background so it is invisible even if anything
+         paints it for a frame. The <noscript> below restores it (visible) when
+         JS is off; the text still ships in raw HTML for non-JS crawlers/AI bots. */
       #seo-fallback { display: none; }
+      #seo-fallback,
+      #seo-fallback * { color: #0a0a0a !important; }
     </style>
     <noscript>
-      <style>#seo-fallback { display: block; }</style>
+      <style>
+        #seo-fallback { display: block; }
+        #seo-fallback { color: #e8e8e8 !important; }
+        #seo-fallback p { color: #cfcfcf !important; }
+        #seo-fallback a { color: #cfcfcf !important; }
+      </style>
     </noscript>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
