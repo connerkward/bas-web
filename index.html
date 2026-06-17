@@ -11,7 +11,17 @@
       body {
         background: #0a0a0a;
       }
+      /* The pre-hydration / no-JS SEO fallback inside #root must NOT paint for
+         JS clients: React removes it on mount, and painting-then-removing caused
+         a visible blink. Hide it by default (this inline head style applies
+         before #root first paints, so it never flashes); the <noscript> below
+         re-shows it when JS is off. The text still ships in the raw HTML, so
+         non-JS crawlers/AI bots still read the entity name + definition. */
+      #seo-fallback { display: none; }
     </style>
+    <noscript>
+      <style>#seo-fallback { display: block; }</style>
+    </noscript>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -199,7 +209,7 @@
            don't run JS) so the entity name + definition are always in the DOM.
            Not cloaking — the same facts are shown to every visitor; the JS app
            presents them as the WebGL hero + sections. -->
-      <main style="max-width:46rem;margin:0 auto;padding:12vh 6vw;color:#e8e8e8;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5;">
+      <main id="seo-fallback" style="max-width:46rem;margin:0 auto;padding:12vh 6vw;color:#e8e8e8;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5;">
         <h1 style="font-size:clamp(1.8rem,5vw,3rem);letter-spacing:0.02em;margin:0 0 0.6em;">BAS STUDIO — A STUDY IN MOTION</h1>
         <p style="font-size:clamp(1.05rem,2.4vw,1.3rem);color:#cfcfcf;margin:0 0 1.2em;">
           <strong>A STUDY IN MOTION</strong> is a chronophotography relief installation by
