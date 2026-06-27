@@ -1374,7 +1374,7 @@ export default function Hero({ dpr }: HeroProps) {
       const overlap =
         Math.min(heroRect.bottom, pageRect.bottom) -
         Math.max(heroRect.top, pageRect.top);
-      heroInView = overlap > pageRect.height * 0.05;
+      heroInView = overlap > 0;
       heroNear =
         heroRect.bottom > pageRect.top - pageRect.height &&
         heroRect.top < pageRect.bottom + pageRect.height;
@@ -1399,14 +1399,15 @@ export default function Hero({ dpr }: HeroProps) {
 
     // Second hero IO without the pre-warm rootMargin — tracks whether the
     // hero section is *actually* on screen (vs. one section away). Drives
-    // the `body.in-hero` class. Threshold 0.05 so a 1-pixel sliver of hero
-    // peeking past the edge doesn't keep the blend on past the snap.
+    // the `body.in-hero` class. Threshold 0 so any overlap (even a single
+    // pixel of hero) keeps `in-hero` true; the topbar tint only applies
+    // once the hero is fully off-screen.
     const heroVisIO = new IntersectionObserver(
       ([entry]) => {
         heroInView = entry.isIntersecting;
         update();
       },
-      { threshold: 0.05, root },
+      { threshold: 0, root },
     );
     heroVisIO.observe(node);
 
