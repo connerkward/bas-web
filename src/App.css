@@ -398,23 +398,40 @@ body.crosshair-cursor .hero {
   }
 }
 
-/* Prefinal phone — uses the same tokens as the steps so the rhythm
-   reads as one continuous design system end to end. Video full-bleed
-   with a 9:16 portrait crop, copy follows underneath with the same
-   24px text-gap and 15/1.6 body type as every step. */
+/* Prefinal phone — locked to one viewport so mandatory snap has a
+   clean target. The section is `height: 100%` (one .page viewport),
+   .prefinal is a flex column inside it: video flexes to fill the
+   remaining space after the copy block, the copy block is natural
+   height. No `aspect-ratio: 9/16` here — that forces the video to
+   ~width × 16/9 (≈ 693px on a 390 viewport) which blew the section
+   past the viewport and produced the "stuck between pages" symptom
+   on hero → prefinal swipes. The inner <video> uses object-fit:
+   cover so the 9:16 source crops cleanly into whatever box remains. */
 @media (max-width: 600px) {
   .prefinal {
     padding: var(--m-section-top) var(--m-gutter) var(--m-section-bottom);
+    /* Stack: video on top, copy below — keeps the desktop reading
+       order. The video flex-shrinks to whatever room remains after
+       padding + copy; copy is natural height. */
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
     gap: var(--m-gap-block);
   }
   .prefinal__video {
     width: 100%;
+    /* Flex-shrink to fit; min-height: 0 lets it shrink below the
+       intrinsic 9:16 box on tight viewports. max-height caps it so
+       on tall phones it doesn't dominate the composition. The inner
+       <video> is object-fit: cover so the figure crops centered into
+       whatever box this becomes. */
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 50dvh;
     height: auto;
-    max-height: none;
-    aspect-ratio: 9 / 16;
   }
   .prefinal__copy {
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     width: 100%;
     max-width: none;
   }
@@ -1233,13 +1250,19 @@ body.crosshair-cursor .hero {
   .page {
     scroll-snap-type: y proximity;
   }
+  /* Prefinal locks to one viewport on phone — same as hero/footer — so
+     mandatory snap has a clean target and a swipe from hero lands
+     exactly on prefinal start (not stalled mid-section). The video
+     becomes a flex item that fills remaining space after the copy
+     block; `min-height: 0` lets it shrink below its intrinsic 9:16
+     box on tight viewports. */
   .page__section--prefinal {
-    height: auto;
-    min-height: 100%;
+    height: 100%;
+    min-height: 0;
   }
   .prefinal {
-    height: auto;
-    min-height: 100%;
+    height: 100%;
+    min-height: 0;
   }
   .step,
   .step:first-child {
@@ -1250,9 +1273,20 @@ body.crosshair-cursor .hero {
     padding: var(--m-section-top) var(--m-gutter) var(--m-section-bottom);
     gap: var(--m-gap-block);
     border-top: 1px solid var(--footer-rule);
+    /* Opt out of snap-align for individual steps on phone. Steps grow
+       past one viewport (triptych stacks vertically, etc.); leaving
+       them as snap targets under mandatory would trap the user unable
+       to read past each step's start. The major section boundaries
+       (hero / prefinal / projects-start / footer) remain snap targets
+       and produce the full-page rhythm; steps free-scroll between. */
+    scroll-snap-align: none;
   }
   .step:first-child {
     border-top: none;
+    /* Projects-start needs to stay a snap target on mobile too —
+       the section itself opts out of snap-align (height:auto), so we
+       hand the role to its first child. */
+    scroll-snap-align: start;
   }
 
   /* --- Body layouts collapse to a single vertical flow -------------
@@ -1815,14 +1849,16 @@ a.footer__line:hover {
 
 /* ----- Mobile: phone / small tablet (<= 720px) ----------------------- */
 @media (max-width: 720px) {
-  /* Mobile portrait: drop mandatory snap to proximity. Mandatory was
-     fighting iOS touch swipes — small swipes felt sticky and the page
-     could feel "caught between" sections. Proximity still pulls the
-     scroll to a section boundary when the user lets go near one, but
-     doesn't yank back during the gesture itself. Desktop and landscape
-     keep mandatory for the clean lock-to-step experience. */
+  /* Mobile portrait keeps `mandatory` snap. Earlier we tried `proximity`
+     to soften the swipe feel — but proximity won't commit to a snap
+     point when the user releases between two distant snap targets, so
+     the scroll could stall mid-section ("stuck between pages"). With
+     mandatory the scroll always rests on a snap boundary; the steps
+     inside the projects section opt out individually below when their
+     content overflows the viewport (so mandatory never traps the user
+     unable to read past a tall step start). */
   .page {
-    scroll-snap-type: y proximity;
+    scroll-snap-type: y mandatory;
   }
   /* Topbar — keep logo + nav at sizes that respect mobile tap-target
      guidance (44–48px hit area). Padding on the interactive elements is
