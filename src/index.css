@@ -53,7 +53,13 @@ body,
 html {
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: none;
+  /* `contain`, not `none` — kills cross-document scroll-chaining and
+     suppresses iOS Safari's elastic past-end pull on the document. With
+     mandatory scroll-snap, the past-end rubber-band can release into a
+     position outside the snap grid, then mandatory snap yanks back as a
+     visible "footer jump". `contain` clamps the document at its own
+     ends so the spring-back never overshoots the snap point. */
+  overscroll-behavior-y: contain;
 }
 
 body {
